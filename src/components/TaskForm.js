@@ -1,39 +1,29 @@
-import { useState } from "react";
-import { useTasks } from "../context/TaskContext";
+import { useContext, useState } from "react";
+import { TaskContext } from "../context/TaskContext";
 
-const TaskForm = () => {
-  const { addTask } = useTasks();
-  const [task, setTask] = useState({
-    title: "",
-    status: "To Do",
-    priority: "Medium",
-    dueDate: "",
-  });
+export default function TaskForm() {
+  const { addTask } = useContext(TaskContext);
+  const [form, setForm] = useState({ title: "", description: "", priority: "medium", dueDate: "" });
+
+  const handleChange = (e) => setForm({ ...form, [e.target.name]: e.target.value });
 
   const handleSubmit = (e) => {
     e.preventDefault();
-    if (!task.title) return;
-    addTask(task);
-    setTask({ title: "", status: "To Do", priority: "Medium", dueDate: "" });
+    addTask(form);
+    setForm({ title: "", description: "", priority: "medium", dueDate: "" });
   };
 
   return (
     <form onSubmit={handleSubmit}>
-      <input value={task.title} onChange={(e) => setTask({ ...task, title: e.target.value })} placeholder="Task title" />
-      <select value={task.status} onChange={(e) => setTask({ ...task, status: e.target.value })}>
-        <option>To Do</option>
-        <option>In Progress</option>
-        <option>Done</option>
+      <input name="title" placeholder="Task title" value={form.title} onChange={handleChange} />
+      <input name="description" placeholder="Description" value={form.description} onChange={handleChange} />
+      <select name="priority" value={form.priority} onChange={handleChange}>
+        <option>low</option>
+        <option>medium</option>
+        <option>high</option>
       </select>
-      <select value={task.priority} onChange={(e) => setTask({ ...task, priority: e.target.value })}>
-        <option>Low</option>
-        <option>Medium</option>
-        <option>High</option>
-      </select>
-      <input type="date" value={task.dueDate} onChange={(e) => setTask({ ...task, dueDate: e.target.value })} />
+      <input type="date" name="dueDate" value={form.dueDate} onChange={handleChange} />
       <button type="submit">Add Task</button>
     </form>
   );
-};
-
-export default TaskForm;
+}

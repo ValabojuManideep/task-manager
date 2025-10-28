@@ -61,7 +61,7 @@ export default function Dashboard() {
 
   // stats
   const totalTasks = tasks.length;
-  const todoTasks = tasks.filter((t) => t.status === "todo").length;
+  //const todoTasks = tasks.filter((t) => t.status === "todo").length;
   const inProgressTasks = tasks.filter((t) => t.status === "in_progress").length;
   const completedTasks = tasks.filter((t) => t.status === "done").length;
   const completionRate =

@@ -1,45 +1,36 @@
-import { createContext, useContext, useState, useEffect } from "react";
-import { v4 as uuidv4 } from "uuid";
+import { createContext, useState, useEffect } from "react";
+import axios from "axios";
 
-const TaskContext = createContext();
+export const TaskContext = createContext();
 
-export const TaskProvider = ({ children }) => {
-  const [tasks, setTasks] = useState(() => {
-    const stored = localStorage.getItem("tasks");
-    return stored ? JSON.parse(stored) : [];
-  });
+export const TaskProvider = ({ children, userId }) => {
+  const [tasks, setTasks] = useState([]);
 
-  useEffect(() => {
-    localStorage.setItem("tasks", JSON.stringify(tasks));
-  }, [tasks]);
-
-  const addTask = (task) => {
-    setTasks([...tasks, { ...task, id: uuidv4(), comments: [] }]);
+  const fetchTasks = async () => {
+    const res = await axios.get(`http://localhost:5000/api/tasks/${userId}`);
+    setTasks(res.data);
   };
 
-  const updateTask = (id, updated) => {
-    setTasks(tasks.map((t) => (t.id === id ? { ...t, ...updated } : t)));
+  const addTask = async (task) => {
+    const res = await axios.post("http://localhost:5000/api/tasks", { ...task, userId });
+    setTasks([...tasks, res.data]);
   };
 
-  const deleteTask = (id) => {
-    setTasks(tasks.filter((t) => t.id !== id));
+  const updateTask = async (id, updates) => {
+    const res = await axios.put(`http://localhost:5000/api/tasks/${id}`, updates);
+    setTasks(tasks.map((t) => (t._id === id ? res.data : t)));
   };
 
-  const addComment = (id, text) => {
-    setTasks(
-      tasks.map((t) =>
-        t.id === id
-          ? { ...t, comments: [...t.comments, { id: uuidv4(), text }] }
-          : t
-      )
-    );
+  const deleteTask = async (id) => {
+    await axios.delete(`http://localhost:5000/api/tasks/${id}`);
+    setTasks(tasks.filter((t) => t._id !== id));
   };
+
+  useEffect(() => { fetchTasks(); }, []);
 
   return (
-    <TaskContext.Provider value={{ tasks, addTask, updateTask, deleteTask, addComment }}>
+    <TaskContext.Provider value={{ tasks, addTask, updateTask, deleteTask }}>
       {children}
     </TaskContext.Provider>
   );
 };
-
-export const useTasks = () => useContext(TaskContext);
