@@ -4,15 +4,16 @@ import { useNavigate } from "react-router-dom";
 const AuthContext = createContext();
 
 export const AuthProvider = ({ children }) => {
-  const [user, setUser] = useState(localStorage.getItem("user") || null);
+  const [user, setUser] = useState(
+    JSON.parse(localStorage.getItem("user") || "null")
+  );
   const navigate = useNavigate();
 
-  const login = (username, password) => {
-    if (username && password) {
-      setUser(username);
-      localStorage.setItem("user", username);
-      navigate("/dashboard");
-    }
+  const login = async (username, password) => {
+    const loggedIn = { id: "me", username };
+    setUser(loggedIn);
+    localStorage.setItem("user", JSON.stringify(loggedIn));
+    navigate("/");
   };
 
   const logout = () => {

@@ -1,32 +1,51 @@
-import { createContext, useState, useEffect } from "react";
+import { createContext, useState, useEffect, useContext, useCallback } from "react";
 import axios from "axios";
 
 export const TaskContext = createContext();
+export const useTasks = () => useContext(TaskContext);
 
 export const TaskProvider = ({ children, userId }) => {
   const [tasks, setTasks] = useState([]);
 
-  const fetchTasks = async () => {
-    const res = await axios.get(`http://localhost:5000/api/tasks/${userId}`);
-    setTasks(res.data);
-  };
+  const fetchTasks = useCallback(async () => {
+    try {
+      const { data } = await axios.get(`http://localhost:5000/api/tasks`);
+      setTasks(data);
+    } catch (err) {
+      console.error("Fetch tasks error:", err);
+    }
+  }, []);
 
   const addTask = async (task) => {
-    const res = await axios.post("http://localhost:5000/api/tasks", { ...task, userId });
-    setTasks([...tasks, res.data]);
+    try {
+      const { data } = await axios.post("http://localhost:5000/api/tasks", { ...task, userId });
+      setTasks(prev => [...prev, data]);
+    } catch (err) {
+      console.error("Add task error:", err);
+    }
   };
 
   const updateTask = async (id, updates) => {
-    const res = await axios.put(`http://localhost:5000/api/tasks/${id}`, updates);
-    setTasks(tasks.map((t) => (t._id === id ? res.data : t)));
+    try {
+      const { data } = await axios.put(`http://localhost:5000/api/tasks/${id}`, updates);
+      setTasks(prev => prev.map(t => ((t._id || t.id) === id ? data : t)));
+    } catch (err) {
+      console.error("Update task error:", err);
+    }
   };
 
   const deleteTask = async (id) => {
-    await axios.delete(`http://localhost:5000/api/tasks/${id}`);
-    setTasks(tasks.filter((t) => t._id !== id));
+    try {
+      await axios.delete(`http://localhost:5000/api/tasks/${id}`);
+      setTasks(prev => prev.filter(t => (t._id || t.id) !== id));
+    } catch (err) {
+      console.error("Delete task error:", err);
+    }
   };
 
-  useEffect(() => { fetchTasks(); }, []);
+  useEffect(() => {
+    fetchTasks();
+  }, [fetchTasks]);
 
   return (
     <TaskContext.Provider value={{ tasks, addTask, updateTask, deleteTask }}>

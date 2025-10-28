@@ -1,39 +1,66 @@
-import { useTasks } from "../context/TaskContext";
+import React, { useContext } from "react";
+import { TaskContext } from "../context/TaskContext";
+import { format } from "date-fns";
+import "./TaskList.css";
 
-const TaskList = ({ filter }) => {
-  const { tasks, updateTask, deleteTask, addComment } = useTasks();
+export default function TaskList({ statusFilter, priorityFilter }) {
+  const { tasks, updateTask, deleteTask } = useContext(TaskContext);
 
-  const filtered = filter === "All" ? tasks : tasks.filter((t) => t.status === filter);
+  const filtered = tasks.filter((t) => {
+    const matchStatus = statusFilter === "All" || t.status === statusFilter;
+    const matchPriority = priorityFilter === "All Priority" || t.priority === priorityFilter;
+    return matchStatus && matchPriority;
+  });
+
+  const getPriorityColor = (priority) => {
+    switch (priority) {
+      case "high": return "#ef4444";
+      case "medium": return "#f59e0b";
+      case "low": return "#10b981";
+      default: return "#6b7280";
+    }
+  };
+
+  if (filtered.length === 0) {
+    return (
+      <div className="empty-tasks">
+        <div className="empty-icon">📋</div>
+        <h3>No tasks found</h3>
+        <p>Create your first task to get started</p>
+      </div>
+    );
+  }
 
   return (
-    <div>
-      {filtered.map((t) => (
-        <div key={t.id} className="task">
-          <h4>{t.title}</h4>
-          <p>Status: {t.status}</p>
-          <p>Priority: {t.priority}</p>
-          <p>Due: {t.dueDate || "None"}</p>
-
-          <button onClick={() => updateTask(t.id, { status: "Done" })}>Mark Done</button>
-          <button onClick={() => deleteTask(t.id)}>Delete</button>
-
-          <div>
-            <h5>Comments</h5>
-            {t.comments.map((c) => (
-              <p key={c.id}>• {c.text}</p>
-            ))}
-            <input
-              type="text"
-              placeholder="Add comment..."
-              onKeyDown={(e) => {
-                if (e.key === "Enter") addComment(t.id, e.target.value);
-              }}
-            />
+    <div className="task-list-container">
+      {filtered.map((task) => {
+        const id = task._id || task.id;
+        return (
+          <div key={id} className="task-card">
+            <div className="task-card-header">
+              <h3 className="task-card-title">{task.title}</h3>
+              <span className="task-priority" style={{ color: getPriorityColor(task.priority) }}>
+                {task.priority}
+              </span>
+            </div>
+            {task.description && <p className="task-description">{task.description}</p>}
+            <div className="task-card-footer">
+              <span className="task-status-badge">{task.status}</span>
+              {task.dueDate && (
+                <span className="task-due">Due: {format(new Date(task.dueDate), "MMM d, yyyy")}</span>
+              )}
+            </div>
+            <div className="task-actions">
+              <button className="task-action-btn done-btn" onClick={() => updateTask(id, { status: "done" })}>
+                ✓ Mark Done
+              </button>
+              <button className="task-action-btn delete-btn" onClick={() => deleteTask(id)}>
+                🗑 Delete
+              </button>
+            </div>
           </div>
-        </div>
-      ))}
+        );
+      })}
     </div>
   );
-};
-
-export default TaskList;
+}

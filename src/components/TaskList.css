@@ -1,0 +1,130 @@
+.task-list-container {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(320px, 1fr));
+  gap: 20px;
+}
+
+.task-card {
+  background: white;
+  border: 1px solid #e5e7eb;
+  border-radius: 12px;
+  padding: 20px;
+  transition: all 0.2s;
+}
+
+.task-card:hover {
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.08);
+}
+
+.task-card-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-start;
+  margin-bottom: 12px;
+}
+
+.task-card-title {
+  font-size: 17px;
+  font-weight: 600;
+  color: #111827;
+  flex: 1;
+  margin-right: 10px;
+}
+
+.task-priority {
+  font-size: 13px;
+  font-weight: 600;
+  text-transform: capitalize;
+}
+
+.task-description {
+  font-size: 14px;
+  color: #6b7280;
+  margin-bottom: 16px;
+  line-height: 1.5;
+}
+
+.task-card-footer {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 16px;
+  padding-top: 12px;
+  border-top: 1px solid #f3f4f6;
+}
+
+.task-status-badge {
+  padding: 4px 12px;
+  background: #f3f4f6;
+  border-radius: 6px;
+  font-size: 12px;
+  font-weight: 500;
+  color: #374151;
+  text-transform: capitalize;
+}
+
+.task-due {
+  font-size: 13px;
+  color: #9ca3af;
+}
+
+.task-actions {
+  display: flex;
+  gap: 10px;
+}
+
+.task-action-btn {
+  flex: 1;
+  padding: 8px 16px;
+  border: 1px solid #e5e7eb;
+  border-radius: 6px;
+  font-size: 13px;
+  font-weight: 500;
+  cursor: pointer;
+  transition: all 0.2s;
+}
+
+.done-btn {
+  background: white;
+  color: #10b981;
+}
+
+.done-btn:hover {
+  background: #d1fae5;
+  border-color: #10b981;
+}
+
+.delete-btn {
+  background: white;
+  color: #ef4444;
+}
+
+.delete-btn:hover {
+  background: #fee2e2;
+  border-color: #ef4444;
+}
+
+.empty-tasks {
+  background: white;
+  border: 1px solid #e5e7eb;
+  border-radius: 12px;
+  padding: 60px 40px;
+  text-align: center;
+}
+
+.empty-icon {
+  font-size: 48px;
+  margin-bottom: 16px;
+}
+
+.empty-tasks h3 {
+  font-size: 20px;
+  font-weight: 600;
+  color: #111827;
+  margin-bottom: 8px;
+}
+
+.empty-tasks p {
+  font-size: 15px;
+  color: #9ca3af;
+}
