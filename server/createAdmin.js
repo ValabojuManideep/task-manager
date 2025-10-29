@@ -12,7 +12,7 @@ const createAdmin = async () => {
     // Change these credentials
     const adminData = {
       username: "admin",
-      email: "admin@taskflow.com",
+      email: "admin@gmail.com",
       password: "admin123" // Change this to a strong password
     };
 

@@ -170,3 +170,23 @@ body.dark-mode .navbar-footer {
 body.dark-mode .user-name {
   color: #f9fafb;
 }
+/* Mobile responsive */
+@media (max-width: 768px) {
+  .app-container {
+    margin-left: 0;
+    padding-top: 60px;
+    padding-bottom: 60px;
+  }
+  
+  .main-content {
+    margin-left: 0 !important;
+  }
+
+  .top-bar {
+    display: none; /* Hide desktop top bar on mobile */
+  }
+
+  .page-content {
+    padding: 15px;
+  }
+}

@@ -175,3 +175,59 @@
 }
 
 
+
+
+/* Mobile Responsive */
+@media (max-width: 768px) {
+  .taskboard-container {
+    padding: 15px;
+  }
+
+  .taskboard-header {
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 15px;
+  }
+
+  .new-task-btn {
+    width: 100%;
+    justify-content: center;
+  }
+
+  .filters-row {
+    flex-direction: column;
+    gap: 12px;
+  }
+
+  .filter-group {
+    width: 100%;
+    flex-wrap: wrap;
+    justify-content: flex-start;
+  }
+
+  .filter-btn {
+    flex: 1;
+    min-width: 70px;
+    font-size: 12px;
+    padding: 8px 12px;
+  }
+
+  .user-filter {
+    width: 100%;
+    margin-left: 0;
+  }
+
+  .user-filter-select {
+    width: 100%;
+  }
+
+  .page-title {
+    font-size: 24px;
+  }
+
+  .page-subtitle {
+    font-size: 14px;
+  }
+}
+
+

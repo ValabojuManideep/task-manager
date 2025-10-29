@@ -1,3 +1,24 @@
+/* Prevent mobile zoom */
+/* * {
+  -webkit-text-size-adjust: 90;
+  -ms-text-size-adjust: 150%;
+}
+
+html, body {
+  width: 100%;
+  overflow-x: hidden;
+}
+
+body {
+  min-height: 100vh;
+  position: relative;
+} */
+
+
+
+
+
+
 body {
   margin: 0;
   font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', 'Roboto', 'Oxygen',
@@ -10,4 +31,17 @@ body {
 code {
   font-family: source-code-pro, Menlo, Monaco, Consolas, 'Courier New',
     monospace;
+}
+/* Mobile Responsive - Add at the end of index.css */
+
+@media (max-width: 768px) {
+  .app-container {
+    margin-left: 0;
+    padding-top: 60px; /* Space for mobile header */
+  }
+  
+  .main-content {
+    margin-left: 0 !important;
+    padding: 15px;
+  }
 }

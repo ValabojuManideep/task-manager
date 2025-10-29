@@ -83,3 +83,35 @@
 .submit-btn:hover {
   background: #4c6edb;
 }
+
+
+
+
+
+
+/* Mobile Responsive */
+@media (max-width: 768px) {
+  .task-form {
+    padding: 20px 15px;
+    max-width: 100%;
+  }
+
+  .form-title {
+    font-size: 20px;
+  }
+
+  .form-row {
+    flex-direction: column;
+    gap: 0;
+  }
+
+  .form-actions {
+    flex-direction: column-reverse;
+    gap: 10px;
+  }
+
+  .cancel-btn,
+  .submit-btn {
+    width: 100%;
+  }
+}

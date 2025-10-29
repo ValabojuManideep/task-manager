@@ -17,6 +17,9 @@ export default function TaskForm({ onClose }) {
     assignedTo: "",
   });
 
+  // Get today's date in YYYY-MM-DD format
+  const today = new Date().toISOString().split('T')[0];
+
   useEffect(() => {
     fetchUsers();
   }, []);
@@ -100,7 +103,13 @@ export default function TaskForm({ onClose }) {
 
       <div className="form-group">
         <label>Due Date</label>
-        <input type="date" name="dueDate" value={form.dueDate} onChange={handleChange} />
+        <input 
+          type="date" 
+          name="dueDate" 
+          value={form.dueDate} 
+          onChange={handleChange}
+          min={today}
+        />
       </div>
 
       <div className="form-actions">

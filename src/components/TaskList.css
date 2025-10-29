@@ -366,3 +366,116 @@
   font-weight: 500;
   cursor: pointer;
 }
+
+
+/* Mobile Responsive */
+@media (max-width: 768px) {
+  .task-list-container {
+    grid-template-columns: 1fr;
+    gap: 15px;
+    padding: 15px 0;
+  }
+
+  .task-card {
+    padding: 16px;
+  }
+
+  .task-card-title {
+    font-size: 16px;
+  }
+
+  .task-actions {
+    flex-direction: column;
+    gap: 10px;
+  }
+
+  .task-action-btn {
+    width: 100%;
+    min-width: auto;
+  }
+
+  .comment-input-wrapper {
+    flex-direction: column;
+  }
+
+  .comment-submit-btn {
+    width: 100%;
+  }
+}
+
+/* Limit description height with scroll */
+.task-description {
+  color: var(--text-muted);
+  font-size: 14px;
+  margin: 0 0 12px 0;
+  line-height: 1.5;
+  max-height: 60px;
+  overflow-y: auto;
+  word-wrap: break-word;
+}
+
+/* Custom scrollbar for description */
+.task-description::-webkit-scrollbar {
+  width: 6px;
+}
+
+.task-description::-webkit-scrollbar-track {
+  background: var(--hover-bg);
+  border-radius: 3px;
+}
+
+.task-description::-webkit-scrollbar-thumb {
+  background: var(--border-color);
+  border-radius: 3px;
+}
+
+.task-description::-webkit-scrollbar-thumb:hover {
+  background: #9ca3af;
+}
+
+/* Limit comments list height with scroll - show 2 comments */
+.comments-list {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  margin-bottom: 16px;
+  max-height: 200px;
+  overflow-y: auto;
+  padding-right: 8px;
+}
+
+/* Custom scrollbar for comments */
+.comments-list::-webkit-scrollbar {
+  width: 6px;
+}
+
+.comments-list::-webkit-scrollbar-track {
+  background: var(--hover-bg);
+  border-radius: 3px;
+}
+
+.comments-list::-webkit-scrollbar-thumb {
+  background: var(--border-color);
+  border-radius: 3px;
+}
+
+.comments-list::-webkit-scrollbar-thumb:hover {
+  background: #9ca3af;
+}
+/* Task card hover for clickable */
+.task-card {
+  cursor: pointer;
+}
+
+.task-card:active {
+  transform: translateY(-2px);
+}
+
+.task-comment-count {
+  margin-top: 12px;
+  padding-top: 12px;
+  border-top: 1px solid var(--border-color);
+  font-size: 13px;
+  color: var(--text-muted);
+  text-align: center;
+}
