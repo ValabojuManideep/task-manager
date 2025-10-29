@@ -10,6 +10,7 @@ import TaskBoard from "./components/TaskBoard";
 import Analytics from "./components/Analytics";
 import Activity from "./components/Activity";
 import Login from "./components/Login";
+import SignUp from "./components/SignUp";
 import "./App.css";
 
 const queryClient = new QueryClient();
@@ -58,6 +59,7 @@ export default function App() {
           <WithTasks>
             <Routes>
               <Route path="/login" element={<Login />} />
+              <Route path="/signup" element={<SignUp />} />
               <Route
                 path="/"
                 element={

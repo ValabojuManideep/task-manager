@@ -14,6 +14,12 @@ export default function Navbar() {
     { path: "/activity", label: "Activity", icon: "📈" },
   ];
 
+  // Get initials for avatar
+  const getInitials = (name) => {
+    if (!name) return "U";
+    return name.substring(0, 2).toUpperCase();
+  };
+
   return (
     <div className="navbar">
       <div className="navbar-header">
@@ -36,10 +42,10 @@ export default function Navbar() {
       </div>
 
       <div className="navbar-footer">
-        <div className="user-avatar">VM</div>
+        <div className="user-avatar">{getInitials(user?.username)}</div>
         <div className="user-info">
           <div className="user-name">{user?.username || "User"}</div>
-          <div className="user-email">22r11a6741@gcet.edu.in</div>
+          <div className="user-email">{user?.email || "No email"}</div>
         </div>
       </div>
     </div>

@@ -1,48 +1,44 @@
 import React, { useContext, useMemo } from "react";
-import { useNavigate } from "react-router-dom";
 import { TaskContext } from "../context/TaskContext";
-import { format } from "date-fns";
+import { useAuth } from "../context/AuthContext";
+import { useNavigate } from "react-router-dom";
 import "./Dashboard.css";
 
 export default function Dashboard() {
+  const { allTasks } = useContext(TaskContext);
+  const { user } = useAuth();
   const navigate = useNavigate();
-  const { tasks = [] } = useContext(TaskContext);
 
-  const { total, inProgress, done, rate, recent } = useMemo(() => {
-    const total = tasks.length;
-    const inProgress = tasks.filter(t => t.status === "in_progress").length;
-    const done = tasks.filter(t => t.status === "done").length;
-    const rate = total ? Math.round((done / total) * 100) : 0;
-    const recent = [...tasks]
-      .sort((a, b) => new Date(b.createdAt || 0) - new Date(a.createdAt || 0))
+  const isAdmin = user?.role === "admin";
+
+  // Filter tasks based on role
+  const userTasks = useMemo(() => {
+    if (isAdmin) return allTasks;
+    return allTasks.filter(t => t.assignedTo?._id === user.id || t.assignedTo === user.id);
+  }, [allTasks, user, isAdmin]);
+
+  const stats = useMemo(() => {
+    const total = userTasks.length;
+    const inProgress = userTasks.filter((t) => t.status === "in_progress").length;
+    const completed = userTasks.filter((t) => t.status === "done").length;
+    const rate = total ? Math.round((completed / total) * 100) : 0;
+    return { total, inProgress, completed, rate };
+  }, [userTasks]);
+
+  const recentTasks = useMemo(() => {
+    return [...userTasks]
+      .sort((a, b) => new Date(b.createdAt) - new Date(a.createdAt))
       .slice(0, 5);
-    return { total, inProgress, done, rate, recent };
-  }, [tasks]);
-
-  const getPriorityColor = (priority) => {
-    switch (priority) {
-      case "high": return "#ef4444";
-      case "medium": return "#f59e0b";
-      case "low": return "#10b981";
-      default: return "#6b7280";
-    }
-  };
-
-  const getStatusLabel = (status) => {
-    switch (status) {
-      case "todo": return "To Do";
-      case "in_progress": return "In Progress";
-      case "done": return "Completed";
-      default: return status;
-    }
-  };
+  }, [userTasks]);
 
   return (
     <div className="dashboard-container">
       <div className="dashboard-header">
         <div>
           <h1 className="page-title">Dashboard</h1>
-          <p className="page-subtitle">Overview of your tasks and progress</p>
+          <p className="page-subtitle">
+            {isAdmin ? "Overview of all tasks and progress" : "Your tasks and progress"}
+          </p>
         </div>
         <button className="view-all-btn" onClick={() => navigate("/tasks")}>
           View All Tasks
@@ -51,65 +47,56 @@ export default function Dashboard() {
 
       <div className="stats-grid">
         <div className="stat-card">
-          <div className="stat-header">
-            <span className="stat-title">Total Tasks</span>
-            <span className="stat-icon">▦</span>
+          <div className="stat-icon">📊</div>
+          <div className="stat-content">
+            <div className="stat-value">{stats.total}</div>
+            <div className="stat-description">Total Tasks</div>
           </div>
-          <div className="stat-value">{total}</div>
-          <div className="stat-description">All tasks in system</div>
         </div>
 
         <div className="stat-card">
-          <div className="stat-header">
-            <span className="stat-title">In Progress</span>
-            <span className="stat-icon">⏱</span>
+          <div className="stat-icon">⏳</div>
+          <div className="stat-content">
+            <div className="stat-value">{stats.inProgress}</div>
+            <div className="stat-description">In Progress</div>
           </div>
-          <div className="stat-value">{inProgress}</div>
-          <div className="stat-description">Currently active</div>
         </div>
 
         <div className="stat-card">
-          <div className="stat-header">
-            <span className="stat-title">Completed</span>
-            <span className="stat-icon">☑</span>
+          <div className="stat-icon">✅</div>
+          <div className="stat-content">
+            <div className="stat-value">{stats.completed}</div>
+            <div className="stat-description">Completed</div>
           </div>
-          <div className="stat-value">{done}</div>
-          <div className="stat-description">Tasks finished</div>
         </div>
 
         <div className="stat-card">
-          <div className="stat-header">
-            <span className="stat-title">Completion Rate</span>
-            <span className="stat-icon">📈</span>
+          <div className="stat-icon">📈</div>
+          <div className="stat-content">
+            <div className="stat-value">{stats.rate}%</div>
+            <div className="stat-description">Completion Rate</div>
           </div>
-          <div className="stat-value">{rate}%</div>
-          <div className="stat-description">Overall progress</div>
         </div>
       </div>
 
       <div className="recent-tasks-section">
         <h2 className="section-title">Recent Tasks</h2>
-        {recent.length === 0 ? (
-          <div className="empty-state">
-            <p>No tasks available</p>
-          </div>
-        ) : (
-          <div className="tasks-list">
-            {recent.map((task) => (
-              <div key={task._id || task.id} className="task-item">
+        {recentTasks.length > 0 ? (
+          <div className="task-list">
+            {recentTasks.map((task) => (
+              <div key={task._id} className="task-item">
                 <div className="task-info">
                   <h3 className="task-title">{task.title}</h3>
                   <div className="task-meta">
-                    Status: {getStatusLabel(task.status)} | Priority:{" "}
-                    <span style={{ color: getPriorityColor(task.priority), fontWeight: "600" }}>
-                      {task.priority}
-                    </span>
-                    {task.dueDate && <> | Due: {format(new Date(task.dueDate), "MMM d")}</>}
+                    <span className={`task-status status-${task.status}`}>{task.status}</span>
+                    <span className={`task-priority priority-${task.priority}`}>{task.priority}</span>
                   </div>
                 </div>
               </div>
             ))}
           </div>
+        ) : (
+          <p className="no-tasks">No tasks yet</p>
         )}
       </div>
     </div>

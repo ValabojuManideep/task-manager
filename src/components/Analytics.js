@@ -1,23 +1,62 @@
-import React, { useContext, useMemo, useState } from "react";
+import React, { useContext, useMemo, useState, useEffect } from "react";
 import { TaskContext } from "../context/TaskContext";
+import { useAuth } from "../context/AuthContext";
 import { Chart as ChartJS, ArcElement, Tooltip, Legend, CategoryScale, LinearScale, BarElement } from "chart.js";
 import { Pie, Bar, Doughnut } from "react-chartjs-2";
+import axios from "axios";
 import "./Analytics.css";
 
 ChartJS.register(ArcElement, Tooltip, Legend, CategoryScale, LinearScale, BarElement);
 
 export default function Analytics() {
-  const { tasks } = useContext(TaskContext);
+  const { allTasks } = useContext(TaskContext);
+  const { user } = useAuth();
   const [chartType, setChartType] = useState("pie");
+  const [userFilter, setUserFilter] = useState("All Users");
+  const [users, setUsers] = useState([]);
+
+  const isAdmin = user?.role === "admin";
+
+  useEffect(() => {
+    if (isAdmin) {
+      fetchUsers();
+    }
+  }, [isAdmin]);
+
+  const fetchUsers = async () => {
+    try {
+      const { data } = await axios.get("http://localhost:5000/api/auth/users");
+      setUsers(data);
+    } catch (err) {
+      console.error("Error fetching users:", err);
+    }
+  };
+
+  // Filter tasks based on role and user filter
+  const userTasks = useMemo(() => {
+    let filtered = isAdmin 
+      ? allTasks 
+      : allTasks.filter(t => t.assignedTo?._id === user.id || t.assignedTo === user.id);
+
+    // Apply user filter for admin
+    if (isAdmin && userFilter !== "All Users") {
+      filtered = filtered.filter(t => {
+        const assignedId = t.assignedTo?._id || t.assignedTo;
+        return assignedId === userFilter;
+      });
+    }
+
+    return filtered;
+  }, [allTasks, user, isAdmin, userFilter]);
 
   const stats = useMemo(() => {
-    const total = tasks.length;
-    const todo = tasks.filter(t => t.status === "todo").length;
-    const inProgress = tasks.filter(t => t.status === "in_progress").length;
-    const done = tasks.filter(t => t.status === "done").length;
+    const total = userTasks.length;
+    const todo = userTasks.filter(t => t.status === "todo").length;
+    const inProgress = userTasks.filter(t => t.status === "in_progress").length;
+    const done = userTasks.filter(t => t.status === "done").length;
     const rate = total ? Math.round((done / total) * 100) : 0;
     return { total, todo, inProgress, done, rate };
-  }, [tasks]);
+  }, [userTasks]);
 
   const chartData = {
     labels: ["To Do", "In Progress", "Done"],
@@ -61,9 +100,28 @@ export default function Analytics() {
 
   return (
     <div className="analytics-container">
-      <div>
-        <h1 className="page-title">Analytics</h1>
-        <p className="page-subtitle">Insights into task performance and team productivity</p>
+      <div className="analytics-header-section">
+        <div>
+          <h1 className="page-title">Analytics</h1>
+          <p className="page-subtitle">
+            {isAdmin ? "Insights into task performance and team productivity" : "Your task performance insights"}
+          </p>
+        </div>
+        
+        {isAdmin && users.length > 0 && (
+          <select 
+            className="analytics-user-select"
+            value={userFilter}
+            onChange={(e) => setUserFilter(e.target.value)}
+          >
+            <option value="All Users">All Users</option>
+            {users.map(u => (
+              <option key={u._id} value={u._id}>
+                {u.username}
+              </option>
+            ))}
+          </select>
+        )}
       </div>
 
       <div className="stats-grid">
@@ -100,7 +158,7 @@ export default function Analytics() {
         <div className="chart-container">
           {stats.total === 0 ? (
             <div className="chart-placeholder">
-              <p>No data to display. Create tasks to see visualizations.</p>
+              <p>No data to display. {isAdmin ? "Create tasks" : "Wait for tasks to be assigned"} to see visualizations.</p>
             </div>
           ) : (
             renderChart()

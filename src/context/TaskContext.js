@@ -1,54 +1,63 @@
-import { createContext, useState, useEffect, useContext, useCallback } from "react";
+import React, { createContext, useState, useEffect } from "react";
 import axios from "axios";
+import { useAuth } from "./AuthContext";
 
 export const TaskContext = createContext();
-export const useTasks = () => useContext(TaskContext);
 
-export const TaskProvider = ({ children, userId }) => {
+export const TaskProvider = ({ children }) => {
   const [tasks, setTasks] = useState([]);
+  const [allTasks, setAllTasks] = useState([]);
+  const { user } = useAuth();
 
-  const fetchTasks = useCallback(async () => {
+  const fetchTasks = async () => {
     try {
-      const { data } = await axios.get(`http://localhost:5000/api/tasks`);
+      const { data } = await axios.get("http://localhost:5000/api/tasks");
+      setAllTasks(data);
       setTasks(data);
     } catch (err) {
-      console.error("Fetch tasks error:", err);
+      console.error("Error fetching tasks:", err);
     }
+  };
+
+  useEffect(() => {
+    fetchTasks();
   }, []);
 
   const addTask = async (task) => {
     try {
-      const { data } = await axios.post("http://localhost:5000/api/tasks", { ...task, userId });
-      setTasks(prev => [...prev, data]);
+      const { data } = await axios.post("http://localhost:5000/api/tasks", task);
+      setTasks([...tasks, data]);
+      setAllTasks([...allTasks, data]);
     } catch (err) {
-      console.error("Add task error:", err);
+      console.error("Error adding task:", err);
     }
   };
 
   const updateTask = async (id, updates) => {
     try {
       const { data } = await axios.put(`http://localhost:5000/api/tasks/${id}`, updates);
-      setTasks(prev => prev.map(t => ((t._id || t.id) === id ? data : t)));
+      setTasks(tasks.map((t) => (t._id === id ? data : t)));
+      setAllTasks(allTasks.map((t) => (t._id === id ? data : t)));
+      await fetchTasks(); // Refresh to ensure consistency
     } catch (err) {
-      console.error("Update task error:", err);
+      console.error("Error updating task:", err);
     }
   };
 
   const deleteTask = async (id) => {
     try {
-      await axios.delete(`http://localhost:5000/api/tasks/${id}`);
-      setTasks(prev => prev.filter(t => (t._id || t.id) !== id));
+      await axios.delete(`http://localhost:5000/api/tasks/${id}`, {
+        data: { username: user?.username || "Admin" }
+      });
+      setTasks(tasks.filter((t) => t._id !== id));
+      setAllTasks(allTasks.filter((t) => t._id !== id));
     } catch (err) {
-      console.error("Delete task error:", err);
+      console.error("Error deleting task:", err);
     }
   };
 
-  useEffect(() => {
-    fetchTasks();
-  }, [fetchTasks]);
-
   return (
-    <TaskContext.Provider value={{ tasks, addTask, updateTask, deleteTask }}>
+    <TaskContext.Provider value={{ tasks, allTasks, addTask, updateTask, deleteTask, fetchTasks }}>
       {children}
     </TaskContext.Provider>
   );

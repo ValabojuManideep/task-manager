@@ -66,3 +66,34 @@
   border-radius: 8px;
   color: #9ca3af;
 }
+
+.analytics-header-section {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 30px;
+}
+
+.analytics-user-select {
+  padding: 10px 16px;
+  border: 2px solid var(--border-color, #e5e7eb);
+  border-radius: 8px;
+  background: var(--card-bg, white);
+  color: var(--text-color, #1f2937);
+  font-size: 14px;
+  font-weight: 500;
+  cursor: pointer;
+  transition: all 0.2s ease;
+  min-width: 180px;
+}
+
+.analytics-user-select:hover {
+  border-color: var(--primary-color, #5B7FFF);
+}
+
+.analytics-user-select:focus {
+  outline: none;
+  border-color: var(--primary-color, #5B7FFF);
+  box-shadow: 0 0 0 3px rgba(91, 127, 255, 0.1);
+}
+

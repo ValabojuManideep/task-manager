@@ -74,3 +74,104 @@
   color: #111827;
   font-weight: 600;
 }
+
+/* Add to existing CSS */
+.taskboard-actions {
+  display: flex;
+  gap: 12px;
+}
+
+.your-tasks-btn {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 12px 24px;
+  background: white;
+  color: #374151;
+  border: 2px solid #e5e7eb;
+  border-radius: 8px;
+  font-size: 15px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.2s;
+}
+
+.your-tasks-btn:hover {
+  border-color: #5B7FFF;
+  color: #5B7FFF;
+}
+
+.your-tasks-btn.active {
+  background: #5B7FFF;
+  color: white;
+  border-color: #5B7FFF;
+}
+
+.user-filter {
+  margin-left: 20px;
+}
+
+.user-filter-select {
+  padding: 8px 16px;
+  border: 2px solid var(--border-color, #e5e7eb);
+  border-radius: 8px;
+  background: var(--card-bg, white);
+  color: var(--text-color, #1f2937);
+  font-size: 14px;
+  font-weight: 500;
+  cursor: pointer;
+  transition: all 0.2s ease;
+  min-width: 150px;
+}
+
+.user-filter-select:hover {
+  border-color: var(--primary-color, #5B7FFF);
+}
+
+.user-filter-select:focus {
+  outline: none;
+  border-color: var(--primary-color, #5B7FFF);
+  box-shadow: 0 0 0 3px rgba(91, 127, 255, 0.1);
+}
+.user-filter {
+  margin-left: 20px;
+}
+
+.user-filter-select {
+  padding: 8px 16px;
+  border: 2px solid var(--border-color, #e5e7eb);
+  border-radius: 8px;
+  background: var(--card-bg, white);
+  color: var(--text-color, #1f2937);
+  font-size: 14px;
+  font-weight: 500;
+  cursor: pointer;
+  transition: all 0.2s ease;
+  min-width: 150px;
+}
+
+.user-filter-select:hover {
+  border-color: var(--primary-color, #5B7FFF);
+}
+
+.user-filter-select:focus {
+  outline: none;
+  border-color: var(--primary-color, #5B7FFF);
+  box-shadow: 0 0 0 3px rgba(91, 127, 255, 0.1);
+}
+/* Fix dropdown options visibility */
+.user-filter-select option,
+.analytics-user-select option {
+  background: white;
+  color: #111827;
+  padding: 10px;
+}
+
+/* In dark mode */
+[data-theme="dark"] .user-filter-select option,
+[data-theme="dark"] .analytics-user-select option {
+  background: #1f2937;
+  color: #f9fafb;
+}
+
+

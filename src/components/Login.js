@@ -1,22 +1,32 @@
 import React, { useState } from "react";
 import { useAuth } from "../context/AuthContext";
+import { useNavigate } from "react-router-dom";
 import "./Login.css";
 
 export default function Login() {
   const { login } = useAuth();
-  const [form, setForm] = useState({ username: "", password: "" });
+  const navigate = useNavigate();
+  const [form, setForm] = useState({ usernameOrEmail: "", password: "" });
   const [error, setError] = useState("");
+  const [loading, setLoading] = useState(false);
 
   const handleChange = (e) => setForm({ ...form, [e.target.name]: e.target.value });
 
-  const handleSubmit = (e) => {
+  const handleSubmit = async (e) => {
     e.preventDefault();
-    if (!form.username || !form.password) {
-      setError("Please enter both username and password");
+    if (!form.usernameOrEmail || !form.password) {
+      setError("Please enter both fields");
       return;
     }
+
+    setLoading(true);
     setError("");
-    login(form.username, form.password);
+    const result = await login(form.usernameOrEmail, form.password);
+    setLoading(false);
+
+    if (!result.success) {
+      setError(result.error);
+    }
   };
 
   return (
@@ -58,15 +68,16 @@ export default function Login() {
             {error && <div className="error-message">{error}</div>}
 
             <div className="form-field">
-              <label htmlFor="username">Username</label>
+              <label htmlFor="usernameOrEmail">Username or Email</label>
               <input
-                id="username"
-                name="username"
+                id="usernameOrEmail"
+                name="usernameOrEmail"
                 type="text"
-                placeholder="Enter your username"
-                value={form.username}
+                placeholder="Enter your username or email"
+                value={form.usernameOrEmail}
                 onChange={handleChange}
                 autoComplete="username"
+                disabled={loading}
               />
             </div>
 
@@ -80,6 +91,7 @@ export default function Login() {
                 value={form.password}
                 onChange={handleChange}
                 autoComplete="current-password"
+                disabled={loading}
               />
             </div>
 
@@ -88,16 +100,16 @@ export default function Login() {
                 <input type="checkbox" />
                 <span>Remember me</span>
               </label>
-              <a href="#" className="forgot-password">Forgot password?</a>
+              <button type="button" className="forgot-password">Forgot password?</button>
             </div>
 
-            <button type="submit" className="login-button">
-              Sign In
+            <button type="submit" className="login-button" disabled={loading}>
+              {loading ? "Signing in..." : "Sign In"}
             </button>
           </form>
 
           <div className="login-footer">
-            <p>Don't have an account? <a href="#">Sign up</a></p>
+            <p>Don't have an account? <button type="button" className="signup-link" onClick={() => navigate("/signup")}>Sign up</button></p>
           </div>
         </div>
       </div>

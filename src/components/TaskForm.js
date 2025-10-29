@@ -1,23 +1,42 @@
-import React, { useContext, useState } from "react";
+import React, { useContext, useState, useEffect } from "react";
 import { TaskContext } from "../context/TaskContext";
+import { useAuth } from "../context/AuthContext";
+import axios from "axios";
 import "./TaskForm.css";
 
 export default function TaskForm({ onClose }) {
   const { addTask } = useContext(TaskContext);
+  const { user } = useAuth();
+  const [users, setUsers] = useState([]);
   const [form, setForm] = useState({
     title: "",
     description: "",
     status: "todo",
     priority: "medium",
     dueDate: "",
+    assignedTo: "",
   });
+
+  useEffect(() => {
+    fetchUsers();
+  }, []);
+
+  const fetchUsers = async () => {
+    try {
+      const { data } = await axios.get("http://localhost:5000/api/auth/users");
+      // Filter only users with role "user" (not admins)
+      setUsers(data.filter(u => u.role === "user"));
+    } catch (err) {
+      console.error("Error fetching users:", err);
+    }
+  };
 
   const handleChange = (e) => setForm({ ...form, [e.target.name]: e.target.value });
 
   const handleSubmit = (e) => {
     e.preventDefault();
-    addTask(form);
-    setForm({ title: "", description: "", status: "todo", priority: "medium", dueDate: "" });
+    addTask({ ...form, createdBy: user.id });
+    setForm({ title: "", description: "", status: "todo", priority: "medium", dueDate: "", assignedTo: "" });
     if (onClose) onClose();
   };
 
@@ -45,6 +64,18 @@ export default function TaskForm({ onClose }) {
           onChange={handleChange}
           rows="3"
         />
+      </div>
+
+      <div className="form-group">
+        <label>Assign To</label>
+        <select name="assignedTo" value={form.assignedTo} onChange={handleChange}>
+          <option value="">Unassigned</option>
+          {users.map((u) => (
+            <option key={u._id} value={u._id}>
+              {u.username} ({u.email})
+            </option>
+          ))}
+        </select>
       </div>
 
       <div className="form-row">
