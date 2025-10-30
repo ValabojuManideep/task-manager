@@ -1,3 +1,24 @@
+/* Global Variables */
+:root {
+  --primary-color: #5B7FFF;
+  --text-color: #1f2937;
+  --text-muted: #6b7280;
+  --border-color: #e5e7eb;
+  --hover-bg: #f3f4f6;
+  --card-bg: #ffffff;
+  --bg-color: #f9fafb;
+}
+
+body.dark-mode {
+  --text-color: #f9fafb;
+  --text-muted: #9ca3af;
+  --border-color: #374151;
+  --hover-bg: #374151;
+  --card-bg: #1f2937;
+  --bg-color: #111827;
+}
+
+/* Base Styles */
 * {
   margin: 0;
   padding: 0;
@@ -5,188 +26,153 @@
 }
 
 body {
-  font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', 'Roboto', 'Oxygen', 'Ubuntu', 'Cantarell', sans-serif;
-  background: #f5f5f5;
-  transition: background 0.3s, color 0.3s;
+  font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', 'Roboto', 'Oxygen',
+    'Ubuntu', 'Cantarell', 'Fira Sans', 'Droid Sans', 'Helvetica Neue',
+    sans-serif;
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+  background: var(--bg-color);
+  color: var(--text-color);
+  transition: background-color 0.3s ease, color 0.3s ease;
+  width: 100%;
+  overflow-x: hidden;
 }
 
-body.dark-mode {
-  background: #1a1a1a;
-  color: #e5e7eb;
-}
-
+/* App Container */
 .app-container {
   display: flex;
-  height: 100vh;
+  min-height: 100vh;
+  width: 100%;
+  overflow-x: hidden;
 }
 
+/* Main Content */
 .main-content {
   flex: 1;
-  display: flex;
-  flex-direction: column;
   margin-left: 280px;
+  min-height: 100vh;
+  background: var(--bg-color);
+  transition: margin-left 0.3s ease;
+  width: calc(100% - 280px);
 }
 
+/* Top Bar */
 .top-bar {
   height: 70px;
-  background: white;
-  border-bottom: 1px solid #e5e7eb;
+  background: var(--card-bg);
+  border-bottom: 1px solid var(--border-color);
   display: flex;
   align-items: center;
   justify-content: space-between;
-  padding: 0 30px;
-  transition: background 0.3s, border-color 0.3s;
-}
-
-body.dark-mode .top-bar {
-  background: #2d2d2d;
-  border-bottom-color: #404040;
+  padding: 0 40px;
+  position: sticky;
+  top: 0;
+  z-index: 100;
+  transition: all 0.3s ease;
 }
 
 .top-bar-left {
-  display: flex;
-  align-items: center;
-  gap: 20px;
+  flex: 1;
 }
 
 .top-bar-right {
   display: flex;
   align-items: center;
-  gap: 20px;
+  gap: 16px;
 }
 
+/* Dark Mode Toggle */
 .dark-mode-toggle {
-  background: none;
+  width: 48px;
+  height: 48px;
   border: none;
-  font-size: 22px;
+  border-radius: 12px;
+  background: var(--hover-bg);
+  color: var(--text-color);
+  font-size: 20px;
   cursor: pointer;
-  transition: transform 0.2s;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: all 0.2s ease;
 }
 
 .dark-mode-toggle:hover {
-  transform: scale(1.1);
+  background: var(--border-color);
+  transform: scale(1.05);
 }
 
+/* Logout Button */
 .logout-btn {
   display: flex;
   align-items: center;
   gap: 8px;
-  background: none;
+  padding: 12px 20px;
   border: none;
+  border-radius: 10px;
+  background: #ef4444;
+  color: white;
   font-size: 15px;
+  font-weight: 600;
   cursor: pointer;
-  color: #374151;
-  font-weight: 500;
-  transition: color 0.2s;
-}
-
-body.dark-mode .logout-btn {
-  color: #e5e7eb;
+  transition: all 0.2s ease;
 }
 
 .logout-btn:hover {
-  color: #5B7FFF;
+  background: #dc2626;
+  transform: translateY(-2px);
+  box-shadow: 0 4px 12px rgba(239, 68, 68, 0.3);
 }
 
+/* Page Content */
 .page-content {
-  flex: 1;
-  padding: 30px;
-  overflow-y: auto;
+  padding: 40px;
+  width: 100%;
+  box-sizing: border-box;
 }
 
-/* Dark mode for cards and sections */
-body.dark-mode .stat-card,
-body.dark-mode .stat-card-large,
-body.dark-mode .recent-tasks-section,
-body.dark-mode .chart-section,
-body.dark-mode .task-card,
-body.dark-mode .activity-feed,
-body.dark-mode .activity-empty,
-body.dark-mode .task-form-wrapper {
-  background: #2d2d2d;
-  border-color: #404040;
-  color: #e5e7eb;
-}
-
-body.dark-mode .page-title {
-  color: #f9fafb;
-}
-
-body.dark-mode .page-subtitle,
-body.dark-mode .stat-description,
-body.dark-mode .task-meta,
-body.dark-mode .activity-time {
-  color: #9ca3af;
-}
-
-body.dark-mode .stat-value,
-body.dark-mode .stat-value-large,
-body.dark-mode .task-title,
-body.dark-mode .task-card-title {
-  color: #f9fafb;
-}
-
-body.dark-mode .task-item,
-body.dark-mode .activity-item {
-  background: #262626;
-  border-color: #404040;
-}
-
-body.dark-mode .filter-btn,
-body.dark-mode .chart-selector {
-  background: #2d2d2d;
-  color: #e5e7eb;
-  border-color: #404040;
-}
-
-body.dark-mode .filter-btn.active {
-  background: #404040;
-  color: #f9fafb;
-}
-
-body.dark-mode .navbar {
-  background: #2d2d2d;
-  border-right-color: #404040;
-}
-
-body.dark-mode .logo-text {
-  color: #f9fafb;
-}
-
-body.dark-mode .nav-item {
-  color: #9ca3af;
-}
-
-body.dark-mode .nav-item:hover,
-body.dark-mode .nav-item.active {
-  background: #404040;
-  color: #f9fafb;
-}
-
-body.dark-mode .navbar-footer {
-  border-top-color: #404040;
-}
-
-body.dark-mode .user-name {
-  color: #f9fafb;
-}
-/* Mobile responsive */
+/* Mobile Responsive */
 @media (max-width: 768px) {
   .app-container {
-    margin-left: 0;
+    margin-left: 0 !important;
     padding-top: 60px;
     padding-bottom: 60px;
+    width: 100%;
+    overflow-x: hidden;
   }
   
   .main-content {
     margin-left: 0 !important;
+    width: 100%;
+    padding: 0;
   }
 
   .top-bar {
-    display: none; /* Hide desktop top bar on mobile */
+    display: none;
   }
 
   .page-content {
-    padding: 15px;
+    padding: 0;
+    width: 100%;
+    overflow-x: hidden;
   }
+}
+
+/* Tablet adjustments */
+@media (max-width: 1024px) and (min-width: 769px) {
+  .main-content {
+    margin-left: 280px;
+  }
+}
+
+/* Prevent text size adjustment on mobile */
+html {
+  -webkit-text-size-adjust: 100%;
+  -ms-text-size-adjust: 100%;
+}
+
+/* Prevent horizontal overflow */
+html, body {
+  max-width: 100%;
+  overflow-x: hidden;
 }

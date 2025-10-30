@@ -4,6 +4,7 @@ import { useAuth } from "../context/AuthContext";
 import { Chart as ChartJS, ArcElement, Tooltip, Legend, CategoryScale, LinearScale, BarElement } from "chart.js";
 import { Pie, Bar, Doughnut } from "react-chartjs-2";
 import axios from "axios";
+import SearchableSelect from "./SearchableSelect";
 import "./Analytics.css";
 
 ChartJS.register(ArcElement, Tooltip, Legend, CategoryScale, LinearScale, BarElement);
@@ -80,9 +81,28 @@ export default function Analytics() {
         labels: {
           font: { size: 14 },
           padding: 20,
+          color: document.body.classList.contains('dark-mode') ? '#f9fafb' : '#1f2937',
         },
       },
     },
+    scales: chartType === 'bar' ? {
+      y: {
+        ticks: {
+          color: document.body.classList.contains('dark-mode') ? '#f9fafb' : '#1f2937',
+        },
+        grid: {
+          color: document.body.classList.contains('dark-mode') ? '#374151' : '#e5e7eb',
+        }
+      },
+      x: {
+        ticks: {
+          color: document.body.classList.contains('dark-mode') ? '#f9fafb' : '#1f2937',
+        },
+        grid: {
+          color: document.body.classList.contains('dark-mode') ? '#374151' : '#e5e7eb',
+        }
+      }
+    } : {}
   };
 
   const renderChart = () => {
@@ -98,71 +118,93 @@ export default function Analytics() {
     }
   };
 
+  // Prepare user options for SearchableSelect
+  const userOptions = useMemo(() => {
+    const options = [{ value: "All Users", label: "All Users" }];
+    
+    if (users.length > 0) {
+      users
+        .filter(u => u.role === "user")
+        .forEach(u => {
+          options.push({
+            value: u._id,
+            label: `${u.username} (${u.email})`
+          });
+        });
+    }
+    
+    return options;
+  }, [users]);
+
+  // Prepare chart type options
+  const chartTypeOptions = [
+    { value: "pie", label: "Pie Chart" },
+    { value: "bar", label: "Bar Chart" },
+    { value: "doughnut", label: "Doughnut Chart" }
+  ];
+
   return (
-    <div className="analytics-container">
-      <div className="analytics-header-section">
-        <div>
-          <h1 className="page-title">Analytics</h1>
-          <p className="page-subtitle">
-            {isAdmin ? "Insights into task performance and team productivity" : "Your task performance insights"}
-          </p>
-        </div>
-        
-        {isAdmin && users.length > 0 && (
-          <select 
-            className="analytics-user-select"
-            value={userFilter}
-            onChange={(e) => setUserFilter(e.target.value)}
-          >
-            <option value="All Users">All Users</option>
-            {users.map(u => (
-              <option key={u._id} value={u._id}>
-                {u.username}
-              </option>
-            ))}
-          </select>
-        )}
-      </div>
-
-      <div className="stats-grid">
-        <div className="stat-card-large">
-          <div className="stat-title">Total Tasks</div>
-          <div className="stat-value-large">{stats.total}</div>
-        </div>
-
-        <div className="stat-card-large">
-          <div className="stat-title">Completed</div>
-          <div className="stat-value-large">{stats.done}</div>
-        </div>
-
-        <div className="stat-card-large">
-          <div className="stat-title">In Progress</div>
-          <div className="stat-value-large">{stats.inProgress}</div>
-        </div>
-
-        <div className="stat-card-large">
-          <div className="stat-title">Completion Rate</div>
-          <div className="stat-value-large">{stats.rate}%</div>
-        </div>
-      </div>
-
-      <div className="chart-section">
-        <div className="chart-header">
-          <h2 className="section-title">Task Status Distribution</h2>
-          <select className="chart-selector" value={chartType} onChange={(e) => setChartType(e.target.value)}>
-            <option value="pie">Pie Chart</option>
-            <option value="bar">Bar Chart</option>
-            <option value="doughnut">Doughnut Chart</option>
-          </select>
-        </div>
-        <div className="chart-container">
-          {stats.total === 0 ? (
-            <div className="chart-placeholder">
-              <p>No data to display. {isAdmin ? "Create tasks" : "Wait for tasks to be assigned"} to see visualizations.</p>
-            </div>
-          ) : (
-            renderChart()
+    <div style={{ width: '100%', maxWidth: '100vw', overflowX: 'hidden' }}>
+      <div className="analytics-container">
+        <div className="analytics-header-section">
+          <div>
+            <h1 className="page-title">Analytics</h1>
+            <p className="page-subtitle">
+              {isAdmin ? "Insights into task performance and team productivity" : "Your task performance insights"}
+            </p>
+          </div>
+          
+          {isAdmin && users.length > 0 && (
+            <SearchableSelect
+              options={userOptions}
+              value={userFilter}
+              onChange={setUserFilter}
+              placeholder="Select User"
+            />
           )}
+        </div>
+
+        <div className="stats-grid">
+          <div className="stat-card-large">
+            <div className="stat-label">Total Tasks</div>
+            <div className="stat-value-large">{stats.total}</div>
+          </div>
+
+          <div className="stat-card-large">
+            <div className="stat-label">Completed</div>
+            <div className="stat-value-large">{stats.done}</div>
+          </div>
+
+          <div className="stat-card-large">
+            <div className="stat-label">In Progress</div>
+            <div className="stat-value-large">{stats.inProgress}</div>
+          </div>
+
+          <div className="stat-card-large">
+            <div className="stat-label">Completion Rate</div>
+            <div className="stat-value-large">{stats.rate}%</div>
+          </div>
+        </div>
+
+        <div className="chart-section">
+          <div className="chart-header">
+            <h2 className="chart-title">Task Status Distribution</h2>
+            <SearchableSelect
+              options={chartTypeOptions}
+              value={chartType}
+              onChange={setChartType}
+              placeholder="Select Chart Type"
+            />
+          </div>
+          <div className="chart-container">
+            {stats.total === 0 ? (
+              <div className="chart-placeholder">
+                <p>No data to display. {isAdmin ? "Create tasks" : "Wait for tasks to be assigned"} to see visualizations.</p>
+              </div>
+            ) : (
+              renderChart()
+            )}
+          </div>
         </div>
       </div>
     </div>

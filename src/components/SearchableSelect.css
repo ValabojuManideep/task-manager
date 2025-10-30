@@ -1,0 +1,131 @@
+.searchable-select {
+  position: relative;
+  width: 100%;
+  min-width: 200px;
+}
+
+.select-trigger {
+  padding: 12px 20px;
+  border: 2px solid var(--border-color);
+  border-radius: 10px;
+  background: var(--card-bg);
+  color: var(--text-color);
+  font-size: 15px;
+  font-weight: 500;
+  cursor: pointer;
+  transition: all 0.2s;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  user-select: none;
+}
+
+.select-trigger:hover {
+  border-color: #5B7FFF;
+}
+
+.select-arrow {
+  font-size: 12px;
+  color: var(--text-muted);
+  transition: transform 0.2s;
+}
+
+.select-dropdown {
+  position: absolute;
+  top: calc(100% + 8px);
+  left: 0;
+  right: 0;
+  background: var(--card-bg);
+  border: 2px solid var(--border-color);
+  border-radius: 10px;
+  box-shadow: 0 8px 24px rgba(0, 0, 0, 0.15);
+  z-index: 1000;
+  overflow: hidden;
+}
+
+.select-search {
+  width: 100%;
+  padding: 12px 16px;
+  border: none;
+  border-bottom: 1px solid var(--border-color);
+  background: var(--card-bg);
+  color: var(--text-color);
+  font-size: 15px;
+  outline: none;
+  box-sizing: border-box;
+}
+
+.select-search::placeholder {
+  color: var(--text-muted);
+}
+
+.select-options {
+  max-height: 180px; /* Shows ~3 options */
+  overflow-y: auto;
+}
+
+.select-options::-webkit-scrollbar {
+  width: 6px;
+}
+
+.select-options::-webkit-scrollbar-track {
+  background: var(--hover-bg);
+}
+
+.select-options::-webkit-scrollbar-thumb {
+  background: var(--border-color);
+  border-radius: 3px;
+}
+
+.select-options::-webkit-scrollbar-thumb:hover {
+  background: #9ca3af;
+}
+
+.select-option {
+  padding: 12px 16px;
+  cursor: pointer;
+  transition: background 0.2s;
+  color: var(--text-color);
+  font-size: 15px;
+}
+
+.select-option:hover {
+  background: var(--hover-bg);
+}
+
+.select-option.selected {
+  background: rgba(91, 127, 255, 0.1);
+  color: #5B7FFF;
+  font-weight: 600;
+}
+
+.select-no-results {
+  padding: 20px;
+  text-align: center;
+  color: var(--text-muted);
+  font-size: 14px;
+}
+
+/* Dark mode */
+[data-theme="dark"] .select-dropdown,
+.dark .select-dropdown,
+body.dark-mode .select-dropdown {
+  background: #1f2937;
+  border-color: #374151;
+  box-shadow: 0 8px 24px rgba(0, 0, 0, 0.5);
+}
+
+/* Mobile responsive */
+@media (max-width: 768px) {
+  .searchable-select {
+    width: 100%;
+  }
+
+  .select-trigger {
+    font-size: 16px; /* Prevent iOS zoom */
+  }
+
+  .select-search {
+    font-size: 16px; /* Prevent iOS zoom */
+  }
+}
