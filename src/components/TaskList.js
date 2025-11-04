@@ -115,11 +115,11 @@ export default function TaskList({ statusFilter, priorityFilter, displayTasks })
               </div>
               {task.description && <p className="task-description">{task.description}</p>}
               
-              {task.assignedTo && (
-                <div className="task-assigned">
-                  👤 Assigned to: <strong>{task.assignedTo.username}</strong>
-                </div>
-              )}
+              <div className="task-assigned">
+                👤 Assigned to: <strong>
+                  {task.assignedTo?.username || task.assignedTo?.email || 'Unassigned'}
+                </strong>
+              </div>
 
               <div className="task-card-footer">
                 <span className="task-status-badge">{task.status}</span>
@@ -146,37 +146,35 @@ export default function TaskList({ statusFilter, priorityFilter, displayTasks })
                   </>
                 ) : (
                   <>
-                  {task.status === "todo" && (
+                    {task.status === "todo" && (
                       <button 
-                          className="task-action-btn progress-btn"
-                          onClick={(e) => {
-                            e.stopPropagation();
-                            console.log("Updating task with user:", user);
-                            console.log("Username being sent:", user.username);
-                            updateTask(id, { 
-                                status: "in_progress",
-                                userId: user.username
-                            });
-                          }}
+                        className="task-action-btn progress-btn"
+                        onClick={(e) => {
+                          e.stopPropagation();
+                          updateTask(id, { 
+                            status: "in_progress",
+                            userId: user.username
+                          });
+                        }}
                       >
-                          ▶️ Start
+                        ▶️ Start
                       </button>
-                  )}
+                    )}
 
-                      {task.status === "in_progress" && (
+                    {task.status === "in_progress" && (
                       <button 
-                          className="task-action-btn done-btn"
-                          onClick={(e) => {
-                            e.stopPropagation();
-                            updateTask(id, { 
-                              status: "done",
-                              userId: user.username
-                            });
-                          }}
+                        className="task-action-btn done-btn"
+                        onClick={(e) => {
+                          e.stopPropagation();
+                          updateTask(id, { 
+                            status: "done",
+                            userId: user.username
+                          });
+                        }}
                       >
-                          ✓ Complete
+                        ✓ Complete
                       </button>
-                      )}
+                    )}
 
                     <button 
                       className="task-action-btn comment-btn"
