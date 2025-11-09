@@ -347,3 +347,105 @@ body.dark-mode .mobile-header-actions .mobile-theme-btn:hover {
 body.dark-mode .mobile-header-actions .mobile-logout-btn:hover {
   background: #4b5563;
 }
+
+
+
+
+/* Add these styles to your existing Navbar.css */
+
+.nav-item-with-subitems {
+  width: 100%;
+}
+
+.nav-item-expandable {
+  width: 100%;
+  background: none;
+  border: none;
+  padding: 10px 12px;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  color: #6b7280;
+  font-size: 14px;
+  font-weight: 500;
+  transition: all 0.2s;
+  border-radius: 8px;
+  margin-bottom: 4px;
+}
+
+.nav-item-expandable:hover {
+  background: #f3f4f6;
+  color: #374151;
+}
+
+.nav-item-expandable.active {
+  background: #ede9fe;
+  color: #5B7FFF;
+  font-weight: 600;
+}
+
+.expand-icon {
+  margin-left: auto;
+  font-size: 12px;
+  transition: transform 0.3s;
+}
+
+.expand-icon.expanded {
+  transform: rotate(90deg);
+}
+
+.nav-subitems {
+  margin-left: 12px;
+  padding-left: 12px;
+  border-left: 2px solid #e5e7eb;
+  animation: slideDown 0.2s ease;
+}
+
+@keyframes slideDown {
+  from {
+    opacity: 0;
+    transform: translateY(-8px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+.nav-subitem {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 8px 12px;
+  color: #6b7280;
+  font-size: 13px;
+  font-weight: 400;
+  text-decoration: none;
+  border-radius: 6px;
+  margin-bottom: 4px;
+  transition: all 0.2s;
+}
+
+.nav-subitem:last-child {
+  margin-bottom: 0;
+}
+
+.nav-subitem:hover {
+  background: #f3f4f6;
+  color: #374151;
+  transform: translateX(4px);
+}
+
+.nav-subitem.active {
+  background: #ede9fe;
+  color: #5B7FFF;
+  font-weight: 600;
+  padding-left: 8px;
+  border-left: 4px solid #5B7FFF;
+}
+
+.subitem-icon {
+  font-size: 14px;
+}
+

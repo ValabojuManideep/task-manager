@@ -3,12 +3,14 @@ import { BrowserRouter, Routes, Route, Navigate } from "react-router-dom";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { AuthProvider, useAuth } from "./context/AuthContext";
 import { TaskProvider } from "./context/TaskContext";
+import { TeamProvider } from "./context/TeamContext";
 import ProtectedRoute from "./ProtectedRoute";
 import Navbar from "./components/Navbar";
 import Dashboard from "./components/Dashboard";
 import TaskBoard from "./components/TaskBoard";
 import Analytics from "./components/Analytics";
 import Activity from "./components/Activity";
+import TeamManagement from "./components/TeamManagement";
 import Login from "./components/Login";
 import SignUp from "./components/SignUp";
 import "./App.css";
@@ -17,7 +19,13 @@ const queryClient = new QueryClient();
 
 function WithTasks({ children }) {
   const { user } = useAuth();
-  return <TaskProvider userId={user?.id}>{children}</TaskProvider>;
+  return (
+    <TaskProvider userId={user?.id}>
+      <TeamProvider>
+        {children}
+      </TeamProvider>
+    </TaskProvider>
+  );
 }
 
 function AppLayout({ children }) {
@@ -71,14 +79,28 @@ export default function App() {
                 }
               />
               <Route
-                path="/tasks"
+                path="/tasks/team"
                 element={
                   <ProtectedRoute>
                     <AppLayout>
-                      <TaskBoard />
+                      <TaskBoard taskType="team" />
                     </AppLayout>
                   </ProtectedRoute>
                 }
+              />
+              <Route
+                path="/tasks/user"
+                element={
+                  <ProtectedRoute>
+                    <AppLayout>
+                      <TaskBoard taskType="user" />
+                    </AppLayout>
+                  </ProtectedRoute>
+                }
+              />
+              <Route
+                path="/tasks"
+                element={<Navigate to="/tasks/team" replace />}
               />
               <Route
                 path="/analytics"
@@ -96,6 +118,16 @@ export default function App() {
                   <ProtectedRoute>
                     <AppLayout>
                       <Activity />
+                    </AppLayout>
+                  </ProtectedRoute>
+                }
+              />
+              <Route
+                path="/teams"
+                element={
+                  <ProtectedRoute>
+                    <AppLayout>
+                      <TeamManagement />
                     </AppLayout>
                   </ProtectedRoute>
                 }

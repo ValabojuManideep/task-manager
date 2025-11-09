@@ -1,13 +1,20 @@
 import React, { useContext, useState, useEffect } from "react";
 import { TaskContext } from "../context/TaskContext";
+import { TeamContext } from "../context/TeamContext";
 import { useAuth } from "../context/AuthContext";
 import axios from "axios";
 import "./TaskForm.css";
 
 export default function TaskForm({ onClose }) {
   const { addTask } = useContext(TaskContext);
+  const { teams } = useContext(TeamContext);
   const { user } = useAuth();
   const [users, setUsers] = useState([]);
+  const [assignmentType, setAssignmentType] = useState("user");
+  const [userSearchTerm, setUserSearchTerm] = useState("");
+  const [teamSearchTerm, setTeamSearchTerm] = useState("");
+  const [showUserDropdown, setShowUserDropdown] = useState(false);
+  const [showTeamDropdown, setShowTeamDropdown] = useState(false);
   const [form, setForm] = useState({
     title: "",
     description: "",
@@ -15,9 +22,9 @@ export default function TaskForm({ onClose }) {
     priority: "medium",
     dueDate: "",
     assignedTo: "",
+    assignedToTeam: "",
   });
 
-  // Get today's date in YYYY-MM-DD format
   const today = new Date().toISOString().split('T')[0];
 
   useEffect(() => {
@@ -27,7 +34,6 @@ export default function TaskForm({ onClose }) {
   const fetchUsers = async () => {
     try {
       const { data } = await axios.get("http://localhost:5000/api/auth/users");
-      // Filter only users with role "user" (not admins)
       setUsers(data.filter(u => u.role === "user"));
     } catch (err) {
       console.error("Error fetching users:", err);
@@ -36,11 +42,59 @@ export default function TaskForm({ onClose }) {
 
   const handleChange = (e) => setForm({ ...form, [e.target.name]: e.target.value });
 
-  const handleSubmit = (e) => {
+  const handleSubmit = async (e) => {
     e.preventDefault();
-    addTask({ ...form, createdBy: user.id });
-    setForm({ title: "", description: "", status: "todo", priority: "medium", dueDate: "", assignedTo: "" });
+    
+    const taskData = {
+      ...form,
+      createdBy: user.id,
+      isTeamTask: assignmentType === "team"
+    };
+
+    if (assignmentType === "team") {
+      delete taskData.assignedTo;
+    } else {
+      delete taskData.assignedToTeam;
+    }
+
+    await addTask(taskData);
+    setForm({ 
+      title: "", 
+      description: "", 
+      status: "todo", 
+      priority: "medium", 
+      dueDate: "", 
+      assignedTo: "",
+      assignedToTeam: "" 
+    });
     if (onClose) onClose();
+  };
+
+  // Filter users based on search
+  const filteredUsers = users.filter(u =>
+    u.username.toLowerCase().includes(userSearchTerm.toLowerCase()) ||
+    u.email.toLowerCase().includes(userSearchTerm.toLowerCase())
+  );
+
+  // Filter teams based on search
+  const filteredTeams = teams.filter(team =>
+    team.name.toLowerCase().includes(teamSearchTerm.toLowerCase()) ||
+    team.members?.some(member => 
+      member.username.toLowerCase().includes(teamSearchTerm.toLowerCase())
+    )
+  );
+
+  // Get selected user/team names for display
+  const getSelectedUserName = () => {
+    if (!form.assignedTo) return "Select User";
+    const user = users.find(u => u._id === form.assignedTo);
+    return user ? user.username : "Select User";
+  };
+
+  const getSelectedTeamName = () => {
+    if (!form.assignedToTeam) return "Select Team";
+    const team = teams.find(t => t._id === form.assignedToTeam);
+    return team ? team.name : "Select Team";
   };
 
   return (
@@ -70,16 +124,144 @@ export default function TaskForm({ onClose }) {
       </div>
 
       <div className="form-group">
-        <label>Assign To</label>
-        <select name="assignedTo" value={form.assignedTo} onChange={handleChange}>
-          <option value="">Unassigned</option>
-          {users.map((u) => (
-            <option key={u._id} value={u._id}>
-              {u.username} ({u.email})
-            </option>
-          ))}
-        </select>
+        <label>Assignment Type</label>
+        <div className="assignment-type-toggle">
+          <button
+            type="button"
+            className={`toggle-btn ${assignmentType === "user" ? "active" : ""}`}
+            onClick={() => {
+              setAssignmentType("user");
+              setShowTeamDropdown(false);
+            }}
+          >
+            👤 Individual User
+          </button>
+          <button
+            type="button"
+            className={`toggle-btn ${assignmentType === "team" ? "active" : ""}`}
+            onClick={() => {
+              setAssignmentType("team");
+              setShowUserDropdown(false);
+            }}
+          >
+            👥 Team
+          </button>
+        </div>
       </div>
+
+      {assignmentType === "user" ? (
+        <div className="form-group">
+          <label>Assign To User</label>
+          <div className="custom-dropdown-wrapper">
+            <div 
+              className="custom-dropdown-header"
+              onClick={() => setShowUserDropdown(!showUserDropdown)}
+            >
+              <span>{getSelectedUserName()}</span>
+              <span className="dropdown-arrow">▼</span>
+            </div>
+            {showUserDropdown && (
+              <div className="custom-dropdown-container">
+                <input
+                  type="text"
+                  className="dropdown-search"
+                  placeholder="🔍 Search users..."
+                  value={userSearchTerm}
+                  onChange={(e) => setUserSearchTerm(e.target.value)}
+                  onClick={(e) => e.stopPropagation()}
+                />
+                <div className="custom-dropdown-list">
+                  <div
+                    className={`dropdown-item ${form.assignedTo === "" ? "selected" : ""}`}
+                    onClick={() => {
+                      setForm({ ...form, assignedTo: "" });
+                      setShowUserDropdown(false);
+                      setUserSearchTerm("");
+                    }}
+                  >
+                    Unassigned
+                  </div>
+                  {filteredUsers.length > 0 ? (
+                    filteredUsers.map((u) => (
+                      <div
+                        key={u._id}
+                        className={`dropdown-item ${form.assignedTo === u._id ? "selected" : ""}`}
+                        onClick={() => {
+                          setForm({ ...form, assignedTo: u._id });
+                          setShowUserDropdown(false);
+                          setUserSearchTerm("");
+                        }}
+                      >
+                        <div className="dropdown-item-main">{u.username}</div>
+                        <div className="dropdown-item-sub">{u.email}</div>
+                      </div>
+                    ))
+                  ) : (
+                    <div className="dropdown-no-results">No users found</div>
+                  )}
+                </div>
+              </div>
+            )}
+          </div>
+        </div>
+      ) : (
+        <div className="form-group">
+          <label>Assign To Team</label>
+          <div className="custom-dropdown-wrapper">
+            <div 
+              className="custom-dropdown-header"
+              onClick={() => setShowTeamDropdown(!showTeamDropdown)}
+            >
+              <span>{getSelectedTeamName()}</span>
+              <span className="dropdown-arrow">▼</span>
+            </div>
+            {showTeamDropdown && (
+              <div className="custom-dropdown-container">
+                <input
+                  type="text"
+                  className="dropdown-search"
+                  placeholder="🔍 Search teams..."
+                  value={teamSearchTerm}
+                  onChange={(e) => setTeamSearchTerm(e.target.value)}
+                  onClick={(e) => e.stopPropagation()}
+                />
+                <div className="custom-dropdown-list">
+                  <div
+                    className={`dropdown-item ${form.assignedToTeam === "" ? "selected" : ""}`}
+                    onClick={() => {
+                      setForm({ ...form, assignedToTeam: "" });
+                      setShowTeamDropdown(false);
+                      setTeamSearchTerm("");
+                    }}
+                  >
+                    No Team
+                  </div>
+                  {filteredTeams.length > 0 ? (
+                    filteredTeams.map((team) => (
+                      <div
+                        key={team._id}
+                        className={`dropdown-item ${form.assignedToTeam === team._id ? "selected" : ""}`}
+                        onClick={() => {
+                          setForm({ ...form, assignedToTeam: team._id });
+                          setShowTeamDropdown(false);
+                          setTeamSearchTerm("");
+                        }}
+                      >
+                        <div className="dropdown-item-main">{team.name}</div>
+                        <div className="dropdown-item-sub">
+                          {team.members?.length || 0} members
+                        </div>
+                      </div>
+                    ))
+                  ) : (
+                    <div className="dropdown-no-results">No teams found</div>
+                  )}
+                </div>
+              </div>
+            )}
+          </div>
+        </div>
+      )}
 
       <div className="form-row">
         <div className="form-group">

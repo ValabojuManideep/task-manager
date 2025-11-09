@@ -83,7 +83,6 @@ export default function TaskList({ statusFilter, priorityFilter, displayTasks })
   };
 
   const handleTaskCardClick = (task, e) => {
-    // Don't open modal if clicking on buttons
     if (e.target.closest('.task-action-btn')) return;
     setSelectedTask(task);
   };
@@ -116,9 +115,20 @@ export default function TaskList({ statusFilter, priorityFilter, displayTasks })
               {task.description && <p className="task-description">{task.description}</p>}
               
               <div className="task-assigned">
-                👤 Assigned to: <strong>
-                  {task.assignedTo?.username || task.assignedTo?.email || 'Unassigned'}
-                </strong>
+                {task.isTeamTask ? (
+                  <>
+                    👥 Team: <strong>{task.assignedToTeam?.name || 'No team'}</strong>
+                    <span className="team-members-count">
+                      {' '}({task.assignedToTeam?.members?.length || 0} members)
+                    </span>
+                  </>
+                ) : (
+                  <>
+                    👤 Assigned to: <strong>
+                      {task.assignedTo?.username || task.assignedTo?.email || 'Unassigned'}
+                    </strong>
+                  </>
+                )}
               </div>
 
               <div className="task-card-footer">

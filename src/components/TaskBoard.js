@@ -6,7 +6,7 @@ import TaskList from "./TaskList";
 import axios from "axios";
 import "./TaskBoard.css";
 
-export default function TaskBoard() {
+export default function TaskBoard({ taskType = "team" }) {
   const { user } = useAuth();
   const [statusFilter, setStatusFilter] = useState("All");
   const [priorityFilter, setPriorityFilter] = useState("All Priority");
@@ -32,17 +32,52 @@ export default function TaskBoard() {
     }
   };
 
-  // Filter tasks based on role and user filter
+  // Filter tasks based on type and role
   const getDisplayTasks = () => {
-    let filtered = isAdmin 
-      ? allTasks 
-      : allTasks.filter(t => t.assignedTo?._id === user.id || t.assignedTo === user.id);
+    let filtered;
+    const currentUserId = user?.id || user?._id;
 
-    // Apply user filter for admin
-    if (isAdmin && userFilter !== "All Users") {
+    if (taskType === "team") {
+      // Show only team tasks
+      if (isAdmin) {
+        // Admin sees all team tasks
+        filtered = allTasks.filter(t => t.isTeamTask === true);
+      } else {
+        // Regular users see team tasks where they are a member
+        filtered = allTasks.filter(t => {
+          if (!t.isTeamTask) return false;
+          
+          // Check if user is in the team
+          if (!t.assignedToTeam) return false;
+          
+          const teamMembers = t.assignedToTeam.members || [];
+          return teamMembers.some(member => {
+            const memberId = member._id || member;
+            return String(memberId) === String(currentUserId);
+          });
+        });
+      }
+    } else {
+      // Show only user tasks
+      if (isAdmin) {
+        // Admin sees all user tasks
+        filtered = allTasks.filter(t => t.isTeamTask === false);
+      } else {
+        // Regular users see their own tasks
+        filtered = allTasks.filter(t => {
+          if (t.isTeamTask) return false;
+          
+          const assignedId = t.assignedTo?._id || t.assignedTo;
+          return String(assignedId) === String(currentUserId);
+        });
+      }
+    }
+
+    // Apply user filter for admin (only for user tasks)
+    if (isAdmin && userFilter !== "All Users" && taskType === "user") {
       filtered = filtered.filter(t => {
         const assignedId = t.assignedTo?._id || t.assignedTo;
-        return assignedId === userFilter;
+        return String(assignedId) === String(userFilter);
       });
     }
 
@@ -55,9 +90,13 @@ export default function TaskBoard() {
     <div className="taskboard-container">
       <div className="taskboard-header">
         <div>
-          <h1 className="page-title">Tasks</h1>
+          <h1 className="page-title">
+            {taskType === "team" ? "Team Tasks" : "User Tasks"}
+          </h1>
           <p className="page-subtitle">
-            {isAdmin ? `${displayTasks.length} tasks` : `${displayTasks.length} tasks assigned to you`}
+            {isAdmin 
+              ? `${displayTasks.length} ${taskType} tasks` 
+              : `${displayTasks.length} ${taskType} task${displayTasks.length !== 1 ? 's' : ''} assigned to you`}
           </p>
         </div>
         {isAdmin && (
@@ -70,7 +109,7 @@ export default function TaskBoard() {
 
       {showForm && isAdmin && (
         <div className="task-form-wrapper">
-          <TaskForm onClose={() => setShowForm(false)} />
+          <TaskForm onClose={() => setShowForm(false)} taskType={taskType} />
         </div>
       )}
 
@@ -129,7 +168,7 @@ export default function TaskBoard() {
           </button>
         </div>
 
-        {isAdmin && users.length > 0 && (
+        {isAdmin && users.length > 0 && taskType === "user" && (
           <div className="filter-group user-filter">
             <select 
               className="user-filter-select"

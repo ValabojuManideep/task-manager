@@ -6,7 +6,12 @@ const router = express.Router();
 
 // Get all tasks
 router.get("/", async (req, res) => {
-  const tasks = await Task.find().populate("assignedTo", "username email");
+  const tasks = await Task.find()
+    .populate("assignedTo", "username email")
+    .populate({
+      path: "assignedToTeam",
+      populate: { path: "members", select: "username email" }
+    });
   res.json(tasks);
 });
 
@@ -16,8 +21,17 @@ router.post("/", async (req, res) => {
     const newTask = new Task(req.body);
     await newTask.save();
     
+    // Populate both assignedTo and assignedToTeam
+    await newTask.populate("assignedTo", "username email");
+    await newTask.populate({
+      path: "assignedToTeam",
+      populate: { path: "members", select: "username email" }
+    });
+    
     const creatorName = req.body.creatorName || "Admin";
-    const assignedInfo = req.body.assignedTo ? "Assigned to user" : "";
+    const assignedInfo = req.body.isTeamTask 
+      ? "Assigned to team" 
+      : req.body.assignedTo ? "Assigned to user" : "";
     
     await logActivity("created", newTask.title, creatorName, assignedInfo);
     res.status(201).json(newTask);
@@ -36,15 +50,16 @@ router.put("/:id", async (req, res) => {
     
     const oldStatus = task.status;
     
-    // Extract userId from request body BEFORE updating
     const username = req.body.userId || "User";
-    
-    // Remove userId from updates (it's not a Task field)
     const { userId, ...updateData } = req.body;
     
-    const updated = await Task.findByIdAndUpdate(req.params.id, updateData, { new: true });
+    const updated = await Task.findByIdAndUpdate(req.params.id, updateData, { new: true })
+      .populate("assignedTo", "username email")
+      .populate({
+        path: "assignedToTeam",
+        populate: { path: "members", select: "username email" }
+      });
     
-    // Log activity with proper username
     if (oldStatus && updated.status !== oldStatus) {
       await logActivity("updated", updated.title, username, `Status changed from ${oldStatus} to ${updated.status}`);
     }
@@ -68,7 +83,6 @@ router.delete("/:id", async (req, res) => {
     
     await Task.findByIdAndDelete(req.params.id);
     
-    // Get admin username from request body
     const adminUsername = req.body.username || "Admin";
     await logActivity("deleted", taskTitle, adminUsername, "Task deleted");
     

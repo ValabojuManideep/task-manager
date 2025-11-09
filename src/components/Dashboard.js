@@ -1,11 +1,13 @@
 import React, { useContext, useMemo } from "react";
 import { TaskContext } from "../context/TaskContext";
+import { TeamContext } from "../context/TeamContext";
 import { useAuth } from "../context/AuthContext";
 import { useNavigate } from "react-router-dom";
 import "./Dashboard.css";
 
 export default function Dashboard() {
   const { allTasks } = useContext(TaskContext);
+  const { teams } = useContext(TeamContext);
   const { user } = useAuth();
   const navigate = useNavigate();
 
@@ -17,13 +19,35 @@ export default function Dashboard() {
     return allTasks.filter(t => t.assignedTo?._id === user.id || t.assignedTo === user.id);
   }, [allTasks, user, isAdmin]);
 
+  // Get team tasks for the user
+  const teamTasks = useMemo(() => {
+    if (isAdmin) {
+      // Admin sees all team tasks
+      return allTasks.filter(t => t.isTeamTask === true);
+    } else {
+      // Regular users see team tasks where they are a member
+      const currentUserId = user?.id || user?._id;
+      return allTasks.filter(t => {
+        if (!t.isTeamTask) return false;
+        if (!t.assignedToTeam) return false;
+        
+        const teamMembers = t.assignedToTeam.members || [];
+        return teamMembers.some(member => {
+          const memberId = member._id || member;
+          return String(memberId) === String(currentUserId);
+        });
+      });
+    }
+  }, [allTasks, user, isAdmin]);
+
   const stats = useMemo(() => {
     const total = userTasks.length;
     const inProgress = userTasks.filter((t) => t.status === "in_progress").length;
     const completed = userTasks.filter((t) => t.status === "done").length;
     const rate = total ? Math.round((completed / total) * 100) : 0;
-    return { total, inProgress, completed, rate };
-  }, [userTasks]);
+    const teamCount = teamTasks.length;
+    return { total, inProgress, completed, rate, teamCount };
+  }, [userTasks, teamTasks]);
 
   const recentTasks = useMemo(() => {
     return [...userTasks]
@@ -40,7 +64,7 @@ export default function Dashboard() {
             {isAdmin ? "Overview of all tasks and progress" : "Your tasks and progress"}
           </p>
         </div>
-        <button className="view-all-btn" onClick={() => navigate("/tasks")}>
+        <button className="view-all-btn" onClick={() => navigate("/tasks/team")}>
           View All Tasks
         </button>
       </div>
@@ -51,6 +75,14 @@ export default function Dashboard() {
           <div className="stat-content">
             <div className="stat-value">{stats.total}</div>
             <div className="stat-description">Total Tasks</div>
+          </div>
+        </div>
+
+        <div className="stat-card">
+          <div className="stat-icon">👥</div>
+          <div className="stat-content">
+            <div className="stat-value">{stats.teamCount}</div>
+            <div className="stat-description">Team Tasks</div>
           </div>
         </div>
 

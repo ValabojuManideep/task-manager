@@ -487,3 +487,12 @@ body.dark-mode .task-assigned strong {
     width: 100%;
   }
 }
+
+/* Existing styles remain the same, add these at the end */
+
+.team-members-count {
+  color: #667eea;
+  font-weight: 600;
+  font-size: 13px;
+}
+

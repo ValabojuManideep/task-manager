@@ -26,8 +26,9 @@ export const TaskProvider = ({ children }) => {
   const addTask = async (task) => {
     try {
       const { data } = await axios.post("http://localhost:5000/api/tasks", task);
-      setTasks([...tasks, data]);
-      setAllTasks([...allTasks, data]);
+      // Instead of manually adding, refetch all tasks to get populated data
+      await fetchTasks();
+      return data;
     } catch (err) {
       console.error("Error adding task:", err);
     }
@@ -36,8 +37,6 @@ export const TaskProvider = ({ children }) => {
   const updateTask = async (id, updates) => {
     try {
       const { data } = await axios.put(`http://localhost:5000/api/tasks/${id}`, updates);
-      setTasks(tasks.map((t) => (t._id === id ? data : t)));
-      setAllTasks(allTasks.map((t) => (t._id === id ? data : t)));
       await fetchTasks(); // Refresh to ensure consistency
     } catch (err) {
       console.error("Error updating task:", err);
@@ -49,8 +48,7 @@ export const TaskProvider = ({ children }) => {
       await axios.delete(`http://localhost:5000/api/tasks/${id}`, {
         data: { username: user?.username || "Admin" }
       });
-      setTasks(tasks.filter((t) => t._id !== id));
-      setAllTasks(allTasks.filter((t) => t._id !== id));
+      await fetchTasks(); // Refetch after delete
     } catch (err) {
       console.error("Error deleting task:", err);
     }
