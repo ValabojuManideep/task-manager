@@ -26,9 +26,12 @@ export default function TaskForm({ onClose }) {
     recurrencePattern: "none",
     recurrenceEndDate: ""
   });
+  const [isPrivate, setIsPrivate] = useState(false);
+  const [privateKey, setPrivateKey] = useState("");
+  const [privateKeyError, setPrivateKeyError] = useState("");
 
   const today = new Date().toISOString().split('T')[0];
-  const nowForDateTimeLocal = new Date().toISOString().slice(0,16); // YYYY-MM-DDTHH:mm
+  const nowForDateTimeLocal = new Date().toISOString().slice(0,16);
 
   useEffect(() => {
     fetchUsers();
@@ -48,7 +51,6 @@ export default function TaskForm({ onClose }) {
   const handleSubmit = async (e) => {
     e.preventDefault();
 
-    // Prevent dueDate from being after recurrenceEndDate
     if (
       form.recurrenceEndDate &&
       form.dueDate &&
@@ -62,10 +64,19 @@ export default function TaskForm({ onClose }) {
       ...form,
       createdBy: user.id,
       isTeamTask: assignmentType === "team",
-      isRecurrent: form.recurrencePattern && form.recurrencePattern !== "none" ? true : false
+      isRecurrent: form.recurrencePattern && form.recurrencePattern !== "none" ? true : false,
+      isPrivate: isPrivate
     };
 
-    // Convert datetime-local strings to ISO (so backend/Mongo stores full timestamp)
+    if (isPrivate) {
+      if (!privateKey) {
+        setPrivateKeyError("Enter security key.");
+        return;
+      }
+      setPrivateKeyError("");
+      taskData.privateKey = privateKey; // Sent to backend only!
+    }
+
     if (taskData.dueDate) {
       try {
         taskData.dueDate = new Date(taskData.dueDate).toISOString();
@@ -80,8 +91,6 @@ export default function TaskForm({ onClose }) {
         console.warn('Invalid recurrenceEndDate format', taskData.recurrenceEndDate);
       }
     }
-    // Debug: log taskData before sending
-    console.log('Submitting taskData:', taskData);
 
     if (assignmentType === "team") {
       delete taskData.assignedTo;
@@ -89,7 +98,12 @@ export default function TaskForm({ onClose }) {
       delete taskData.assignedToTeam;
     }
 
-    await addTask(taskData);
+    const resp = await addTask(taskData);
+    if (resp && resp.error && isPrivate) {
+      setPrivateKeyError("Invalid security key.");
+      return;
+    }
+
     setForm({ 
       title: "", 
       description: "", 
@@ -101,16 +115,17 @@ export default function TaskForm({ onClose }) {
       recurrencePattern: "none",
       recurrenceEndDate: ""
     });
+    setIsPrivate(false);
+    setPrivateKey("");
+    setPrivateKeyError("");
     if (onClose) onClose();
   };
 
-  // Filter users based on search
   const filteredUsers = users.filter(u =>
     u.username.toLowerCase().includes(userSearchTerm.toLowerCase()) ||
     u.email.toLowerCase().includes(userSearchTerm.toLowerCase())
   );
 
-  // Filter teams based on search
   const filteredTeams = teams.filter(team =>
     team.name.toLowerCase().includes(teamSearchTerm.toLowerCase()) ||
     team.members?.some(member => 
@@ -118,7 +133,6 @@ export default function TaskForm({ onClose }) {
     )
   );
 
-  // Get selected user/team names for display
   const getSelectedUserName = () => {
     if (!form.assignedTo) return "Select User";
     const user = users.find(u => u._id === form.assignedTo);
@@ -183,7 +197,7 @@ export default function TaskForm({ onClose }) {
               onChange={handleChange}
               required={form.recurrencePattern !== "none"}
             />
-          </div>
+        </div>
       )}
 
       <div className="form-group">
@@ -335,7 +349,6 @@ export default function TaskForm({ onClose }) {
             <option value="done">Done</option>
           </select>
         </div>
-
         <div className="form-group">
           <label>Priority</label>
           <select name="priority" value={form.priority} onChange={handleChange}>
@@ -355,6 +368,31 @@ export default function TaskForm({ onClose }) {
           onChange={handleChange}
           min={nowForDateTimeLocal}
         />
+      </div>
+      
+      <div className="form-group">
+        <label>
+          <input
+            type="checkbox"
+            checked={isPrivate}
+            onChange={e => setIsPrivate(e.target.checked)}
+          />
+          Sensitive Task
+        </label>
+        {isPrivate && (
+          <div style={{ marginTop: "8px" }}>
+            <input
+              type="password"
+              placeholder="Enter security key"
+              value={privateKey}
+              onChange={e => setPrivateKey(e.target.value)}
+              required
+            />
+            {privateKeyError && (
+              <div style={{color: "red", fontSize: "0.93em", marginTop: "5px"}}>{privateKeyError}</div>
+            )}
+          </div>
+        )}
       </div>
 
       <div className="form-actions">

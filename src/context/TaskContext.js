@@ -7,6 +7,7 @@ export const TaskContext = createContext();
 export const TaskProvider = ({ children }) => {
   const [tasks, setTasks] = useState([]);
   const [allTasks, setAllTasks] = useState([]);
+  const [privateTasks, setPrivateTasks] = useState([]);
   const { user } = useAuth();
 
   const fetchTasks = async () => {
@@ -19,6 +20,21 @@ export const TaskProvider = ({ children }) => {
     }
   };
 
+  // Fetch private tasks using key
+  const fetchPrivateTasks = async (key) => {
+    try {
+      const { data } = await axios.get("http://localhost:5000/api/tasks/private", {
+        headers: { "x-private-key": key }
+      });
+      setPrivateTasks(data);
+      return data;
+    } catch (err) {
+      console.error("Error fetching private tasks:", err);
+      setPrivateTasks([]);
+      return [];
+    }
+  };
+
   useEffect(() => {
     fetchTasks();
   }, []);
@@ -26,7 +42,6 @@ export const TaskProvider = ({ children }) => {
   const addTask = async (task) => {
     try {
       const { data } = await axios.post("http://localhost:5000/api/tasks", task);
-      // Instead of manually adding, refetch all tasks to get populated data
       await fetchTasks();
       return data;
     } catch (err) {
@@ -37,7 +52,7 @@ export const TaskProvider = ({ children }) => {
   const updateTask = async (id, updates) => {
     try {
       const { data } = await axios.put(`http://localhost:5000/api/tasks/${id}`, updates);
-      await fetchTasks(); // Refresh to ensure consistency
+      await fetchTasks();
     } catch (err) {
       console.error("Error updating task:", err);
     }
@@ -48,14 +63,23 @@ export const TaskProvider = ({ children }) => {
       await axios.delete(`http://localhost:5000/api/tasks/${id}`, {
         data: { username: user?.username || "Admin" }
       });
-      await fetchTasks(); // Refetch after delete
+      await fetchTasks();
     } catch (err) {
       console.error("Error deleting task:", err);
     }
   };
 
   return (
-    <TaskContext.Provider value={{ tasks, allTasks, addTask, updateTask, deleteTask, fetchTasks }}>
+    <TaskContext.Provider value={{
+      tasks,
+      allTasks,
+      privateTasks,
+      addTask,
+      updateTask,
+      deleteTask,
+      fetchTasks,
+      fetchPrivateTasks
+    }}>
       {children}
     </TaskContext.Provider>
   );

@@ -13,7 +13,11 @@ export default function TaskBoard({ taskType = "team" }) {
   const [userFilter, setUserFilter] = useState("All Users");
   const [showForm, setShowForm] = useState(false);
   const [users, setUsers] = useState([]);
-  const { tasks, allTasks } = useContext(TaskContext);
+  const [showPrivateSection, setShowPrivateSection] = useState(false);
+  const [securityKey, setSecurityKey] = useState("");
+  const [privateKeyEntered, setPrivateKeyEntered] = useState(false);
+
+  const { tasks, allTasks, privateTasks, fetchPrivateTasks } = useContext(TaskContext);
 
   const isAdmin = user?.role === "admin";
 
@@ -32,24 +36,33 @@ export default function TaskBoard({ taskType = "team" }) {
     }
   };
 
+  // Private tasks
+  const handleShowPrivate = async () => {
+    if (!securityKey) {
+      alert("Enter security key.");
+      return;
+    }
+    const data = await fetchPrivateTasks(securityKey);
+    if (data && data.length > 0) {
+      setPrivateKeyEntered(true);
+    } else {
+      setPrivateKeyEntered(false);
+      alert("Invalid key or no sensitive tasks.");
+    }
+  };
+
   // Filter tasks based on type and role
   const getDisplayTasks = () => {
     let filtered;
     const currentUserId = user?.id || user?._id;
 
     if (taskType === "team") {
-      // Show only team tasks
       if (isAdmin) {
-        // Admin sees all team tasks
-        filtered = allTasks.filter(t => t.isTeamTask === true);
+        filtered = allTasks.filter(t => t.isTeamTask === true && !t.isPrivate);
       } else {
-        // Regular users see team tasks where they are a member
         filtered = allTasks.filter(t => {
-          if (!t.isTeamTask) return false;
-          
-          // Check if user is in the team
+          if (!t.isTeamTask || t.isPrivate) return false;
           if (!t.assignedToTeam) return false;
-          
           const teamMembers = t.assignedToTeam.members || [];
           return teamMembers.some(member => {
             const memberId = member._id || member;
@@ -58,15 +71,11 @@ export default function TaskBoard({ taskType = "team" }) {
         });
       }
     } else {
-      // Show only user tasks
       if (isAdmin) {
-        // Admin sees all user tasks
-        filtered = allTasks.filter(t => t.isTeamTask === false);
+        filtered = allTasks.filter(t => t.isTeamTask === false && !t.isPrivate);
       } else {
-        // Regular users see their own tasks
         filtered = allTasks.filter(t => {
-          if (t.isTeamTask) return false;
-          
+          if (t.isTeamTask || t.isPrivate) return false;
           const assignedId = t.assignedTo?._id || t.assignedTo;
           return String(assignedId) === String(currentUserId);
         });
@@ -98,6 +107,13 @@ export default function TaskBoard({ taskType = "team" }) {
               ? `${displayTasks.length} ${taskType} tasks` 
               : `${displayTasks.length} ${taskType} task${displayTasks.length !== 1 ? 's' : ''} assigned to you`}
           </p>
+          <button
+            style={{ marginLeft: "10px" }}
+            className="filter-btn"
+            onClick={() => setShowPrivateSection(!showPrivateSection)}
+          >
+            Sensitive Tasks
+          </button>
         </div>
         {isAdmin && (
           <button className="new-task-btn" onClick={() => setShowForm(!showForm)}>
@@ -167,7 +183,6 @@ export default function TaskBoard({ taskType = "team" }) {
             Low
           </button>
         </div>
-
         {isAdmin && users.length > 0 && taskType === "user" && (
           <div className="filter-group user-filter">
             <select 
@@ -185,6 +200,31 @@ export default function TaskBoard({ taskType = "team" }) {
           </div>
         )}
       </div>
+
+      {showPrivateSection && (
+        <div style={{ margin: "18px 0", padding: "16px", border: "1px solid #cfcfcf", borderRadius: "6px", background: "#f9f9fd" }}>
+          <h2>Sensitive Tasks</h2>
+          {!privateKeyEntered && (
+            <div>
+              <input
+                type="password"
+                value={securityKey}
+                onChange={e => setSecurityKey(e.target.value)}
+                placeholder="Enter security key"
+                style={{ marginRight: "12px" }}
+              />
+              <button onClick={handleShowPrivate} className="filter-btn">Access</button>
+            </div>
+          )}
+          {privateKeyEntered && (
+            <TaskList
+              statusFilter={statusFilter}
+              priorityFilter={priorityFilter}
+              displayTasks={privateTasks}
+            />
+          )}
+        </div>
+      )}
 
       <TaskList 
         statusFilter={statusFilter} 

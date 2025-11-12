@@ -75,6 +75,11 @@ const taskSchema = new mongoose.Schema({
     type: String,
     default: ""
   },
+  isPrivate: {
+  type: Boolean,
+  default: false
+  },
+
   // End date for recurrent tasks
   recurrenceEndDate: {
     type: Date,

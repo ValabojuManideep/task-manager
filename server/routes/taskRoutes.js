@@ -1,8 +1,10 @@
 import express from "express";
 import Task from "../models/Task.js";
-// Ensure Team model is registered with mongoose before populate() runs
 import Team from "../models/Team.js";
 import { logActivity } from "./activityRoutes.js";
+import dotenv from "dotenv";
+dotenv.config();
+const PRIVATE_TASK_KEY = process.env.PRIVATE_TASK_KEY;
 
 const router = express.Router();
 
@@ -22,13 +24,28 @@ router.get("/", async (req, res) => {
   }
 });
 
-// Add a new task
+// Get private tasks (requires security key)
+router.get("/private", async (req, res) => {
+  const key = req.headers["x-private-key"];
+  if (!key || key !== PRIVATE_TASK_KEY) {
+    return res.status(401).json({ error: "Invalid or missing security key" });
+  }
+  try {
+    const privateTasks = await Task.find({ isPrivate: true })
+      .populate("assignedTo", "username email")
+      .populate({
+        path: "assignedToTeam",
+        populate: { path: "members", select: "username email" }
+      });
+    res.json(privateTasks);
+  } catch (err) {
+    res.status(500).json({ error: err.message });
+  }
+});
+
+// Add a new task (secure sensitive creation)
 router.post("/", async (req, res) => {
   try {
-    // Debug: log incoming request body
-    console.log('Incoming task creation request:', req.body);
-
-    // Explicitly pick recurrent fields from body for clarity
     const {
       title,
       description,
@@ -41,10 +58,19 @@ router.post("/", async (req, res) => {
       createdBy,
       isRecurrent,
       recurrencePattern,
-      recurrenceEndDate
+      recurrenceEndDate,
+      isPrivate,
+      privateKey // <-- from client
     } = req.body;
 
-    // Convert recurrenceEndDate to Date if present
+    let finalIsPrivate = false;
+    if (isPrivate) {
+      if (!privateKey || privateKey !== PRIVATE_TASK_KEY) {
+        return res.status(401).json({ error: "Invalid security key for sensitive task" });
+      }
+      finalIsPrivate = true;
+    }
+
     let recurrenceEndDateValue = recurrenceEndDate ? new Date(recurrenceEndDate) : null;
 
     const newTask = new Task({
@@ -59,14 +85,11 @@ router.post("/", async (req, res) => {
       createdBy,
       isRecurrent: !!isRecurrent,
       recurrencePattern: recurrencePattern || "",
-      recurrenceEndDate: recurrenceEndDateValue
+      recurrenceEndDate: recurrenceEndDateValue,
+      isPrivate: finalIsPrivate
     });
     await newTask.save();
 
-    // Debug: log saved task
-    console.log('Saved task:', newTask);
-
-    // Populate both assignedTo and assignedToTeam
     await newTask.populate("assignedTo", "username email");
     await newTask.populate({
       path: "assignedToTeam",
@@ -97,30 +120,26 @@ router.put("/:id", async (req, res) => {
     if (!task) {
       return res.status(404).json({ error: "Task not found" });
     }
-    
+
     const oldStatus = task.status;
     const username = req.body.userId || "User";
     const { userId, ...updateData } = req.body;
-    // Convert recurrenceEndDate to Date if present
     if (updateData.recurrenceEndDate) {
       updateData.recurrenceEndDate = new Date(updateData.recurrenceEndDate);
     }
 
-    // Always process recurrence logic for recurrent tasks when status is set to 'done'
     let nextDueDate = task.dueDate;
     if (
       updateData.status === "done" &&
       ((task.isRecurrent && task.recurrencePattern && task.recurrencePattern !== "none") ||
        (updateData.isRecurrent && updateData.recurrencePattern && updateData.recurrencePattern !== "none"))
     ) {
-      // If dueDate matches recurrenceEndDate, mark as done and do not update due date
       if (
         task.recurrenceEndDate &&
         task.dueDate &&
         new Date(task.dueDate).toDateString() === new Date(task.recurrenceEndDate).toDateString()
       ) {
         updateData.status = "done";
-        // Optionally, you can set a flag or message here
       } else {
         const currentDate = new Date(task.dueDate || Date.now());
         switch (task.recurrencePattern) {
@@ -139,12 +158,10 @@ router.put("/:id", async (req, res) => {
           default:
             break;
         }
-        // Keep the same priority and status for the next recurrence
         updateData.status = task.status;
         updateData.dueDate = nextDueDate;
         updateData.priority = task.priority;
       }
-      // Add completion log entry
       if (!task.completionLog) task.completionLog = [];
       task.completionLog.push({
         completedAt: new Date(),
@@ -178,14 +195,11 @@ router.delete("/:id", async (req, res) => {
     if (!task) {
       return res.status(404).json({ error: "Task not found" });
     }
-    
     const taskTitle = task.title;
-    
     await Task.findByIdAndDelete(req.params.id);
-    
     const adminUsername = req.body.username || "Admin";
     await logActivity("deleted", taskTitle, adminUsername, "Task deleted");
-    
+
     res.json({ message: "Task deleted successfully" });
   } catch (err) {
     console.error("Delete error:", err);
@@ -198,7 +212,7 @@ router.post("/:id/comment", async (req, res) => {
   try {
     const { userId, username, userRole, text } = req.body;
     const task = await Task.findById(req.params.id);
-    
+
     if (!task) {
       return res.status(404).json({ error: "Task not found" });
     }
@@ -210,10 +224,10 @@ router.post("/:id/comment", async (req, res) => {
       text,
       createdAt: new Date()
     });
-    
+
     await task.save();
     await logActivity("commented", task.title, username, "Added comment");
-    
+
     res.json(task);
   } catch (err) {
     res.status(500).json({ error: err.message });
@@ -225,7 +239,7 @@ router.put("/:taskId/comment/:commentId", async (req, res) => {
   try {
     const { text } = req.body;
     const task = await Task.findById(req.params.taskId);
-    
+
     if (!task) {
       return res.status(404).json({ error: "Task not found" });
     }
@@ -238,7 +252,7 @@ router.put("/:taskId/comment/:commentId", async (req, res) => {
     comment.text = text;
     comment.updatedAt = new Date();
     await task.save();
-    
+
     res.json(task);
   } catch (err) {
     res.status(500).json({ error: err.message });
@@ -249,14 +263,14 @@ router.put("/:taskId/comment/:commentId", async (req, res) => {
 router.delete("/:taskId/comment/:commentId", async (req, res) => {
   try {
     const task = await Task.findById(req.params.taskId);
-    
+
     if (!task) {
       return res.status(404).json({ error: "Task not found" });
     }
 
     task.comments = task.comments.filter(c => c._id.toString() !== req.params.commentId);
     await task.save();
-    
+
     res.json(task);
   } catch (err) {
     res.status(500).json({ error: err.message });
