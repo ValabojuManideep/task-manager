@@ -66,7 +66,28 @@ const taskSchema = new mongoose.Schema({
     type: mongoose.Schema.Types.ObjectId,
     ref: 'User'
   },
+  // Recurrent task fields
+  isRecurrent: {
+    type: Boolean,
+    default: false
+  },
+  recurrencePattern: {
+    type: String,
+    default: ""
+  },
+  // End date for recurrent tasks
+  recurrenceEndDate: {
+    type: Date,
+    default: null
+  },
   comments: [commentSchema],
+  // Completion log for recurrent tasks
+  completionLog: [
+    {
+      completedAt: { type: Date, default: Date.now },
+      completedBy: { type: String }, // store username or userId
+    }
+  ],
   createdAt: { type: Date, default: Date.now },
   updatedAt: { type: Date, default: Date.now }
 });

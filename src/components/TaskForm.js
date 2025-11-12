@@ -23,6 +23,8 @@ export default function TaskForm({ onClose }) {
     dueDate: "",
     assignedTo: "",
     assignedToTeam: "",
+    recurrencePattern: "none",
+    recurrenceEndDate: ""
   });
 
   const today = new Date().toISOString().split('T')[0];
@@ -44,12 +46,25 @@ export default function TaskForm({ onClose }) {
 
   const handleSubmit = async (e) => {
     e.preventDefault();
-    
+
+    // Prevent dueDate from being after recurrenceEndDate
+    if (
+      form.recurrenceEndDate &&
+      form.dueDate &&
+      new Date(form.dueDate) > new Date(form.recurrenceEndDate)
+    ) {
+      alert("Due date cannot be after recurrence end date.");
+      return;
+    }
+
     const taskData = {
       ...form,
       createdBy: user.id,
-      isTeamTask: assignmentType === "team"
+      isTeamTask: assignmentType === "team",
+      isRecurrent: form.recurrencePattern && form.recurrencePattern !== "none" ? true : false
     };
+    // Debug: log taskData before sending
+    console.log('Submitting taskData:', taskData);
 
     if (assignmentType === "team") {
       delete taskData.assignedTo;
@@ -100,7 +115,7 @@ export default function TaskForm({ onClose }) {
   return (
     <form className="task-form" onSubmit={handleSubmit}>
       <h3 className="form-title">Create New Task</h3>
-      
+
       <div className="form-group">
         <label>Task Title</label>
         <input
@@ -122,6 +137,35 @@ export default function TaskForm({ onClose }) {
           rows="3"
         />
       </div>
+
+      <div className="form-group">
+        <label>Recurrent Task</label>
+        <select
+          name="recurrencePattern"
+          value={form.recurrencePattern}
+          onChange={e => setForm({ ...form, recurrencePattern: e.target.value })}
+        >
+          <option value="none">None</option>
+          <option value="daily">Daily</option>
+          <option value="weekly">Weekly</option>
+          <option value="fortnight">Fortnight</option>
+          <option value="monthly">Monthly</option>
+        </select>
+      </div>
+
+      {form.recurrencePattern !== "none" && (
+        <div className="form-group">
+          <label>Recurrent Until (End Date)</label>
+          <input
+            type="date"
+            name="recurrenceEndDate"
+            min={today}
+            value={form.recurrenceEndDate}
+            onChange={handleChange}
+            required={form.recurrencePattern !== "none"}
+          />
+        </div>
+      )}
 
       <div className="form-group">
         <label>Assignment Type</label>
