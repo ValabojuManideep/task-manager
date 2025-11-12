@@ -106,6 +106,15 @@ export default function Navbar() {
             <span className="nav-label">Activity</span>
           </Link>
 
+          {/* Profile */}
+          <Link
+            to="/profile"
+            className={`nav-item ${location.pathname === "/profile" ? "active" : ""}`}
+          >
+            <span className="nav-icon">👤</span>
+            <span className="nav-label">Profile</span>
+          </Link>
+
           {/* Teams - Only for Admin */}
           {isAdmin && (
             <Link
@@ -167,6 +176,14 @@ export default function Navbar() {
         >
           <span className="mobile-nav-icon">📈</span>
           <span>Activity</span>
+        </Link>
+
+        <Link
+          to="/profile"
+          className={`mobile-nav-item ${location.pathname === "/profile" ? "active" : ""}`}
+        >
+          <span className="mobile-nav-icon">👤</span>
+          <span>Profile</span>
         </Link>
 
         {isAdmin && (

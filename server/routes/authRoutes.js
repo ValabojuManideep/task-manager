@@ -20,7 +20,17 @@ router.post("/register", async (req, res) => {
 
     const token = jwt.sign({ id: user._id, username: user.username, role: user.role }, JWT_SECRET, { expiresIn: "7d" });
 
-    res.status(201).json({ token, user: { id: user._id, username: user.username, email: user.email, role: user.role } });
+    // Include createdAt in returned user so frontend can display join date
+    res.status(201).json({
+      token,
+      user: {
+        id: user._id,
+        username: user.username,
+        email: user.email,
+        role: user.role,
+        createdAt: user.createdAt
+      }
+    });
   } catch (err) {
     res.status(500).json({ error: err.message });
   }
@@ -46,7 +56,16 @@ router.post("/login", async (req, res) => {
 
     const token = jwt.sign({ id: user._id, username: user.username, role: user.role }, JWT_SECRET, { expiresIn: "7d" });
 
-    res.json({ token, user: { id: user._id, username: user.username, email: user.email, role: user.role } });
+    res.json({
+      token,
+      user: {
+        id: user._id,
+        username: user.username,
+        email: user.email,
+        role: user.role,
+        createdAt: user.createdAt
+      }
+    });
   } catch (err) {
     res.status(500).json({ error: err.message });
   }

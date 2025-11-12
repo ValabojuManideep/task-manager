@@ -11,6 +11,7 @@ import TaskBoard from "./components/TaskBoard";
 import Analytics from "./components/Analytics";
 import Activity from "./components/Activity";
 import TeamManagement from "./components/TeamManagement";
+import Profile from "./components/Profile";
 import Login from "./components/Login";
 import SignUp from "./components/SignUp";
 import "./App.css";
@@ -128,6 +129,16 @@ export default function App() {
                   <ProtectedRoute>
                     <AppLayout>
                       <TeamManagement />
+                    </AppLayout>
+                  </ProtectedRoute>
+                }
+              />
+              <Route
+                path="/profile"
+                element={
+                  <ProtectedRoute>
+                    <AppLayout>
+                      <Profile />
                     </AppLayout>
                   </ProtectedRoute>
                 }
