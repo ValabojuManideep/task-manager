@@ -1,18 +1,25 @@
 import express from "express";
 import Task from "../models/Task.js";
+// Ensure Team model is registered with mongoose before populate() runs
+import Team from "../models/Team.js";
 import { logActivity } from "./activityRoutes.js";
 
 const router = express.Router();
 
 // Get all tasks
 router.get("/", async (req, res) => {
-  const tasks = await Task.find()
-    .populate("assignedTo", "username email")
-    .populate({
-      path: "assignedToTeam",
-      populate: { path: "members", select: "username email" }
-    });
-  res.json(tasks);
+  try {
+    const tasks = await Task.find()
+      .populate("assignedTo", "username email")
+      .populate({
+        path: "assignedToTeam",
+        populate: { path: "members", select: "username email" }
+      });
+    res.json(tasks);
+  } catch (err) {
+    console.error('Error fetching tasks:', err);
+    res.status(500).json({ error: err.message });
+  }
 });
 
 // Add a new task

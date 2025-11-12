@@ -28,6 +28,7 @@ export default function TaskForm({ onClose }) {
   });
 
   const today = new Date().toISOString().split('T')[0];
+  const nowForDateTimeLocal = new Date().toISOString().slice(0,16); // YYYY-MM-DDTHH:mm
 
   useEffect(() => {
     fetchUsers();
@@ -63,6 +64,22 @@ export default function TaskForm({ onClose }) {
       isTeamTask: assignmentType === "team",
       isRecurrent: form.recurrencePattern && form.recurrencePattern !== "none" ? true : false
     };
+
+    // Convert datetime-local strings to ISO (so backend/Mongo stores full timestamp)
+    if (taskData.dueDate) {
+      try {
+        taskData.dueDate = new Date(taskData.dueDate).toISOString();
+      } catch (e) {
+        console.warn('Invalid dueDate format', taskData.dueDate);
+      }
+    }
+    if (taskData.recurrenceEndDate) {
+      try {
+        taskData.recurrenceEndDate = new Date(taskData.recurrenceEndDate).toISOString();
+      } catch (e) {
+        console.warn('Invalid recurrenceEndDate format', taskData.recurrenceEndDate);
+      }
+    }
     // Debug: log taskData before sending
     console.log('Submitting taskData:', taskData);
 
@@ -80,7 +97,9 @@ export default function TaskForm({ onClose }) {
       priority: "medium", 
       dueDate: "", 
       assignedTo: "",
-      assignedToTeam: "" 
+      assignedToTeam: "",
+      recurrencePattern: "none",
+      recurrenceEndDate: ""
     });
     if (onClose) onClose();
   };
@@ -156,15 +175,15 @@ export default function TaskForm({ onClose }) {
       {form.recurrencePattern !== "none" && (
         <div className="form-group">
           <label>Recurrent Until (End Date)</label>
-          <input
-            type="date"
-            name="recurrenceEndDate"
-            min={today}
-            value={form.recurrenceEndDate}
-            onChange={handleChange}
-            required={form.recurrencePattern !== "none"}
-          />
-        </div>
+            <input
+              type="datetime-local"
+              name="recurrenceEndDate"
+              min={nowForDateTimeLocal}
+              value={form.recurrenceEndDate}
+              onChange={handleChange}
+              required={form.recurrencePattern !== "none"}
+            />
+          </div>
       )}
 
       <div className="form-group">
@@ -330,11 +349,11 @@ export default function TaskForm({ onClose }) {
       <div className="form-group">
         <label>Due Date</label>
         <input 
-          type="date" 
+          type="datetime-local" 
           name="dueDate" 
           value={form.dueDate} 
           onChange={handleChange}
-          min={today}
+          min={nowForDateTimeLocal}
         />
       </div>
 

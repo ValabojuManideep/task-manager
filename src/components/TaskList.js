@@ -238,7 +238,7 @@ export default function TaskList({ statusFilter, priorityFilter, displayTasks })
                 <div className="task-card-footer">
                   <span className="task-status-badge">{task.status}</span>
                   {task.dueDate && (
-                    <span className="task-due">Due: {format(new Date(task.dueDate), "MMM d, yyyy")}</span>
+                    <span className="task-due">Due: {format(new Date(task.dueDate), "MMM d, yyyy h:mm a")}</span>
                   )}
                 </div>
 
@@ -363,12 +363,12 @@ export default function TaskList({ statusFilter, priorityFilter, displayTasks })
                     >
                       Completion Log
                     </h3>
-                    {task.completionLog && task.completionLog.length > 0 ? (
+                        {task.completionLog && task.completionLog.length > 0 ? (
                       <ul style={{ margin: 0, paddingLeft: "18px" }}>
                         {task.completionLog.map((log, idx) => (
                           <li key={idx} style={{ marginBottom: "10px", fontSize: "1em", color: "#374151" }}>
                             {log.completedBy || "Unknown"} on{" "}
-                            {format(new Date(log.completedAt), "MMM d, yyyy HH:mm")}
+                            {format(new Date(log.completedAt), "MMM d, yyyy h:mm a")}
                           </li>
                         ))}
                       </ul>

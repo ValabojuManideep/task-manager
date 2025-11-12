@@ -97,12 +97,12 @@ export default function TaskDetailModal({ task, onClose, onUpdate, onDelete, onR
               <span className="info-label">Status:</span>
               <span className="info-value status-badge">{task.status}</span>
             </div>
-            {task.dueDate && (
-              <div className="modal-info-item">
-                <span className="info-label">Due date:</span>
-                <span className="info-value">{format(new Date(task.dueDate), "MMM d, yyyy")}</span>
-              </div>
-            )}
+          {task.dueDate && (
+            <div className="modal-info-item">
+              <span className="info-label">Due date:</span>
+              <span className="info-value">{format(new Date(task.dueDate), "MMM d, yyyy h:mm a")}</span>
+            </div>
+          )}
           </div>
 
           <div className="modal-actions">
