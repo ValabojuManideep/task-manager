@@ -1,12 +1,25 @@
 import express from "express";
+import mongoose from "mongoose";
 import Task from "../models/Task.js";
 import Team from "../models/Team.js";
 import { logActivity } from "./activityRoutes.js";
 import dotenv from "dotenv";
+import multer from "multer";
+
 dotenv.config();
 const PRIVATE_TASK_KEY = process.env.PRIVATE_TASK_KEY;
 
 const router = express.Router();
+
+// ✅ Configure multer for file uploads - NO EXTERNAL IMPORT
+const storage = multer.memoryStorage();
+const fileUpload = multer({
+  storage: storage,
+  limits: { 
+    fileSize: 5 * 1024 * 1024, // 5MB per file
+    files: 5 // max 5 files
+  }
+});
 
 // Get all tasks
 router.get("/", async (req, res) => {
@@ -43,9 +56,12 @@ router.get("/private", async (req, res) => {
   }
 });
 
-// Add a new task (secure sensitive creation)
-router.post("/", async (req, res) => {
+// ✅ Add a new task WITH FILE UPLOADS
+router.post("/", fileUpload.array('files', 5), async (req, res) => {
   try {
+    console.log('📝 Creating task with body:', req.body);
+    console.log('📎 Files received:', req.files?.length || 0);
+    
     const {
       title,
       description,
@@ -60,11 +76,16 @@ router.post("/", async (req, res) => {
       recurrencePattern,
       recurrenceEndDate,
       isPrivate,
-      privateKey // <-- from client
+      privateKey
     } = req.body;
 
+    // Validate required fields
+    if (!title) {
+      return res.status(400).json({ error: "Title is required" });
+    }
+
     let finalIsPrivate = false;
-    if (isPrivate) {
+    if (isPrivate === 'true' || isPrivate === true) {
       if (!privateKey || privateKey !== PRIVATE_TASK_KEY) {
         return res.status(401).json({ error: "Invalid security key for sensitive task" });
       }
@@ -73,22 +94,34 @@ router.post("/", async (req, res) => {
 
     let recurrenceEndDateValue = recurrenceEndDate ? new Date(recurrenceEndDate) : null;
 
+    // ✅ Process uploaded files - store in MongoDB as binary
+    const attachments = req.files ? req.files.map(file => ({
+      filename: file.originalname,
+      mimetype: file.mimetype,
+      data: file.buffer
+    })) : [];
+
+    console.log('✅ Processed attachments:', attachments.length);
+
     const newTask = new Task({
       title,
       description,
-      status,
-      priority,
-      dueDate,
-      assignedTo,
-      assignedToTeam,
-      isTeamTask,
+      status: status || 'todo',
+      priority: priority || 'medium',
+      dueDate: dueDate ? new Date(dueDate) : undefined,
+      assignedTo: assignedTo || undefined,
+      assignedToTeam: assignedToTeam || undefined,
+      isTeamTask: isTeamTask === 'true' || isTeamTask === true,
       createdBy,
-      isRecurrent: !!isRecurrent,
+      isRecurrent: isRecurrent === 'true' || isRecurrent === true,
       recurrencePattern: recurrencePattern || "",
       recurrenceEndDate: recurrenceEndDateValue,
-      isPrivate: finalIsPrivate
+      isPrivate: finalIsPrivate,
+      attachments // ✅ Add attachments to task
     });
+    
     await newTask.save();
+    console.log('✅ Task saved successfully with ID:', newTask._id);
 
     await newTask.populate("assignedTo", "username email");
     await newTask.populate({
@@ -97,18 +130,78 @@ router.post("/", async (req, res) => {
     });
 
     const creatorName = req.body.creatorName || "Admin";
-    const assignedInfo = req.body.isTeamTask 
+    const assignedInfo = isTeamTask === 'true' || isTeamTask === true
       ? "Assigned to team" 
-      : req.body.assignedTo ? "Assigned to user" : "";
+      : assignedTo ? "Assigned to user" : "";
 
     let details = assignedInfo;
-    if (isRecurrent) {
+    if (isRecurrent === 'true' || isRecurrent === true) {
       details += ` | Recurrent: ${recurrencePattern || "pattern not specified"}`;
+    }
+    if (attachments.length > 0) {
+      details += ` | ${attachments.length} file(s) attached`;
     }
 
     await logActivity("created", newTask.title, creatorName, details);
     res.status(201).json(newTask);
   } catch (err) {
+    console.error('❌ Error creating task:', err);
+    res.status(500).json({ error: err.message });
+  }
+});
+
+// ✅ Download attachment from task
+router.get("/:taskId/download/:attachmentId", async (req, res) => {
+  try {
+    const task = await Task.findById(req.params.taskId);
+    if (!task) {
+      return res.status(404).json({ error: "Task not found" });
+    }
+
+    const attachment = task.attachments.id(req.params.attachmentId);
+    if (!attachment) {
+      return res.status(404).json({ error: "Attachment not found" });
+    }
+
+    res.set({
+      'Content-Type': attachment.mimetype,
+      'Content-Disposition': `attachment; filename="${attachment.filename}"`,
+      'Content-Length': attachment.data.length
+    });
+    
+    res.send(attachment.data);
+  } catch (err) {
+    console.error('Download error:', err);
+    res.status(500).json({ error: err.message });
+  }
+});
+
+// ✅ Delete attachment from task
+router.delete("/:taskId/attachment/:attachmentId", async (req, res) => {
+  try {
+    const task = await Task.findById(req.params.taskId);
+    if (!task) {
+      return res.status(404).json({ error: "Task not found" });
+    }
+
+    const attachment = task.attachments.id(req.params.attachmentId);
+    if (!attachment) {
+      return res.status(404).json({ error: "Attachment not found" });
+    }
+
+    const filename = attachment.filename;
+    task.attachments = task.attachments.filter(
+      att => att._id.toString() !== req.params.attachmentId
+    );
+    
+    await task.save();
+
+    const username = req.body.username || "User";
+    await logActivity("updated", task.title, username, `Removed attachment: ${filename}`);
+
+    res.json({ message: "Attachment deleted successfully" });
+  } catch (err) {
+    console.error('Delete attachment error:', err);
     res.status(500).json({ error: err.message });
   }
 });

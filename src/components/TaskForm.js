@@ -15,6 +15,12 @@ export default function TaskForm({ onClose }) {
   const [teamSearchTerm, setTeamSearchTerm] = useState("");
   const [showUserDropdown, setShowUserDropdown] = useState(false);
   const [showTeamDropdown, setShowTeamDropdown] = useState(false);
+  
+  // FILE UPLOAD STATE
+  const [files, setFiles] = useState([]);
+  const [fileError, setFileError] = useState("");
+  const [uploading, setUploading] = useState(false);
+  
   const [form, setForm] = useState({
     title: "",
     description: "",
@@ -48,8 +54,50 @@ export default function TaskForm({ onClose }) {
 
   const handleChange = (e) => setForm({ ...form, [e.target.name]: e.target.value });
 
+  // FILE UPLOAD HANDLERS
+  const handleFileChange = (e) => {
+    const selectedFiles = Array.from(e.target.files);
+    setFileError("");
+    
+    // Validate file count (max 5)
+    if (selectedFiles.length > 5) {
+      setFileError("Maximum 5 files allowed");
+      return;
+    }
+    
+    // Validate file size (max 5MB per file)
+    const maxSize = 5 * 1024 * 1024;
+    const validFiles = [];
+    
+    for (let file of selectedFiles) {
+      if (file.size > maxSize) {
+        setFileError(`${file.name} exceeds 5MB limit`);
+        continue;
+      }
+      validFiles.push(file);
+    }
+    
+    setFiles(validFiles);
+  };
+
+  const removeFile = (index) => {
+    setFiles(prev => prev.filter((_, i) => i !== index));
+    setFileError("");
+  };
+
+  const getFileIcon = (file) => {
+    const type = file.type;
+    if (type.includes('pdf')) return '📄';
+    if (type.includes('word') || type.includes('doc')) return '📝';
+    if (type.includes('excel') || type.includes('sheet')) return '📊';
+    if (type.includes('image')) return '🖼️';
+    if (type.includes('text')) return '📃';
+    return '📎';
+  };
+
   const handleSubmit = async (e) => {
     e.preventDefault();
+    setUploading(true);
 
     if (
       form.recurrenceEndDate &&
@@ -57,68 +105,102 @@ export default function TaskForm({ onClose }) {
       new Date(form.dueDate) > new Date(form.recurrenceEndDate)
     ) {
       alert("Due date cannot be after recurrence end date.");
+      setUploading(false);
       return;
     }
 
-    const taskData = {
-      ...form,
-      createdBy: user.id,
-      isTeamTask: assignmentType === "team",
-      isRecurrent: form.recurrencePattern && form.recurrencePattern !== "none" ? true : false,
-      isPrivate: isPrivate
-    };
+    try {
+      // Create FormData for file upload
+      const formData = new FormData();
+      
+      // Append all form fields
+      formData.append('title', form.title);
+      formData.append('description', form.description);
+      formData.append('status', form.status);
+      formData.append('priority', form.priority);
+      formData.append('createdBy', user.id);
+      formData.append('creatorName', user.username);
+      formData.append('isTeamTask', assignmentType === "team");
+      formData.append('isRecurrent', form.recurrencePattern && form.recurrencePattern !== "none");
+      formData.append('isPrivate', isPrivate);
+      
+      if (form.dueDate) {
+        formData.append('dueDate', new Date(form.dueDate).toISOString());
+      }
+      
+      if (form.recurrencePattern && form.recurrencePattern !== "none") {
+        formData.append('recurrencePattern', form.recurrencePattern);
+        if (form.recurrenceEndDate) {
+          formData.append('recurrenceEndDate', new Date(form.recurrenceEndDate).toISOString());
+        }
+      }
 
-    if (isPrivate) {
-      if (!privateKey) {
-        setPrivateKeyError("Enter security key.");
+      if (assignmentType === "team") {
+        if (form.assignedToTeam) {
+          formData.append('assignedToTeam', form.assignedToTeam);
+        }
+      } else {
+        if (form.assignedTo) {
+          formData.append('assignedTo', form.assignedTo);
+        }
+      }
+
+      if (isPrivate) {
+        if (!privateKey) {
+          setPrivateKeyError("Enter security key.");
+          setUploading(false);
+          return;
+        }
+        setPrivateKeyError("");
+        formData.append('privateKey', privateKey);
+      }
+
+      // Append files
+      files.forEach(file => {
+        formData.append('files', file);
+      });
+
+      // Send to backend
+      const response = await axios.post('http://localhost:5000/api/tasks', formData, {
+        headers: {
+          'Content-Type': 'multipart/form-data'
+        }
+      });
+
+      if (response.data.error && isPrivate) {
+        setPrivateKeyError("Invalid security key.");
+        setUploading(false);
         return;
       }
+
+      // Reset form
+      setForm({ 
+        title: "", 
+        description: "", 
+        status: "todo", 
+        priority: "medium", 
+        dueDate: "", 
+        assignedTo: "",
+        assignedToTeam: "",
+        recurrencePattern: "none",
+        recurrenceEndDate: ""
+      });
+      setFiles([]);
+      setFileError("");
+      setIsPrivate(false);
+      setPrivateKey("");
       setPrivateKeyError("");
-      taskData.privateKey = privateKey; // Sent to backend only!
+      
+      // Refresh tasks in context
+      await addTask(null); // Trigger refresh
+      
+      if (onClose) onClose();
+    } catch (error) {
+      console.error("Error creating task:", error);
+      alert("Failed to create task: " + (error.response?.data?.error || error.message));
+    } finally {
+      setUploading(false);
     }
-
-    if (taskData.dueDate) {
-      try {
-        taskData.dueDate = new Date(taskData.dueDate).toISOString();
-      } catch (e) {
-        console.warn('Invalid dueDate format', taskData.dueDate);
-      }
-    }
-    if (taskData.recurrenceEndDate) {
-      try {
-        taskData.recurrenceEndDate = new Date(taskData.recurrenceEndDate).toISOString();
-      } catch (e) {
-        console.warn('Invalid recurrenceEndDate format', taskData.recurrenceEndDate);
-      }
-    }
-
-    if (assignmentType === "team") {
-      delete taskData.assignedTo;
-    } else {
-      delete taskData.assignedToTeam;
-    }
-
-    const resp = await addTask(taskData);
-    if (resp && resp.error && isPrivate) {
-      setPrivateKeyError("Invalid security key.");
-      return;
-    }
-
-    setForm({ 
-      title: "", 
-      description: "", 
-      status: "todo", 
-      priority: "medium", 
-      dueDate: "", 
-      assignedTo: "",
-      assignedToTeam: "",
-      recurrencePattern: "none",
-      recurrenceEndDate: ""
-    });
-    setIsPrivate(false);
-    setPrivateKey("");
-    setPrivateKeyError("");
-    if (onClose) onClose();
   };
 
   const filteredUsers = users.filter(u =>
@@ -369,6 +451,86 @@ export default function TaskForm({ onClose }) {
           min={nowForDateTimeLocal}
         />
       </div>
+
+      {/* FILE UPLOAD SECTION */}
+      <div className="form-group">
+        <label>📎 Attachments</label>
+        <input
+          type="file"
+          multiple
+          onChange={handleFileChange}
+          accept=".pdf,.doc,.docx,.xls,.xlsx,.txt,.jpg,.jpeg,.png,.gif"
+          style={{ marginTop: "8px" }}
+        />
+        <p style={{ fontSize: "0.85em", color: "#666", marginTop: "4px" }}>
+          Max 5MB per file, up to 5 files. Formats: PDF, DOC, DOCX, XLS, XLSX, TXT, JPG, PNG, GIF
+        </p>
+        {fileError && (
+          <div style={{ color: "red", fontSize: "0.9em", marginTop: "5px" }}>
+            {fileError}
+          </div>
+        )}
+      </div>
+
+      {/* SELECTED FILES PREVIEW */}
+      {files.length > 0 && (
+        <div style={{ 
+          background: "#f5f5f5", 
+          padding: "12px", 
+          borderRadius: "6px", 
+          marginBottom: "15px" 
+        }}>
+          <p style={{ fontWeight: "600", marginBottom: "8px", fontSize: "0.95em" }}>
+            Selected Files ({files.length})
+          </p>
+          <div style={{ display: "flex", flexDirection: "column", gap: "8px" }}>
+            {files.map((file, index) => (
+              <div 
+                key={index} 
+                style={{ 
+                  display: "flex", 
+                  alignItems: "center", 
+                  justifyContent: "space-between",
+                  background: "white",
+                  padding: "8px 12px",
+                  borderRadius: "4px",
+                  border: "1px solid #e0e0e0"
+                }}
+              >
+                <div style={{ display: "flex", alignItems: "center", gap: "8px", flex: 1, minWidth: 0 }}>
+                  <span style={{ fontSize: "1.2em" }}>{getFileIcon(file)}</span>
+                  <span style={{ 
+                    fontSize: "0.9em", 
+                    color: "#333",
+                    overflow: "hidden",
+                    textOverflow: "ellipsis",
+                    whiteSpace: "nowrap"
+                  }}>
+                    {file.name}
+                  </span>
+                  <span style={{ fontSize: "0.75em", color: "#999", whiteSpace: "nowrap" }}>
+                    ({(file.size / 1024).toFixed(1)} KB)
+                  </span>
+                </div>
+                <button
+                  type="button"
+                  onClick={() => removeFile(index)}
+                  style={{
+                    background: "transparent",
+                    border: "none",
+                    color: "#e53e3e",
+                    cursor: "pointer",
+                    padding: "4px 8px",
+                    fontSize: "0.9em"
+                  }}
+                >
+                  Remove
+                </button>
+              </div>
+            ))}
+          </div>
+        </div>
+      )}
       
       <div className="form-group">
         <label>
@@ -396,11 +558,11 @@ export default function TaskForm({ onClose }) {
       </div>
 
       <div className="form-actions">
-        <button type="button" className="cancel-btn" onClick={onClose}>
+        <button type="button" className="cancel-btn" onClick={onClose} disabled={uploading}>
           Cancel
         </button>
-        <button type="submit" className="submit-btn">
-          Add Task
+        <button type="submit" className="submit-btn" disabled={uploading}>
+          {uploading ? "Creating..." : "Add Task"}
         </button>
       </div>
     </form>

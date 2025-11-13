@@ -9,6 +9,7 @@ export default function TaskDetailModal({ task, onClose, onUpdate, onDelete, onR
   const [commentText, setCommentText] = useState("");
   const [editingComment, setEditingComment] = useState(null);
   const [editText, setEditText] = useState("");
+  const [deletingAttachment, setDeletingAttachment] = useState(null);
 
   const isAdmin = user?.role === "admin";
   const currentUserId = user?.id || user?._id;
@@ -19,6 +20,59 @@ export default function TaskDetailModal({ task, onClose, onUpdate, onDelete, onR
       case "medium": return "#f59e0b";
       case "low": return "#10b981";
       default: return "#6b7280";
+    }
+  };
+
+  const getFileIcon = (mimetype) => {
+    if (mimetype.includes('pdf')) return '📄';
+    if (mimetype.includes('word') || mimetype.includes('doc')) return '📝';
+    if (mimetype.includes('excel') || mimetype.includes('sheet')) return '📊';
+    if (mimetype.includes('image')) return '🖼️';
+    if (mimetype.includes('text')) return '📃';
+    return '📎';
+  };
+
+  const handleDownloadAttachment = async (attachmentId, filename) => {
+    try {
+      const response = await axios.get(
+        `http://localhost:5000/api/tasks/${task._id}/download/${attachmentId}`,
+        { responseType: 'blob' }
+      );
+      
+      // Create a download link
+      const url = window.URL.createObjectURL(new Blob([response.data]));
+      const link = document.createElement('a');
+      link.href = url;
+      link.setAttribute('download', filename);
+      document.body.appendChild(link);
+      link.click();
+      link.remove();
+      window.URL.revokeObjectURL(url);
+    } catch (error) {
+      console.error('Download error:', error);
+      alert('Failed to download file');
+    }
+  };
+
+  const handleDeleteAttachment = async (attachmentId, filename) => {
+    if (!window.confirm(`Delete "${filename}"?`)) return;
+
+    setDeletingAttachment(attachmentId);
+    try {
+      await axios.delete(
+        `http://localhost:5000/api/tasks/${task._id}/attachment/${attachmentId}`,
+        { 
+          data: { username: user.username || 'Admin' }
+        }
+      );
+      
+      alert('Attachment deleted successfully');
+      onRefresh(); // Refresh task data
+    } catch (error) {
+      console.error('Delete attachment error:', error);
+      alert('Failed to delete attachment');
+    } finally {
+      setDeletingAttachment(null);
     }
   };
 
@@ -79,8 +133,7 @@ export default function TaskDetailModal({ task, onClose, onUpdate, onDelete, onR
         </div>
 
         <div className="modal-body">
-
-          {/* Recurrent label and end date */}
+          {/* Recurrent Task Label and End Date */}
           {task.isRecurrent && (
             <div className="modal-section" style={{ marginBottom: '1rem' }}>
               <span className="recurrent-label" style={{
@@ -125,13 +178,108 @@ export default function TaskDetailModal({ task, onClose, onUpdate, onDelete, onR
               <span className="info-label">Status:</span>
               <span className="info-value status-badge">{task.status}</span>
             </div>
-          {task.dueDate && (
-            <div className="modal-info-item">
-              <span className="info-label">Due date:</span>
-              <span className="info-value">{format(new Date(task.dueDate), "MMM d, yyyy h:mm a")}</span>
+            {task.dueDate && (
+              <div className="modal-info-item">
+                <span className="info-label">Due date:</span>
+                <span className="info-value">{format(new Date(task.dueDate), "MMM d, yyyy h:mm a")}</span>
+              </div>
+            )}
+          </div>
+
+          {/* ATTACHMENTS SECTION */}
+          {task.attachments && task.attachments.length > 0 && (
+            <div className="modal-section" style={{ marginTop: "20px" }}>
+              <h3>📎 Attachments ({task.attachments.length})</h3>
+              <div style={{ display: "flex", flexDirection: "column", gap: "10px", marginTop: "12px" }}>
+                {task.attachments.map((attachment) => (
+                  <div
+                    key={attachment._id}
+                    style={{
+                      display: "flex",
+                      alignItems: "center",
+                      justifyContent: "space-between",
+                      padding: "12px",
+                      background: "#f9f9f9",
+                      borderRadius: "6px",
+                      border: "1px solid #e0e0e0",
+                      transition: "border-color 0.2s"
+                    }}
+                    onMouseEnter={(e) => e.currentTarget.style.borderColor = "#3b82f6"}
+                    onMouseLeave={(e) => e.currentTarget.style.borderColor = "#e0e0e0"}
+                  >
+                    <div style={{ display: "flex", alignItems: "center", gap: "10px", flex: 1, minWidth: 0 }}>
+                      <span style={{ fontSize: "1.5em" }}>{getFileIcon(attachment.mimetype)}</span>
+                      <div style={{ flex: 1, minWidth: 0 }}>
+                        <p style={{ 
+                          margin: 0, 
+                          fontWeight: "500", 
+                          fontSize: "0.95em",
+                          overflow: "hidden",
+                          textOverflow: "ellipsis",
+                          whiteSpace: "nowrap"
+                        }}>
+                          {attachment.filename}
+                        </p>
+                        <p style={{ margin: "2px 0 0 0", fontSize: "0.8em", color: "#666" }}>
+                          {attachment.mimetype}
+                        </p>
+                      </div>
+                    </div>
+                    
+                    <div style={{ display: "flex", gap: "8px", marginLeft: "12px" }}>
+                      <button
+                        onClick={() => handleDownloadAttachment(attachment._id, attachment.filename)}
+                        style={{
+                          padding: "6px 12px",
+                          background: "#3b82f6",
+                          color: "white",
+                          border: "none",
+                          borderRadius: "4px",
+                          cursor: "pointer",
+                          fontSize: "0.85em",
+                          fontWeight: "500",
+                          transition: "background 0.2s"
+                        }}
+                        onMouseEnter={(e) => e.currentTarget.style.background = "#2563eb"}
+                        onMouseLeave={(e) => e.currentTarget.style.background = "#3b82f6"}
+                      >
+                        Download
+                      </button>
+                      {isAdmin && (
+                        <button
+                          onClick={() => handleDeleteAttachment(attachment._id, attachment.filename)}
+                          disabled={deletingAttachment === attachment._id}
+                          style={{
+                            padding: "6px 12px",
+                            background: deletingAttachment === attachment._id ? "#ccc" : "#ef4444",
+                            color: "white",
+                            border: "none",
+                            borderRadius: "4px",
+                            cursor: deletingAttachment === attachment._id ? "not-allowed" : "pointer",
+                            fontSize: "0.85em",
+                            fontWeight: "500",
+                            transition: "background 0.2s"
+                          }}
+                          onMouseEnter={(e) => {
+                            if (deletingAttachment !== attachment._id) {
+                              e.currentTarget.style.background = "#dc2626";
+                            }
+                          }}
+                          onMouseLeave={(e) => {
+                            if (deletingAttachment !== attachment._id) {
+                              e.currentTarget.style.background = "#ef4444";
+                            }
+                          }}
+                        >
+                          {deletingAttachment === attachment._id ? "Deleting..." : "Delete"}
+                        </button>
+                      )}
+                    </div>
+                  </div>
+                ))}
+              </div>
             </div>
           )}
-          </div>
 
           <div className="modal-actions">
             {isAdmin ? (
