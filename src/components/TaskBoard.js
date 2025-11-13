@@ -7,6 +7,8 @@ import axios from "axios";
 import "./TaskBoard.css";
 
 export default function TaskBoard({ taskType = "team" }) {
+  // Search bar state
+  const [taskSearchTerm, setTaskSearchTerm] = useState("");
   const { user } = useAuth();
   const [statusFilter, setStatusFilter] = useState("All");
   const [priorityFilter, setPriorityFilter] = useState("All Priority");
@@ -90,6 +92,15 @@ export default function TaskBoard({ taskType = "team" }) {
       });
     }
 
+    // Apply search filter (task name or description)
+    if (taskSearchTerm.trim()) {
+      const term = taskSearchTerm.trim().toLowerCase();
+      filtered = filtered.filter(t =>
+        t.title.toLowerCase().includes(term) ||
+        (t.description && t.description.toLowerCase().includes(term))
+      );
+    }
+
     return filtered;
   };
 
@@ -107,6 +118,8 @@ export default function TaskBoard({ taskType = "team" }) {
               ? `${displayTasks.length} ${taskType} tasks` 
               : `${displayTasks.length} ${taskType} task${displayTasks.length !== 1 ? 's' : ''} assigned to you`}
           </p>
+
+
           <button
             style={{ marginLeft: "10px" }}
             className="filter-btn"
@@ -130,75 +143,116 @@ export default function TaskBoard({ taskType = "team" }) {
       )}
 
       <div className="filters-row">
-        <div className="filter-group">
-          <button
-            className={`filter-btn ${statusFilter === "All" ? "active" : ""}`}
-            onClick={() => setStatusFilter("All")}
-          >
-            All
-          </button>
-          <button
-            className={`filter-btn ${statusFilter === "todo" ? "active" : ""}`}
-            onClick={() => setStatusFilter("todo")}
-          >
-            To Do
-          </button>
-          <button
-            className={`filter-btn ${statusFilter === "in_progress" ? "active" : ""}`}
-            onClick={() => setStatusFilter("in_progress")}
-          >
-            In Progress
-          </button>
-          <button
-            className={`filter-btn ${statusFilter === "done" ? "active" : ""}`}
-            onClick={() => setStatusFilter("done")}
-          >
-            Done
-          </button>
-        </div>
-
-        <div className="filter-group">
-          <button
-            className={`filter-btn ${priorityFilter === "All Priority" ? "active" : ""}`}
-            onClick={() => setPriorityFilter("All Priority")}
-          >
-            All Priority
-          </button>
-          <button
-            className={`filter-btn ${priorityFilter === "high" ? "active" : ""}`}
-            onClick={() => setPriorityFilter("high")}
-          >
-            High
-          </button>
-          <button
-            className={`filter-btn ${priorityFilter === "medium" ? "active" : ""}`}
-            onClick={() => setPriorityFilter("medium")}
-          >
-            Medium
-          </button>
-          <button
-            className={`filter-btn ${priorityFilter === "low" ? "active" : ""}`}
-            onClick={() => setPriorityFilter("low")}
-          >
-            Low
-          </button>
-        </div>
-        {isAdmin && users.length > 0 && taskType === "user" && (
-          <div className="filter-group user-filter">
-            <select 
-              className="user-filter-select"
-              value={userFilter}
-              onChange={(e) => setUserFilter(e.target.value)}
+        <div
+          style={{
+            display: "flex",
+            gap: "1.5rem",
+            alignItems: "center",
+            flexWrap: "nowrap",
+            width: "100%",
+            marginTop: "0.5rem"
+          }}
+        >
+          <div className="filter-group" style={{ flexShrink: 0 }}>
+            <button
+              className={`filter-btn ${statusFilter === "All" ? "active" : ""}`}
+              onClick={() => setStatusFilter("All")}
             >
-              <option value="All Users">All Users</option>
-              {users.map(u => (
-                <option key={u._id} value={u._id}>
-                  {u.username}
-                </option>
-              ))}
-            </select>
+              All
+            </button>
+            <button
+              className={`filter-btn ${statusFilter === "todo" ? "active" : ""}`}
+              onClick={() => setStatusFilter("todo")}
+            >
+              To Do
+            </button>
+            <button
+              className={`filter-btn ${statusFilter === "in_progress" ? "active" : ""}`}
+              onClick={() => setStatusFilter("in_progress")}
+            >
+              In Progress
+            </button>
+            <button
+              className={`filter-btn ${statusFilter === "done" ? "active" : ""}`}
+              onClick={() => setStatusFilter("done")}
+            >
+              Done
+            </button>
           </div>
-        )}
+
+          <div className="filter-group" style={{ flexShrink: 0 }}>
+            <button
+              className={`filter-btn ${priorityFilter === "All Priority" ? "active" : ""}`}
+              onClick={() => setPriorityFilter("All Priority")}
+            >
+              All Priority
+            </button>
+            <button
+              className={`filter-btn ${priorityFilter === "high" ? "active" : ""}`}
+              onClick={() => setPriorityFilter("high")}
+            >
+              High
+            </button>
+            <button
+              className={`filter-btn ${priorityFilter === "medium" ? "active" : ""}`}
+              onClick={() => setPriorityFilter("medium")}
+            >
+              Medium
+            </button>
+            <button
+              className={`filter-btn ${priorityFilter === "low" ? "active" : ""}`}
+              onClick={() => setPriorityFilter("low")}
+            >
+              Low
+            </button>
+          </div>
+
+          {isAdmin && users.length > 0 && taskType === "user" && (
+            <div className="filter-group user-filter" style={{ flexShrink: 0 }}>
+              <select 
+                className="user-filter-select"
+                value={userFilter}
+                onChange={(e) => setUserFilter(e.target.value)}
+                style={{ minWidth: "160px", height: "44px", fontSize: "1em" }}
+              >
+                <option value="All Users">All Users</option>
+                {users.map(u => (
+                  <option key={u._id} value={u._id}>
+                    {u.username}
+                  </option>
+                ))}
+              </select>
+            </div>
+          )}
+
+          {/* Search bar beside filters */}
+          <div style={{ position: "relative", width: "340px", flexShrink: 1 }}>
+            <input
+              type="text"
+              className="task-search-input"
+              placeholder="Search tasks by name or description..."
+              value={taskSearchTerm}
+              onChange={e => setTaskSearchTerm(e.target.value)}
+              style={{
+                padding: "8px 40px 8px 16px",
+                borderRadius: "8px",
+                border: "1.5px solid #222",
+                width: "100%",
+                fontSize: "1.1em",
+                marginBottom: "4px"
+              }}
+            />
+            <span style={{
+              position: "absolute",
+              right: "14px",
+              top: "50%",
+              transform: "translateY(-50%)",
+              color: "#888",
+              fontSize: "1.3em",
+              pointerEvents: "none"
+            }}>🔍</span>
+          </div>
+        </div>
       </div>
 
       {showPrivateSection && (

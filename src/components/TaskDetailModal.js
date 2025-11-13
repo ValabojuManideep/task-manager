@@ -79,6 +79,34 @@ export default function TaskDetailModal({ task, onClose, onUpdate, onDelete, onR
         </div>
 
         <div className="modal-body">
+
+          {/* Recurrent label and end date */}
+          {task.isRecurrent && (
+            <div className="modal-section" style={{ marginBottom: '1rem' }}>
+              <span className="recurrent-label" style={{
+                display: 'inline-block',
+                background: '#e0e7ff',
+                color: '#3730a3',
+                borderRadius: '6px',
+                padding: '4px 12px',
+                fontWeight: 600,
+                marginRight: '1rem',
+                fontSize: '1em',
+              }}>
+                🔁 Recurrent Task
+              </span>
+              {task.recurrenceEndDate && (
+                <span className="recurrent-end-date" style={{
+                  color: '#5B7FFF',
+                  fontWeight: 500,
+                  fontSize: '1em',
+                }}>
+                  Ends: {format(new Date(task.recurrenceEndDate), "MMM d, yyyy")}
+                </span>
+              )}
+            </div>
+          )}
+
           {task.description && (
             <div className="modal-section">
               <h3>Description</h3>

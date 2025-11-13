@@ -7,6 +7,7 @@ import "./TeamManagement.css";
 export default function TeamManagement() {
   const { teams, addTeam, updateTeam, deleteTeam } = useContext(TeamContext);
   const { user } = useAuth();
+
   const [showForm, setShowForm] = useState(false);
   const [editingTeam, setEditingTeam] = useState(null);
   const [selectedTeamDetail, setSelectedTeamDetail] = useState(null);
@@ -19,6 +20,9 @@ export default function TeamManagement() {
     description: ""
   });
 
+  const [page, setPage] = useState(1);
+  const pageSize = 9;
+
   useEffect(() => {
     fetchUsers();
   }, []);
@@ -26,25 +30,37 @@ export default function TeamManagement() {
   const fetchUsers = async () => {
     try {
       const { data } = await axios.get("http://localhost:5000/api/auth/users");
-      setUsers(data.filter(u => u.role === "user"));
+      setUsers(data.filter((u) => u.role === "user"));
     } catch (err) {
       console.error("Error fetching users:", err);
     }
   };
 
   const handleUserToggle = (userId) => {
-    setSelectedUsers(prev =>
+    setSelectedUsers((prev) =>
       prev.includes(userId)
-        ? prev.filter(id => id !== userId)
+        ? prev.filter((id) => id !== userId)
         : [...prev, userId]
     );
   };
 
   const handleSubmit = async (e) => {
     e.preventDefault();
-    
-    if (selectedUsers.length === 0) {
-      alert("⚠️ Please select at least one team member");
+
+    if (selectedUsers.length < 2) {
+      alert("A team must have at least 2 members.");
+      return;
+    }
+
+    const normalizedName = form.name.trim().toLowerCase();
+    const duplicate = teams.some(
+      (t) =>
+        t.name.trim().toLowerCase() === normalizedName &&
+        (!editingTeam || t._id !== editingTeam._id)
+    );
+
+    if (duplicate) {
+      alert("A team with this name already exists.");
       return;
     }
 
@@ -70,7 +86,7 @@ export default function TeamManagement() {
       name: team.name,
       description: team.description || ""
     });
-    setSelectedUsers(team.members.map(m => m._id));
+    setSelectedUsers(team.members.map((m) => m._id));
     setShowForm(true);
   };
 
@@ -93,38 +109,43 @@ export default function TeamManagement() {
     setSelectedTeamDetail(team);
   };
 
-  const filteredUsers = users.filter(u =>
-    u.username.toLowerCase().includes(searchTerm.toLowerCase()) ||
-    u.email.toLowerCase().includes(searchTerm.toLowerCase())
+  const filteredUsers = users.filter(
+    (u) =>
+      u.username.toLowerCase().includes(searchTerm.toLowerCase()) ||
+      u.email.toLowerCase().includes(searchTerm.toLowerCase())
   );
 
-  const filteredTeams = teams.filter(team =>
-    team.name.toLowerCase().includes(teamSearchTerm.toLowerCase()) ||
-    team.description?.toLowerCase().includes(teamSearchTerm.toLowerCase()) ||
-    team.members?.some(member => 
-      member.username.toLowerCase().includes(teamSearchTerm.toLowerCase())
-    )
+  const filteredTeams = teams.filter(
+    (team) =>
+      team.name.toLowerCase().includes(teamSearchTerm.toLowerCase()) ||
+      team.description?.toLowerCase().includes(teamSearchTerm.toLowerCase()) ||
+      team.members?.some((member) =>
+        member.username.toLowerCase().includes(teamSearchTerm.toLowerCase())
+      )
+  );
+
+  const totalPages = Math.ceil(filteredTeams.length / pageSize);
+  const paginatedTeams = filteredTeams.slice(
+    (page - 1) * pageSize,
+    page * pageSize
   );
 
   return (
     <div className="team-management-container">
       <div className="team-header">
         <h1 className="page-title">Team Management</h1>
-        <button 
-          className="new-team-btn" 
+        <button
+          className="new-team-btn"
           onClick={() => {
-            if (showForm && editingTeam) {
-              resetForm();
-            } else {
-              setShowForm(!showForm);
-            }
+            if (showForm && editingTeam) resetForm();
+            else setShowForm(!showForm);
           }}
         >
           {showForm ? "✕ Cancel" : "+ Create Team"}
         </button>
       </div>
 
-      {/* Team Search Box */}
+      {/* Search box */}
       <div className="team-search-section">
         <div className="search-box">
           <span className="search-icon">🔍</span>
@@ -136,7 +157,7 @@ export default function TeamManagement() {
             onChange={(e) => setTeamSearchTerm(e.target.value)}
           />
           {teamSearchTerm && (
-            <button 
+            <button
               className="clear-search-btn"
               onClick={() => setTeamSearchTerm("")}
             >
@@ -144,18 +165,21 @@ export default function TeamManagement() {
             </button>
           )}
         </div>
+
         {teamSearchTerm && (
           <p className="search-results-count">
-            Found {filteredTeams.length} team{filteredTeams.length !== 1 ? 's' : ''}
+            Found {filteredTeams.length} team
+            {filteredTeams.length !== 1 ? "s" : ""}
           </p>
         )}
       </div>
 
+      {/* Form UI */}
       {showForm && (
         <div className="team-form-wrapper">
           <form className="team-form" onSubmit={handleSubmit}>
             <h3>{editingTeam ? "Edit Team" : "Create New Team"}</h3>
-            
+
             <div className="form-group">
               <label>Team Name</label>
               <input
@@ -172,7 +196,9 @@ export default function TeamManagement() {
               <textarea
                 placeholder="Enter team description"
                 value={form.description}
-                onChange={(e) => setForm({ ...form, description: e.target.value })}
+                onChange={(e) =>
+                  setForm({ ...form, description: e.target.value })
+                }
                 rows="2"
               />
             </div>
@@ -186,25 +212,29 @@ export default function TeamManagement() {
                 value={searchTerm}
                 onChange={(e) => setSearchTerm(e.target.value)}
               />
-              
+
               <div className="user-dropdown">
                 {filteredUsers.length > 0 ? (
-                  filteredUsers.map(u => (
-                    <div 
-                      key={u._id} 
-                      className={`user-item ${selectedUsers.includes(u._id) ? 'selected' : ''}`}
+                  filteredUsers.map((u) => (
+                    <div
+                      key={u._id}
+                      className={`user-item ${
+                        selectedUsers.includes(u._id) ? "selected" : ""
+                      }`}
                       onClick={() => handleUserToggle(u._id)}
                     >
                       <input
                         type="checkbox"
                         checked={selectedUsers.includes(u._id)}
-                        onChange={() => {}}
                         onClick={(e) => e.stopPropagation()}
+                        readOnly
                       />
+
                       <div className="user-details">
                         <span className="user-name">{u.username}</span>
                         <span className="user-email">{u.email}</span>
                       </div>
+
                       {selectedUsers.includes(u._id) && (
                         <span className="check-icon">✓</span>
                       )}
@@ -224,8 +254,8 @@ export default function TeamManagement() {
               <button type="button" className="cancel-btn" onClick={resetForm}>
                 Cancel
               </button>
-              <button 
-                type="submit" 
+              <button
+                type="submit"
                 className="submit-btn"
                 disabled={selectedUsers.length === 0}
               >
@@ -236,79 +266,145 @@ export default function TeamManagement() {
         </div>
       )}
 
+      {/* Team Cards */}
       <div className="teams-list">
         {filteredTeams.length === 0 ? (
           <div className="empty-state">
             <div className="empty-icon">👥</div>
             <h3>{teamSearchTerm ? "No teams found" : "No teams yet"}</h3>
             <p>
-              {teamSearchTerm 
-                ? "Try adjusting your search criteria" 
+              {teamSearchTerm
+                ? "Try adjusting your search criteria"
                 : "Create your first team to get started"}
             </p>
           </div>
         ) : (
-          filteredTeams.map(team => (
-            <div 
-              key={team._id} 
-              className="team-card"
-              onClick={() => handleTeamCardClick(team)}
-            >
-              <div className="team-card-header">
-                <h3>{team.name}</h3>
-                <div className="team-actions">
-                  <button 
-                    className="edit-team-btn"
-                    onClick={(e) => handleEditTeam(team, e)}
-                    title="Edit team"
-                  >
-                    ✏️
-                  </button>
-                  <button 
-                    className="delete-team-btn"
-                    onClick={(e) => handleDeleteTeam(team._id, e)}
-                    title="Delete team"
-                  >
-                    🗑
-                  </button>
+          <>
+            {paginatedTeams.map((team) => (
+              <div
+                key={team._id}
+                className="team-card"
+                onClick={() => handleTeamCardClick(team)}
+              >
+                <div className="team-card-header">
+                  <h3>{team.name}</h3>
+
+                  <div className="team-actions">
+                    <button
+                      className="edit-team-btn"
+                      onClick={(e) => handleEditTeam(team, e)}
+                    >
+                      ✏️
+                    </button>
+
+                    <button
+                      className="delete-team-btn"
+                      onClick={(e) => handleDeleteTeam(team._id, e)}
+                    >
+                      🗑
+                    </button>
+                  </div>
+                </div>
+
+                {team.description && (
+                  <div className="team-description-preview">
+                    <p>{team.description}</p>
+                  </div>
+                )}
+
+                <div className="team-members">
+                  <strong>Members ({team.members?.length || 0}):</strong>
+
+                  <div className="members-list">
+                    {team.members?.slice(0, 3).map((member) => (
+                      <span key={member._id} className="member-tag">
+                        {member.username}
+                      </span>
+                    ))}
+
+                    {team.members?.length > 3 && (
+                      <span className="member-tag more-members">
+                        +{team.members.length - 3} more
+                      </span>
+                    )}
+                  </div>
                 </div>
               </div>
-              {team.description && (
-                <div className="team-description-preview">
-                  <p className="team-description">
-                    {team.description.length > 80 
-                      ? `${team.description.substring(0, 80)}...` 
-                      : team.description}
-                  </p>
-                </div>
-              )}
-              <div className="team-members">
-                <strong>Members ({team.members?.length || 0}):</strong>
-                <div className="members-list">
-                  {team.members?.slice(0, 3).map(member => (
-                    <span key={member._id} className="member-tag">
-                      {member.username}
-                    </span>
-                  ))}
-                  {team.members?.length > 3 && (
-                    <span className="member-tag more-members">
-                      +{team.members.length - 3} more
-                    </span>
-                  )}
-                </div>
-              </div>
-            </div>
-          ))
+            ))}
+          </>
         )}
       </div>
 
-      {/* Team Detail Modal */}
+      {/* FIXED BOTTOM PAGINATION */}
+      {totalPages > 1 && (
+        <div
+          style={{
+            width: "100%",
+            display: "flex",
+            justifyContent: "center",
+            alignItems: "center",
+            gap: "1.2rem",
+            marginTop: "2rem",
+            marginBottom: "2rem"
+          }}
+        >
+          <button
+            onClick={() => setPage(page - 1)}
+            disabled={page === 1}
+            style={{
+              padding: "0.5rem 1.2rem",
+              background: page === 1 ? "#e5e7eb" : "#5B7FFF",
+              color: page === 1 ? "#6b7280" : "#fff",
+              border: "none",
+              borderRadius: "6px",
+              fontWeight: "bold",
+              cursor: page === 1 ? "not-allowed" : "pointer",
+              boxShadow: "0 2px 8px rgba(91,127,255,0.08)"
+            }}
+          >
+            Prev
+          </button>
+
+          <span style={{ fontWeight: 600, color: "#5B7FFF" }}>
+            Page {page} of {totalPages}
+          </span>
+
+          <button
+            onClick={() => setPage(page + 1)}
+            disabled={page === totalPages}
+            style={{
+              padding: "0.5rem 1.2rem",
+              background: page === totalPages ? "#e5e7eb" : "#5B7FFF",
+              color: page === totalPages ? "#6b7280" : "#fff",
+              border: "none",
+              borderRadius: "6px",
+              fontWeight: "bold",
+              cursor:
+                page === totalPages ? "not-allowed" : "pointer",
+              boxShadow: "0 2px 8px rgba(91,127,255,0.08)"
+            }}
+          >
+            Next
+          </button>
+        </div>
+      )}
+
+      {/* Team Modal */}
       {selectedTeamDetail && (
-        <div className="team-detail-modal-overlay" onClick={() => setSelectedTeamDetail(null)}>
-          <div className="team-detail-modal" onClick={(e) => e.stopPropagation()}>
+        <div
+          className="team-detail-modal-overlay"
+          onClick={() => setSelectedTeamDetail(null)}
+        >
+          <div
+            className="team-detail-modal"
+            onClick={(e) => e.stopPropagation()}
+          >
             <div className="modal-header">
               <h2>{selectedTeamDetail.name}</h2>
-              <button className="close-modal-btn" onClick={() => setSelectedTeamDetail(null)}>
+              <button
+                className="close-modal-btn"
+                onClick={() => setSelectedTeamDetail(null)}
+              >
                 ✕
               </button>
             </div>
@@ -317,21 +413,30 @@ export default function TeamManagement() {
               {selectedTeamDetail.description && (
                 <div className="detail-section">
                   <h4>Description</h4>
-                  <p className="detail-description">{selectedTeamDetail.description}</p>
+                  <p className="detail-description">
+                    {selectedTeamDetail.description}
+                  </p>
                 </div>
               )}
 
               <div className="detail-section">
-                <h4>Team Members ({selectedTeamDetail.members?.length || 0})</h4>
+                <h4>
+                  Team Members ({selectedTeamDetail.members?.length || 0})
+                </h4>
                 <div className="detail-members-grid">
-                  {selectedTeamDetail.members?.map(member => (
+                  {selectedTeamDetail.members?.map((member) => (
                     <div key={member._id} className="detail-member-card">
                       <div className="member-avatar">
                         {member.username?.substring(0, 2).toUpperCase()}
                       </div>
+
                       <div className="member-info">
-                        <div className="member-name-detail">{member.username}</div>
-                        <div className="member-email-detail">{member.email}</div>
+                        <div className="member-name-detail">
+                          {member.username}
+                        </div>
+                        <div className="member-email-detail">
+                          {member.email}
+                        </div>
                       </div>
                     </div>
                   ))}
@@ -344,17 +449,20 @@ export default function TeamManagement() {
                   <div className="meta-item">
                     <span className="meta-label">Created:</span>
                     <span className="meta-value">
-                      {new Date(selectedTeamDetail.createdAt).toLocaleDateString('en-US', {
-                        year: 'numeric',
-                        month: 'long',
-                        day: 'numeric'
+                      {new Date(
+                        selectedTeamDetail.createdAt
+                      ).toLocaleDateString("en-US", {
+                        year: "numeric",
+                        month: "long",
+                        day: "numeric"
                       })}
                     </span>
                   </div>
+
                   <div className="meta-item">
                     <span className="meta-label">Created by:</span>
                     <span className="meta-value">
-                      {selectedTeamDetail.createdBy?.username || 'Unknown'}
+                      {selectedTeamDetail.createdBy?.username || "Unknown"}
                     </span>
                   </div>
                 </div>
@@ -362,7 +470,7 @@ export default function TeamManagement() {
             </div>
 
             <div className="modal-footer">
-              <button 
+              <button
                 className="modal-edit-btn"
                 onClick={(e) => {
                   setSelectedTeamDetail(null);
@@ -371,7 +479,8 @@ export default function TeamManagement() {
               >
                 ✏️ Edit Team
               </button>
-              <button 
+
+              <button
                 className="modal-delete-btn"
                 onClick={(e) => {
                   setSelectedTeamDetail(null);
