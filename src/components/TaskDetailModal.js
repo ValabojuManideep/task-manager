@@ -1,15 +1,53 @@
-import React, { useState } from "react";
+
+import React, { useState, useEffect } from "react";
 import { useAuth } from "../context/AuthContext";
 import { format } from "date-fns";
 import axios from "axios";
 import "./TaskDetailModal.css";
 
+// Highlight @username mentions in comment text
+function highlightMentions(text) {
+  if (!text) return null;
+  const mentionRegex = /@([a-zA-Z0-9_.-]+)/g;
+  const parts = [];
+  let lastIndex = 0;
+  let match;
+  let key = 0;
+  while ((match = mentionRegex.exec(text)) !== null) {
+    if (match.index > lastIndex) {
+      parts.push(text.substring(lastIndex, match.index));
+    }
+    parts.push(
+      <span key={key++} className="mention-highlight">@{match[1]}</span>
+    );
+    lastIndex = mentionRegex.lastIndex;
+  }
+  if (lastIndex < text.length) {
+    parts.push(text.substring(lastIndex));
+  }
+  return parts;
+}
 export default function TaskDetailModal({ task, onClose, onUpdate, onDelete, onRefresh }) {
   const { user } = useAuth();
   const [commentText, setCommentText] = useState("");
   const [editingComment, setEditingComment] = useState(null);
   const [editText, setEditText] = useState("");
   const [deletingAttachment, setDeletingAttachment] = useState(null);
+  const [users, setUsers] = useState([]);
+  const [mentionDropdown, setMentionDropdown] = useState({ show: false, search: "", pos: { left: 0, top: 40 } });
+  const [mentionDropdownSelected, setMentionDropdownSelected] = useState(0);
+
+  useEffect(() => {
+    async function fetchUsers() {
+      try {
+        const { data } = await axios.get("http://localhost:5000/api/auth/users");
+        setUsers(data);
+      } catch (err) {
+        setUsers([]);
+      }
+    }
+    fetchUsers();
+  }, []);
 
   const isAdmin = user?.role === "admin";
   const currentUserId = user?.id || user?._id;
@@ -347,7 +385,7 @@ export default function TaskDetailModal({ task, onClose, onUpdate, onDelete, onR
                             )}
                           </div>
                         </div>
-                        <p className="comment-text">{comment.text}</p>
+                        <p className="comment-text">{highlightMentions(comment.text)}</p>
                       </>
                     )}
                   </div>
@@ -358,15 +396,119 @@ export default function TaskDetailModal({ task, onClose, onUpdate, onDelete, onR
             </div>
             
             <div className="comment-input-wrapper">
-              <input
-                type="text"
-                className="comment-input"
-                placeholder="Add a comment..."
-                value={commentText}
-                onChange={(e) => setCommentText(e.target.value)}
-                onKeyPress={(e) => e.key === 'Enter' && handleAddComment()}
-              />
-              <button className="comment-submit-btn" onClick={handleAddComment}>Send</button>
+              <div style={{ position: "relative" }}>
+                <input
+                  type="text"
+                  className="comment-input"
+                  placeholder="Add a comment..."
+                  value={commentText}
+                  onChange={(e) => {
+                    const val = e.target.value;
+                    setCommentText(val);
+                    if (task.isTeamTask) {
+                      const cursor = e.target.selectionStart;
+                      const atIdx = val.lastIndexOf("@", cursor - 1);
+                      setMentionDropdown({
+                        show: atIdx !== -1 && (atIdx === 0 || /\s/.test(val[atIdx - 1])),
+                        search: atIdx !== -1 ? val.slice(atIdx + 1, cursor) : "",
+                        pos: { left: 0, top: -120 }
+                      });
+                    } else {
+                      setMentionDropdown({ show: false, search: "", pos: { left: 0, top: 40 } });
+                    }
+                  }}
+                  onKeyDown={(e) => {
+                    if (task.isTeamTask && mentionDropdown.show) {
+                      const teamMembers = task.assignedToTeam?.members || [];
+                      const filteredUsers = users.filter(u =>
+                        teamMembers.some(m => m._id === u._id) &&
+                        u.username.toLowerCase().includes(mentionDropdown.search.toLowerCase())
+                      );
+                      let selectedIdx = mentionDropdownSelected;
+                      if (e.key === "ArrowDown") {
+                        e.preventDefault();
+                        selectedIdx = Math.min(selectedIdx + 1, filteredUsers.length - 1);
+                        setMentionDropdownSelected(selectedIdx);
+                      } else if (e.key === "ArrowUp") {
+                        e.preventDefault();
+                        selectedIdx = Math.max(selectedIdx - 1, 0);
+                        setMentionDropdownSelected(selectedIdx);
+                      } else if (e.key === "Enter" && filteredUsers.length > 0) {
+                        e.preventDefault();
+                        const u = filteredUsers[selectedIdx];
+                        const val = commentText || "";
+                        const cursor = e.target.selectionStart;
+                        const atIdx = val.lastIndexOf("@", cursor - 1);
+                        const before = val.slice(0, atIdx + 1);
+                        const after = val.slice(cursor);
+                        setCommentText(before + u.username + " " + after);
+                        setMentionDropdown({ show: false, search: "", pos: { left: 0, top: 40 } });
+                        setMentionDropdownSelected(0);
+                      } else if (e.key === "Escape") {
+                        setMentionDropdown({ show: false, search: "", pos: { left: 0, top: 40 } });
+                        setMentionDropdownSelected(0);
+                      }
+                    } else if (e.key === "Enter") {
+                      e.preventDefault();
+                      handleAddComment();
+                      setCommentText("");
+                      setMentionDropdown({ show: false, search: "", pos: { left: 0, top: 40 } });
+                      setMentionDropdownSelected(0);
+                    }
+                  }}
+                />
+                {task.isTeamTask && mentionDropdown.show && (
+                  <div style={{
+                    position: "absolute",
+                    left: mentionDropdown.pos.left,
+                    top: mentionDropdown.pos.top,
+                    background: "#f8f9ff",
+                    border: "2px solid #5B7FFF",
+                    borderRadius: "10px",
+                    boxShadow: "0 8px 32px rgba(91,127,255,0.25)",
+                    zIndex: 9999,
+                    minWidth: "200px",
+                    maxHeight: "220px",
+                    overflowY: "auto",
+                    fontSize: "1rem"
+                  }}>
+                    {(task.assignedToTeam?.members || []).length > 0 ? (
+                      users.filter(u =>
+                        (task.assignedToTeam?.members || []).some(m => m._id === u._id) &&
+                        u.username.toLowerCase().includes(mentionDropdown.search.toLowerCase())
+                      ).map((u, idx) => (
+                        <div
+                          key={u._id}
+                          style={{
+                            padding: "10px 16px",
+                            cursor: "pointer",
+                            background: mentionDropdownSelected === idx ? "#e6edff" : "inherit",
+                            color: mentionDropdownSelected === idx ? "#2346a0" : "#222",
+                            fontWeight: mentionDropdownSelected === idx ? "bold" : "normal",
+                            borderLeft: mentionDropdownSelected === idx ? "4px solid #5B7FFF" : "4px solid transparent"
+                          }}
+                          onMouseDown={e => {
+                            e.preventDefault();
+                            const val = commentText || "";
+                            const cursor = document.activeElement.selectionStart;
+                            const atIdx = val.lastIndexOf("@", cursor - 1);
+                            const before = val.slice(0, atIdx + 1);
+                            const after = val.slice(cursor);
+                            setCommentText(before + u.username + " " + after);
+                            setMentionDropdown({ show: false, search: "", pos: { left: 0, top: 40 } });
+                            setMentionDropdownSelected(0);
+                          }}
+                        >
+                          @{u.username}
+                        </div>
+                      ))
+                    ) : (
+                      <div style={{ padding: "10px 16px", color: "#999" }}>No team members found</div>
+                    )}
+                  </div>
+                )}
+              </div>
+              <button className="comment-submit-btn" onClick={() => { handleAddComment(); setCommentText(""); setMentionDropdown({ show: false, search: "", pos: { left: 0, top: 40 } }); setMentionDropdownSelected(0); }}>Send</button>
             </div>
           </div>
         </div>

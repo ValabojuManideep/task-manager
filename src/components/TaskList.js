@@ -1,12 +1,38 @@
+
 import React, { useContext, useState, useEffect } from "react";
 import { TaskContext } from "../context/TaskContext";
 import { useAuth } from "../context/AuthContext";
+import { TeamContext } from "../context/TeamContext";
 import { format } from "date-fns";
 import axios from "axios";
 import TaskDetailModal from "./TaskDetailModal";
 import "./TaskList.css";
 
+// Highlight @username mentions in comment text
+function highlightMentions(text) {
+  if (!text) return null;
+  const mentionRegex = /@([a-zA-Z0-9_.-]+)/g;
+  const parts = [];
+  let lastIndex = 0;
+  let match;
+  let key = 0;
+  while ((match = mentionRegex.exec(text)) !== null) {
+    if (match.index > lastIndex) {
+      parts.push(text.substring(lastIndex, match.index));
+    }
+    parts.push(
+      <span key={key++} className="mention-highlight">@{match[1]}</span>
+    );
+    lastIndex = mentionRegex.lastIndex;
+  }
+  if (lastIndex < text.length) {
+    parts.push(text.substring(lastIndex));
+  }
+  return parts;
+}
+
 export default function TaskList({ statusFilter, priorityFilter, displayTasks }) {
+  const { teams } = useContext(TeamContext);
   console.log("All tasks:", displayTasks);
 
   const [showRecurrentEnd, setShowRecurrentEnd] = useState(false);
@@ -31,13 +57,28 @@ export default function TaskList({ statusFilter, priorityFilter, displayTasks })
 
   const [expandedTask, setExpandedTask] = useState(null);
   const [selectedTask, setSelectedTask] = useState(null);
-  const [commentText, setCommentText] = useState("");
+  const [commentInputs, setCommentInputs] = useState({});
+  const [mentionDropdowns, setMentionDropdowns] = useState({});
+  const [mentionDropdownSelected, setMentionDropdownSelected] = useState({});
   const [editingComment, setEditingComment] = useState(null);
   const [editText, setEditText] = useState("");
   const [logTaskId, setLogTaskId] = useState(null);
 
   const { updateTask, deleteTask, fetchTasks } = useContext(TaskContext);
   const { user } = useAuth();
+  const [users, setUsers] = useState([]);
+
+  useEffect(() => {
+    async function fetchUsers() {
+      try {
+        const { data } = await axios.get("http://localhost:5000/api/auth/users");
+        setUsers(data);
+      } catch (err) {
+        setUsers([]);
+      }
+    }
+    fetchUsers();
+  }, []);
 
   const isAdmin = user?.role === "admin";
   const currentUserId = user?.id || user?._id;
@@ -106,19 +147,23 @@ export default function TaskList({ statusFilter, priorityFilter, displayTasks })
     setEditText(comment.text);
   };
 
-  const handleAddComment = async (taskId) => {
-    if (!commentText.trim()) return;
+  const handleAddComment = async (taskId, text) => {
+    if (!text.trim()) return;
     try {
-      await axios.post(`/api/tasks/${taskId}/comments`, {
-        text: commentText,
+      console.log('Adding comment to:', `/api/tasks/${taskId}/comment`, 'with text:', text);
+      await axios.post(`/api/tasks/${taskId}/comment`, {
+        text,
         username: user.username,
         userId: currentUserId,
         userRole: user.role,
       });
-      setCommentText("");
-      fetchTasks();
+      // Wait for fetchTasks to complete before updating UI
+      await fetchTasks();
+      // Optionally, force re-render for selected/expanded task
+      setExpandedTask(taskId); // This will re-expand and show updated comments
     } catch (error) {
       console.error("Error adding comment:", error);
+      alert("Failed to add comment: " + (error.response?.data?.error || error.message));
     }
   };
 
@@ -560,7 +605,7 @@ export default function TaskList({ statusFilter, priorityFilter, displayTasks })
                                     </div>
                                   </div>
                                   <p className="comment-text">
-                                    {comment.text}
+                                    {highlightMentions(comment.text)}
                                   </p>
                                 </>
                               )}
@@ -572,19 +617,129 @@ export default function TaskList({ statusFilter, priorityFilter, displayTasks })
                       </div>
 
                       <div className="comment-input-wrapper">
-                        <input
-                          type="text"
-                          className="comment-input"
-                          placeholder="Add a comment..."
-                          value={commentText}
-                          onChange={(e) => setCommentText(e.target.value)}
-                          onKeyPress={(e) =>
-                            e.key === "Enter" && handleAddComment(id)
-                          }
-                        />
+                        <div style={{ position: "relative" }}>
+                          <input
+                            type="text"
+                            className="comment-input"
+                            placeholder="Add a comment..."
+                            value={commentInputs[id] || ""}
+                            onChange={(e) => {
+                              const val = e.target.value;
+                              setCommentInputs(inputs => ({ ...inputs, [id]: val }));
+                              if (task.isTeamTask) {
+                                const cursor = e.target.selectionStart;
+                                const atIdx = val.lastIndexOf("@", cursor - 1);
+                                setMentionDropdowns(dropdowns => ({
+                                  ...dropdowns,
+                                  [id]: {
+                                    show: atIdx !== -1 && (atIdx === 0 || /\s/.test(val[atIdx - 1])),
+                                    search: atIdx !== -1 ? val.slice(atIdx + 1, cursor) : "",
+                                    pos: { left: 0, top: -120 }
+                                  }
+                                }));
+                              } else {
+                                setMentionDropdowns(dropdowns => ({ ...dropdowns, [id]: { show: false, search: "", pos: { left: 0, top: 40 } } }));
+                              }
+                            }}
+                            onKeyDown={(e) => {
+                              if (task.isTeamTask && mentionDropdowns[id]?.show) {
+                                // Only show team members in dropdown
+                                const teamMembers = task.assignedToTeam?.members || [];
+                                const filteredUsers = users.filter(u =>
+                                  teamMembers.some(m => m._id === u._id) &&
+                                  u.username.toLowerCase().includes(mentionDropdowns[id].search.toLowerCase())
+                                );
+                                let selectedIdx = mentionDropdownSelected[id] ?? 0;
+                                if (e.key === "ArrowDown") {
+                                  e.preventDefault();
+                                  selectedIdx = Math.min(selectedIdx + 1, filteredUsers.length - 1);
+                                  setMentionDropdownSelected(sel => ({ ...sel, [id]: selectedIdx }));
+                                } else if (e.key === "ArrowUp") {
+                                  e.preventDefault();
+                                  selectedIdx = Math.max(selectedIdx - 1, 0);
+                                  setMentionDropdownSelected(sel => ({ ...sel, [id]: selectedIdx }));
+                                } else if (e.key === "Enter" && filteredUsers.length > 0) {
+                                  e.preventDefault();
+                                  const u = filteredUsers[selectedIdx];
+                                  const val = commentInputs[id] || "";
+                                  const cursor = e.target.selectionStart;
+                                  const atIdx = val.lastIndexOf("@", cursor - 1);
+                                  const before = val.slice(0, atIdx + 1);
+                                  const after = val.slice(cursor);
+                                  setCommentInputs(inputs => ({ ...inputs, [id]: before + u.username + " " + after }));
+                                  setMentionDropdowns(dropdowns => ({ ...dropdowns, [id]: { show: false, search: "", pos: { left: 0, top: 40 } } }));
+                                  setMentionDropdownSelected(sel => ({ ...sel, [id]: 0 }));
+                                } else if (e.key === "Escape") {
+                                  setMentionDropdowns(dropdowns => ({ ...dropdowns, [id]: { show: false, search: "", pos: { left: 0, top: 40 } } }));
+                                  setMentionDropdownSelected(sel => ({ ...sel, [id]: 0 }));
+                                }
+                              } else if (e.key === "Enter") {
+                                e.preventDefault();
+                                handleAddComment(id, commentInputs[id] || "");
+                                setCommentInputs(inputs => ({ ...inputs, [id]: "" }));
+                                setMentionDropdowns(dropdowns => ({ ...dropdowns, [id]: { show: false, search: "", pos: { left: 0, top: 40 } } }));
+                              }
+                            }}
+                          />
+                          {task.isTeamTask && mentionDropdowns[id]?.show && (
+                            <div style={{
+                              position: "absolute",
+                              left: mentionDropdowns[id].pos.left,
+                              top: mentionDropdowns[id].pos.top,
+                              background: "#f8f9ff",
+                              border: "2px solid #5B7FFF",
+                              borderRadius: "10px",
+                              boxShadow: "0 8px 32px rgba(91,127,255,0.25)",
+                              zIndex: 9999,
+                              minWidth: "200px",
+                              maxHeight: "220px",
+                              overflowY: "auto",
+                              fontSize: "1rem"
+                            }}>
+                              {(task.assignedToTeam?.members || []).length > 0 ? (
+                                users.filter(u =>
+                                  (task.assignedToTeam?.members || []).some(m => m._id === u._id) &&
+                                  u.username.toLowerCase().includes(mentionDropdowns[id].search.toLowerCase())
+                                ).map((u, idx) => (
+                                  <div
+                                    key={u._id}
+                                    style={{
+                                      padding: "10px 16px",
+                                      cursor: "pointer",
+                                      background: (mentionDropdownSelected[id] ?? 0) === idx ? "#e6edff" : "inherit",
+                                      color: (mentionDropdownSelected[id] ?? 0) === idx ? "#2346a0" : "#222",
+                                      fontWeight: (mentionDropdownSelected[id] ?? 0) === idx ? "bold" : "normal",
+                                      borderLeft: (mentionDropdownSelected[id] ?? 0) === idx ? "4px solid #5B7FFF" : "4px solid transparent"
+                                    }}
+                                    onMouseDown={e => {
+                                      e.preventDefault();
+                                      const val = commentInputs[id] || "";
+                                      const cursor = document.activeElement.selectionStart;
+                                      const atIdx = val.lastIndexOf("@", cursor - 1);
+                                      const before = val.slice(0, atIdx + 1);
+                                      const after = val.slice(cursor);
+                                      setCommentInputs(inputs => ({ ...inputs, [id]: before + u.username + " " + after }));
+                                      setMentionDropdowns(dropdowns => ({ ...dropdowns, [id]: { show: false, search: "", pos: { left: 0, top: 40 } } }));
+                                      setMentionDropdownSelected(sel => ({ ...sel, [id]: 0 }));
+                                    }}
+                                  >
+                                    @{u.username}
+                                  </div>
+                                ))
+                              ) : (
+                                <div style={{ padding: "10px 16px", color: "#999" }}>No team members found</div>
+                              )}
+                            </div>
+                          )}
+                        </div>
                         <button
+                          type="button"
                           className="comment-submit-btn"
-                          onClick={() => handleAddComment(id)}
+                          onClick={() => {
+                            handleAddComment(id, commentInputs[id] || "");
+                            setCommentInputs(inputs => ({ ...inputs, [id]: "" }));
+                            setMentionDropdowns(dropdowns => ({ ...dropdowns, [id]: { show: false, search: "", pos: { left: 0, top: 40 } } }));
+                          }}
                         >
                           Send
                         </button>

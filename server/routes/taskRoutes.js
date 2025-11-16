@@ -303,10 +303,14 @@ router.delete("/:id", async (req, res) => {
 // Add comment to task
 router.post("/:id/comment", async (req, res) => {
   try {
+    console.log('🟢 /api/tasks/:id/comment route hit');
+    console.log('Task ID:', req.params.id);
+    console.log('Request body:', req.body);
     const { userId, username, userRole, text } = req.body;
     const task = await Task.findById(req.params.id);
 
     if (!task) {
+      console.log('🔴 Task not found for ID:', req.params.id);
       return res.status(404).json({ error: "Task not found" });
     }
 
@@ -323,6 +327,7 @@ router.post("/:id/comment", async (req, res) => {
 
     res.json(task);
   } catch (err) {
+    console.log('🔴 Error in /api/tasks/:id/comment:', err);
     res.status(500).json({ error: err.message });
   }
 });
