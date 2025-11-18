@@ -25,6 +25,7 @@ export default function Navbar() {
   const isTeamTasksActive = location.pathname === "/tasks/team";
   const isUserTasksActive = location.pathname === "/tasks/user";
   const isDashboardActive = location.pathname === "/";
+  const isChatActive = location.pathname === "/chat";
 
   return (
     <>
@@ -106,6 +107,17 @@ export default function Navbar() {
             <span className="nav-label">Activity</span>
           </Link>
 
+          {/* Chat (hide for admins) */}
+          {!isAdmin && (
+            <Link
+              to="/chat"
+              className={`nav-item ${isChatActive ? "active" : ""}`}
+            >
+              <span className="nav-icon">💬</span>
+              <span className="nav-label">Chat</span>
+            </Link>
+          )}
+
           {/* Profile */}
           <Link
             to="/profile"
@@ -153,6 +165,15 @@ export default function Navbar() {
           <span className="mobile-nav-icon">👥</span>
           <span>Team</span>
         </Link>
+        {!isAdmin && (
+          <Link
+            to="/chat"
+            className={`mobile-nav-item ${isChatActive ? "active" : ""}`}
+          >
+            <span className="mobile-nav-icon">💬</span>
+            <span>Chat</span>
+          </Link>
+        )}
         
         <Link
           to="/tasks/user"

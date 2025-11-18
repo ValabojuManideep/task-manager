@@ -1,0 +1,92 @@
+import React, { useEffect, useState, useContext } from "react";
+import axios from "axios";
+import { TeamContext } from "../context/TeamContext";
+import { useAuth } from "../context/AuthContext";
+import Chat from "./Chat";
+import "./Chat.css";
+
+export default function Conversations() {
+  const { teams } = useContext(TeamContext);
+  const { user } = useAuth();
+  const [userTeams, setUserTeams] = useState([]);
+  const [selectedTeam, setSelectedTeam] = useState(null);
+  const [activeConv, setActiveConv] = useState(null);
+
+  useEffect(() => {
+    if (!teams || !user) return setUserTeams([]);
+    // Filter teams where current user is a member
+    const filtered = teams.filter((t) => {
+      const members = t.members || [];
+      return members.some((m) => {
+        const id = m._id || m;
+        return String(id) === String(user.id) || String(id) === String(user._id);
+      });
+    });
+    setUserTeams(filtered);
+  }, [teams, user]);
+
+  const openConversationWith = async (teamId, member) => {
+    try {
+      const { data } = await axios.post("http://localhost:5000/api/chat/conversations", {
+        teamId,
+        participantId: member._id,
+        senderId: user.id
+      });
+      // data is the conversation
+      setActiveConv(data);
+    } catch (err) {
+      console.error("Failed to open conversation", err.response?.data || err.message);
+      alert(err.response?.data?.error || "Could not start conversation");
+    }
+  };
+
+  return (
+    <div style={{ padding: 16 }}>
+      <h2>Conversations</h2>
+
+      {userTeams.length === 0 ? (
+        <p>You are not a member of any team yet. Join or create a team to start chatting with teammates.</p>
+      ) : (
+        <div style={{ display: "grid", gap: 16 }}>
+          {userTeams.map((t) => (
+            <div key={t._id} style={{ border: "1px solid #e6e6e6", padding: 12, borderRadius: 8 }}>
+              <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center" }}>
+                <div>
+                  <div style={{ fontWeight: 800 }}>{t.name}</div>
+                  <div style={{ fontSize: 12, color: "#6b7280" }}>{t.description}</div>
+                </div>
+                <div>
+                  <button onClick={() => setSelectedTeam(t)} style={{ background: "#e5e7eb", border: "none", padding: "6px 10px", borderRadius: 6 }}>View Members</button>
+                </div>
+              </div>
+
+              {selectedTeam && selectedTeam._id === t._id && (
+                <div style={{ marginTop: 12 }}>
+                  {(t.members || []).filter(m => String(m._id || m) !== String(user.id)).map((member) => (
+                    <div key={member._id} style={{ display: "flex", justifyContent: "space-between", alignItems: "center", padding: 8, borderBottom: "1px solid #f1f1f1" }}>
+                      <div>
+                        <div style={{ fontWeight: 700 }}>{member.username}</div>
+                        <div style={{ fontSize: 12, color: "#6b7280" }}>{member.email}</div>
+                      </div>
+                      <div>
+                        <button onClick={() => openConversationWith(t._id, member)} style={{ background: "#5B7FFF", color: "#fff", border: "none", padding: "6px 10px", borderRadius: 6 }}>💬 Chat</button>
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              )}
+            </div>
+          ))}
+        </div>
+      )}
+
+      {activeConv && (
+        <Chat
+          currentUser={user}
+          conversation={activeConv}
+          onClose={() => setActiveConv(null)}
+        />
+      )}
+    </div>
+  );
+}

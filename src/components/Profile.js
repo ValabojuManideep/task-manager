@@ -128,43 +128,22 @@ export default function Profile() {
         ) : (
           <div style={{ display: "flex", flexDirection: "column", gap: "1.2rem" }}>
             {mentions.map((m, idx) => (
-              <div
-                key={idx}
-                style={{
-                  background: "#f8f9ff",
-                  borderRadius: "8px",
-                  padding: "12px 16px",
-                  boxShadow: "0 2px 8px rgba(91,127,255,0.08)",
-                }}
-              >
-                <div style={{ fontWeight: "bold", color: "#2346a0" }}>{m.taskTitle}</div>
-                <div style={{ fontSize: "0.98em", margin: "6px 0" }}>
-                  <span style={{ color: "#555" }}>@{m.commentUser}</span>: {" "}
+              <div key={idx} className="mention-card">
+                <div className="mention-task-title">{m.taskTitle}</div>
+                <div className="mention-body">
+                  <span className="mention-user">@{m.commentUser}</span>: {" "}
                   {m.commentText.split(`@${profile.username}`).map((part, i, arr) =>
                     i < arr.length - 1 ? (
-                      <>
+                      <React.Fragment key={i}>
                         <span>{part}</span>
-                        <span
-                          style={{
-                            background: "#e6edff",
-                            color: "#2346a0",
-                            fontWeight: "bold",
-                            borderRadius: "4px",
-                            padding: "2px 6px",
-                            margin: "0 2px",
-                          }}
-                        >
-                          @{profile.username}
-                        </span>
-                      </>
+                        <span className="mention-highlight">@{profile.username}</span>
+                      </React.Fragment>
                     ) : (
                       part
                     )
                   )}
                 </div>
-                <div style={{ fontSize: "0.85em", color: "#888" }}>
-                  {format(new Date(m.commentDate), "PPpp")}
-                </div>
+                <div className="mention-date">{format(new Date(m.commentDate), "PPpp")}</div>
               </div>
             ))}
           </div>

@@ -42,12 +42,15 @@ import taskRoutes from "./routes/taskRoutes.js";
 import activityRoutes from "./routes/activityRoutes.js";
 import teamRoutes from "./routes/teamRoutes.js";
 import adminRoutes from "./routes/adminRoutes.js";
+import chatRoutes from "./routes/chatRoutes.js";
 
 // Import models to ensure they are registered with mongoose early
 import "./models/User.js";
 import "./models/Team.js";
 import "./models/Task.js";
 import "./models/Activity.js";
+import "./models/Conversation.js";
+import "./models/Message.js";
 const app = express();
 
 app.use(cors());
@@ -74,6 +77,7 @@ app.use("/api/tasks", taskRoutes);
 app.use("/api/activities", activityRoutes);
 app.use("/api/teams", teamRoutes);
 app.use("/api/admin", adminRoutes);
+app.use("/api/chat", chatRoutes);
 
 // Health check endpoint
 app.get("/", (req, res) => {

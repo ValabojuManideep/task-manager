@@ -41,3 +41,35 @@
 .profile-row .value { font-weight:600; }
 
 .profile-error { color: #b91c1c; margin-top: 8px; }
+
+/* Mentions card (uses class from Profile.js) */
+.mention-card {
+  background: #f8f9ff;
+  border-radius: 8px;
+  padding: 12px 16px;
+  box-shadow: 0 2px 8px rgba(91,127,255,0.08);
+}
+.mention-task-title { font-weight: 700; color: #2346a0; }
+.mention-body { font-size: 0.98em; margin: 6px 0; color: #333; }
+.mention-user { color: #555; }
+.mention-highlight { background: #e6edff; color: #2346a0; font-weight: 700; border-radius: 4px; padding: 2px 6px; margin: 0 2px; }
+.mention-date { font-size: 0.85em; color: #888; }
+
+/* Dark mode overrides */
+.dark-mode .profile-card {
+  background: #0f1724;
+  box-shadow: none;
+  border: 1px solid rgba(255,255,255,0.04);
+  color: #e5e7eb;
+}
+.dark-mode .profile-page { background: transparent; }
+.dark-mode .avatar { background: #1f2937; color: #fff; }
+.dark-mode .profile-role { color: #9ca3af; }
+.dark-mode .profile-row .label { color: #9ca3af; }
+.dark-mode .profile-row .value { color: #e5e7eb; }
+.dark-mode .mention-card { background: #081226; box-shadow: none; border: 1px solid rgba(255,255,255,0.04); }
+.dark-mode .mention-task-title { color: #8ab4ff; }
+.dark-mode .mention-body { color: #d1d5db; }
+.dark-mode .mention-user { color: #a3aab3; }
+.dark-mode .mention-highlight { background: rgba(91,127,255,0.12); color: #a0c4ff; }
+.dark-mode .mention-date { color: #7f8691; }

@@ -3,6 +3,7 @@ import { TeamContext } from "../context/TeamContext";
 import { useAuth } from "../context/AuthContext";
 import axios from "axios";
 import "./TeamManagement.css";
+import Chat from "./Chat";
 
 export default function TeamManagement() {
   const { teams, addTeam, updateTeam, deleteTeam } = useContext(TeamContext);
@@ -11,6 +12,8 @@ export default function TeamManagement() {
   const [showForm, setShowForm] = useState(false);
   const [editingTeam, setEditingTeam] = useState(null);
   const [selectedTeamDetail, setSelectedTeamDetail] = useState(null);
+  const [showChatModal, setShowChatModal] = useState(false);
+  const [chatTarget, setChatTarget] = useState(null);
   const [users, setUsers] = useState([]);
   const [selectedUsers, setSelectedUsers] = useState([]);
   const [searchTerm, setSearchTerm] = useState("");
@@ -438,6 +441,25 @@ export default function TeamManagement() {
                           {member.email}
                         </div>
                       </div>
+
+                      <div style={{ marginLeft: 12 }}>
+                        <button
+                          onClick={() => {
+                            setChatTarget(member);
+                            setShowChatModal(true);
+                          }}
+                          style={{
+                            background: "#5B7FFF",
+                            color: "#fff",
+                            border: "none",
+                            padding: "6px 10px",
+                            borderRadius: 6,
+                            cursor: "pointer"
+                          }}
+                        >
+                          💬 Chat
+                        </button>
+                      </div>
                     </div>
                   ))}
                 </div>
@@ -492,6 +514,14 @@ export default function TeamManagement() {
             </div>
           </div>
         </div>
+      )}
+      {showChatModal && chatTarget && (
+        <Chat
+          teamId={selectedTeamDetail._id}
+          otherUser={chatTarget}
+          currentUser={user}
+          onClose={() => setShowChatModal(false)}
+        />
       )}
     </div>
   );
