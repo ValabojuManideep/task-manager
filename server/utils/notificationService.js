@@ -1,7 +1,7 @@
-import Task from './models/Task.js';
-import User from './models/User.js';
-import Reminder from './models/Reminder.js';
-import { sendMail } from './utils/mailer.js';
+import Task from '../models/Task.js';
+import User from '../models/User.js';
+import Reminder from '../models/Reminder.js';
+import { sendMail } from './mailer.js';
 
 const REMINDER_WINDOW_HOURS = Number(process.env.REMINDER_WINDOW_HOURS || 24); // how far ahead to remind
 const CHECK_INTERVAL_MINUTES = Number(process.env.REMINDER_CHECK_INTERVAL_MINUTES || 60);

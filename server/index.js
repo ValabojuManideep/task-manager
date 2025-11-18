@@ -35,7 +35,7 @@ dotenv.config();
 import express from "express";
 import mongoose from "mongoose";
 import cors from "cors";
-import notificationService from "./notificationService.js";
+import notificationService from "./utils/notificationService.js";
 import authRoutes from "./routes/authRoutes.js";
 import userRoutes from "./routes/userRoutes.js";
 import taskRoutes from "./routes/taskRoutes.js";
@@ -43,6 +43,7 @@ import activityRoutes from "./routes/activityRoutes.js";
 import teamRoutes from "./routes/teamRoutes.js";
 import adminRoutes from "./routes/adminRoutes.js";
 import chatRoutes from "./routes/chatRoutes.js";
+import leaderboardRoutes from "./routes/leaderboardRoutes.js";
 
 // Import models to ensure they are registered with mongoose early
 import "./models/User.js";
@@ -78,6 +79,7 @@ app.use("/api/activities", activityRoutes);
 app.use("/api/teams", teamRoutes);
 app.use("/api/admin", adminRoutes);
 app.use("/api/chat", chatRoutes);
+app.use("/api/leaderboard", leaderboardRoutes);
 
 // Health check endpoint
 app.get("/", (req, res) => {

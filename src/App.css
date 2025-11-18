@@ -102,6 +102,28 @@ body {
   transform: scale(1.05);
 }
 
+/* Leaderboard header button (compact icon beside theme toggle) */
+.leaderboard-header-btn {
+  width: 48px;
+  height: 48px;
+  border: none;
+  border-radius: 12px;
+  background: var(--hover-bg);
+  color: var(--text-color);
+  font-size: 20px;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: all 0.2s ease;
+}
+
+.leaderboard-header-btn:hover {
+  background: var(--border-color);
+  transform: scale(1.05);
+  box-shadow: 0 6px 18px rgba(91,127,255,0.08);
+}
+
 /* Logout Button */
 .logout-btn {
   display: flex;

@@ -1,5 +1,5 @@
 import React, { useState } from "react";
-import { BrowserRouter, Routes, Route, Navigate } from "react-router-dom";
+import { BrowserRouter, Routes, Route, Navigate, useNavigate } from "react-router-dom";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { AuthProvider, useAuth } from "./context/AuthContext";
 import { TaskProvider } from "./context/TaskContext";
@@ -11,6 +11,7 @@ import TaskBoard from "./components/TaskBoard";
 import Analytics from "./components/Analytics";
 import Activity from "./components/Activity";
 import TeamManagement from "./components/TeamManagement";
+import Leaderboard from "./components/Leaderboard";
 import Profile from "./components/Profile";
 import Conversations from "./components/Conversations";
 import Login from "./components/Login";
@@ -32,6 +33,7 @@ function WithTasks({ children }) {
 
 function AppLayout({ children }) {
   const { logout } = useAuth();
+  const navigate = useNavigate();
   const [darkMode, setDarkMode] = useState(false);
 
   const toggleDarkMode = () => {
@@ -46,9 +48,20 @@ function AppLayout({ children }) {
         <div className="top-bar">
           <div className="top-bar-left"></div>
           <div className="top-bar-right">
+            <button
+              className="leaderboard-header-btn"
+              title="Leaderboard"
+              onClick={() => navigate("/leaderboard")}
+              style={{ marginLeft: 8, marginRight: 8 }}
+            >
+              🏅
+            </button>
             <button className="dark-mode-toggle" onClick={toggleDarkMode}>
               {darkMode ? "☀️" : "🌙"}
             </button>
+
+            
+
             <button className="logout-btn" onClick={logout}>
               <span>→</span>
               <span>Logout</span>
@@ -135,7 +148,17 @@ export default function App() {
                 }
               />
               <Route
-                path="/chat"
+                 path="/leaderboard"
+                 element={
+                   <ProtectedRoute>
+                     <AppLayout>
+                       <Leaderboard />
+                     </AppLayout>
+                   </ProtectedRoute>
+                 }
+               />
+               <Route
+                 path="/chat"
                 element={
                   <ProtectedRoute>
                     <AppLayout>

@@ -1,5 +1,5 @@
 import express from 'express';
-import { runOnce } from '../notificationService.js';
+import { runOnce } from '../utils/notificationService.js';
 
 const router = express.Router();
 
