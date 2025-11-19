@@ -380,3 +380,20 @@ body.dark-mode .task-item:hover {
     grid-template-columns: 1fr !important;
   }
 }
+/* ✅ NEW: Task type badge */
+.task-type-badge {
+  background: #10b981;
+  color: white;
+  padding: 0.25rem 0.6rem;
+  border-radius: 8px;
+  font-size: 0.75rem;
+  font-weight: 500;
+}
+
+.task-meta {
+  display: flex;
+  gap: 0.5rem;
+  align-items: center;
+  flex-wrap: wrap;
+}
+

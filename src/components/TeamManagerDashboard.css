@@ -1,0 +1,272 @@
+.team-manager-dashboard {
+  padding: 2rem;
+  max-width: 1400px;
+  margin: 0 auto;
+}
+
+.dashboard-header {
+  margin-bottom: 2rem;
+}
+
+.dashboard-header h1 {
+  font-size: 2rem;
+  color: #1f2937;
+  margin-bottom: 0.5rem;
+}
+
+.subtitle {
+  color: #6b7280;
+  font-size: 1rem;
+}
+
+.empty-state {
+  text-align: center;
+  padding: 4rem 2rem;
+}
+
+.empty-icon {
+  font-size: 4rem;
+  margin-bottom: 1rem;
+}
+
+.empty-state h3 {
+  color: #374151;
+  margin-bottom: 0.5rem;
+}
+
+.empty-state p {
+  color: #6b7280;
+}
+
+.managed-teams-section {
+  margin-bottom: 3rem;
+}
+
+.managed-teams-section h2 {
+  font-size: 1.5rem;
+  color: #1f2937;
+  margin-bottom: 1.5rem;
+}
+
+.teams-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));
+  gap: 1.5rem;
+}
+
+.team-card {
+  background: white;
+  border: 2px solid #e5e7eb;
+  border-radius: 12px;
+  padding: 1.5rem;
+  cursor: pointer;
+  transition: all 0.3s ease;
+}
+
+.team-card:hover {
+  border-color: #5B7FFF;
+  transform: translateY(-2px);
+  box-shadow: 0 4px 12px rgba(91, 127, 255, 0.1);
+}
+
+.team-card.active {
+  border-color: #5B7FFF;
+  background: #f0f4ff;
+}
+
+.team-card-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 0.75rem;
+}
+
+.team-card-header h3 {
+  font-size: 1.25rem;
+  color: #1f2937;
+  margin: 0;
+}
+
+.member-count {
+  background: #e0e7ff;
+  color: #5B7FFF;
+  padding: 0.25rem 0.75rem;
+  border-radius: 12px;
+  font-size: 0.875rem;
+  font-weight: 500;
+}
+
+.team-description {
+  color: #6b7280;
+  font-size: 0.875rem;
+  margin-bottom: 1rem;
+  line-height: 1.5;
+}
+
+.view-tasks-btn {
+  background: #5B7FFF;
+  color: white;
+  border: none;
+  padding: 0.5rem 1rem;
+  border-radius: 8px;
+  font-weight: 500;
+  cursor: pointer;
+  width: 100%;
+  transition: background 0.2s;
+}
+
+.view-tasks-btn:hover {
+  background: #4c6cef;
+}
+
+.team-tasks-section {
+  margin-top: 2rem;
+}
+
+.team-tasks-section h2 {
+  font-size: 1.5rem;
+  color: #1f2937;
+  margin-bottom: 1.5rem;
+}
+
+.loading-state,
+.error-state,
+.empty-tasks {
+  text-align: center;
+  padding: 2rem;
+  background: #f9fafb;
+  border-radius: 8px;
+  color: #6b7280;
+}
+
+.error-state {
+  color: #ef4444;
+  background: #fef2f2;
+}
+
+.tasks-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(350px, 1fr));
+  gap: 1.5rem;
+}
+
+.task-card {
+  background: white;
+  border: 1px solid #e5e7eb;
+  border-radius: 12px;
+  padding: 1.5rem;
+  transition: all 0.2s;
+}
+
+.task-card:hover {
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.08);
+  transform: translateY(-2px);
+}
+
+.task-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-start;
+  margin-bottom: 1rem;
+}
+
+.task-title {
+  font-size: 1.125rem;
+  color: #1f2937;
+  margin: 0;
+  flex: 1;
+}
+
+.task-badges {
+  display: flex;
+  gap: 0.5rem;
+  flex-shrink: 0;
+  margin-left: 1rem;
+}
+
+.status-badge,
+.priority-badge {
+  padding: 0.25rem 0.75rem;
+  border-radius: 12px;
+  font-size: 0.75rem;
+  color: white;
+  font-weight: 500;
+  text-transform: capitalize;
+}
+
+.task-description {
+  color: #6b7280;
+  font-size: 0.875rem;
+  margin-bottom: 1rem;
+  line-height: 1.5;
+}
+
+.task-due-date,
+.task-assignee,
+.task-comments {
+  font-size: 0.875rem;
+  color: #6b7280;
+  margin-top: 0.5rem;
+}
+
+/* Responsive */
+@media (max-width: 768px) {
+  .team-manager-dashboard {
+    padding: 1rem;
+  }
+
+  .teams-grid,
+  .tasks-grid {
+    grid-template-columns: 1fr;
+  }
+}
+/* ✅ NEW: Team Manager specific styles */
+.manager-tag {
+  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+  color: white;
+  padding: 0.4rem 0.8rem;
+  border-radius: 12px;
+  font-size: 0.85rem;
+  font-weight: 500;
+}
+
+.managers-list {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.5rem;
+  margin-top: 0.5rem;
+}
+
+.team-managers {
+  padding: 0.75rem 0;
+  border-top: 1px solid #e5e7eb;
+  margin-top: 0.5rem;
+}
+
+.manager-card {
+  border-left: 3px solid #667eea;
+}
+
+.manager-avatar {
+  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+}
+
+.role-badge-detail {
+  display: inline-block;
+  background: #667eea;
+  color: white;
+  padding: 0.2rem 0.6rem;
+  border-radius: 8px;
+  font-size: 0.75rem;
+  margin-top: 0.3rem;
+}
+
+.user-role-badge {
+  display: inline-block;
+  background: #667eea;
+  color: white;
+  padding: 0.2rem 0.5rem;
+  border-radius: 6px;
+  font-size: 0.7rem;
+  margin-left: 0.5rem;
+}

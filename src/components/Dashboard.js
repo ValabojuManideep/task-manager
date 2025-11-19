@@ -1,31 +1,60 @@
 import React, { useContext, useMemo } from "react";
 import { TaskContext } from "../context/TaskContext";
 import { TeamContext } from "../context/TeamContext";
-import { useAuth } from "../context/AuthContext";
+import { useAuth } from "../hooks/useAuth"; // ✅ Use enhanced hook
 import { useNavigate } from "react-router-dom";
 import "./Dashboard.css";
 
 export default function Dashboard() {
   const { allTasks } = useContext(TaskContext);
   const { teams } = useContext(TeamContext);
-  const { user } = useAuth();
+  const { user, isAdmin, isTeamManager } = useAuth(); // ✅ Use helper functions
   const navigate = useNavigate();
 
-  const isAdmin = user?.role === "admin";
+  // ✅ NEW: Get managed teams for team-manager
+  const managedTeams = useMemo(() => {
+    if (!isTeamManager) return [];
+    return teams.filter(team => 
+      team.teamManagers?.some(manager => 
+        (manager._id || manager) === (user.id || user._id)
+      )
+    );
+  }, [teams, user, isTeamManager]);
 
   // Filter tasks based on role
   const userTasks = useMemo(() => {
     if (isAdmin) return allTasks;
+    
+    // ✅ NEW: Team managers see all tasks from their managed teams
+    if (isTeamManager) {
+      const managedTeamIds = managedTeams.map(t => t._id);
+      return allTasks.filter(task => {
+        // Tasks assigned to managed teams
+        if (task.isTeamTask && managedTeamIds.includes(task.assignedToTeam?._id)) {
+          return true;
+        }
+        // Tasks assigned directly to team manager
+        if (task.assignedTo?._id === user.id || task.assignedTo === user.id) {
+          return true;
+        }
+        return false;
+      });
+    }
+    
     return allTasks.filter(t => t.assignedTo?._id === user.id || t.assignedTo === user.id);
-  }, [allTasks, user, isAdmin]);
+  }, [allTasks, user, isAdmin, isTeamManager, managedTeams]);
 
   // Get team tasks for the user
   const teamTasks = useMemo(() => {
     if (isAdmin) {
-      // Admin sees all team tasks
       return allTasks.filter(t => t.isTeamTask === true);
+    } else if (isTeamManager) {
+      // ✅ NEW: Team managers see tasks from their managed teams
+      const managedTeamIds = managedTeams.map(t => t._id);
+      return allTasks.filter(t => 
+        t.isTeamTask && managedTeamIds.includes(t.assignedToTeam?._id)
+      );
     } else {
-      // Regular users see team tasks where they are a member
       const currentUserId = user?.id || user?._id;
       return allTasks.filter(t => {
         if (!t.isTeamTask) return false;
@@ -38,7 +67,7 @@ export default function Dashboard() {
         });
       });
     }
-  }, [allTasks, user, isAdmin]);
+  }, [allTasks, user, isAdmin, isTeamManager, managedTeams]);
 
   const stats = useMemo(() => {
     const total = userTasks.length;
@@ -46,8 +75,9 @@ export default function Dashboard() {
     const completed = userTasks.filter((t) => t.status === "done").length;
     const rate = total ? Math.round((completed / total) * 100) : 0;
     const teamCount = teamTasks.length;
-    return { total, inProgress, completed, rate, teamCount };
-  }, [userTasks, teamTasks]);
+    const managedTeamsCount = managedTeams.length; // ✅ NEW
+    return { total, inProgress, completed, rate, teamCount, managedTeamsCount };
+  }, [userTasks, teamTasks, managedTeams]);
 
   const recentTasks = useMemo(() => {
     return [...userTasks]
@@ -55,14 +85,25 @@ export default function Dashboard() {
       .slice(0, 5);
   }, [userTasks]);
 
+  // ✅ NEW: Get role-specific title and subtitle
+  const getDashboardTitle = () => {
+    if (isAdmin) return "Admin Dashboard";
+    if (isTeamManager) return "Team Manager Dashboard";
+    return "Dashboard";
+  };
+
+  const getDashboardSubtitle = () => {
+    if (isAdmin) return "Overview of all tasks and progress";
+    if (isTeamManager) return `Managing ${stats.managedTeamsCount} team${stats.managedTeamsCount !== 1 ? 's' : ''}`;
+    return "Your tasks and progress";
+  };
+
   return (
     <div className="dashboard-container">
       <div className="dashboard-header">
         <div>
-          <h1 className="page-title">Dashboard</h1>
-          <p className="page-subtitle">
-            {isAdmin ? "Overview of all tasks and progress" : "Your tasks and progress"}
-          </p>
+          <h1 className="page-title">{getDashboardTitle()}</h1>
+          <p className="page-subtitle">{getDashboardSubtitle()}</p>
         </div>
         <button className="view-all-btn" onClick={() => navigate("/tasks/team")}>
           View All Tasks
@@ -74,9 +115,22 @@ export default function Dashboard() {
           <div className="stat-icon">📊</div>
           <div className="stat-content">
             <div className="stat-value">{stats.total}</div>
-            <div className="stat-description">Total Tasks</div>
+            <div className="stat-description">
+              {isTeamManager ? "Managed Tasks" : "Total Tasks"}
+            </div>
           </div>
         </div>
+
+        {/* ✅ NEW: Show managed teams count for team-manager */}
+        {isTeamManager && (
+          <div className="stat-card">
+            <div className="stat-icon">👔</div>
+            <div className="stat-content">
+              <div className="stat-value">{stats.managedTeamsCount}</div>
+              <div className="stat-description">Managed Teams</div>
+            </div>
+          </div>
+        )}
 
         <div className="stat-card">
           <div className="stat-icon">👥</div>
@@ -122,6 +176,10 @@ export default function Dashboard() {
                   <div className="task-meta">
                     <span className={`task-status status-${task.status}`}>{task.status}</span>
                     <span className={`task-priority priority-${task.priority}`}>{task.priority}</span>
+                    {/* ✅ NEW: Show if it's a team task */}
+                    {task.isTeamTask && (
+                      <span className="task-type-badge">👥 Team</span>
+                    )}
                   </div>
                 </div>
               </div>

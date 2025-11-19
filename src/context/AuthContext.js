@@ -14,6 +14,8 @@ export const AuthProvider = ({ children }) => {
     const storedUser = localStorage.getItem("user");
     if (token && storedUser) {
       setUser(JSON.parse(storedUser));
+      // ✅ Set default axios authorization header
+      axios.defaults.headers.common['Authorization'] = `Bearer ${token}`;
     }
     setLoading(false);
   }, []);
@@ -24,6 +26,8 @@ export const AuthProvider = ({ children }) => {
       setUser(data.user);
       localStorage.setItem("token", data.token);
       localStorage.setItem("user", JSON.stringify(data.user));
+      // ✅ Set authorization header after login
+      axios.defaults.headers.common['Authorization'] = `Bearer ${data.token}`;
       navigate("/");
       return { success: true };
     } catch (err) {
@@ -37,6 +41,8 @@ export const AuthProvider = ({ children }) => {
       setUser(data.user);
       localStorage.setItem("token", data.token);
       localStorage.setItem("user", JSON.stringify(data.user));
+      // ✅ Set authorization header after register
+      axios.defaults.headers.common['Authorization'] = `Bearer ${data.token}`;
       navigate("/");
       return { success: true };
     } catch (err) {
@@ -48,6 +54,8 @@ export const AuthProvider = ({ children }) => {
     setUser(null);
     localStorage.removeItem("token");
     localStorage.removeItem("user");
+    // ✅ Remove authorization header on logout
+    delete axios.defaults.headers.common['Authorization'];
     navigate("/login");
   };
 
@@ -67,3 +75,4 @@ export const AuthProvider = ({ children }) => {
 };
 
 export const useAuth = () => useContext(AuthContext);
+export { AuthContext };

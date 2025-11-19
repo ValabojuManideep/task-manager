@@ -449,3 +449,13 @@ body.dark-mode .mobile-header-actions .mobile-logout-btn:hover {
   font-size: 14px;
 }
 
+/* ✅ NEW: User role badge */
+.user-role-badge {
+  font-size: 0.7rem;
+  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+  color: white;
+  padding: 0.2rem 0.6rem;
+  border-radius: 8px;
+  margin-top: 0.3rem;
+  display: inline-block;
+}

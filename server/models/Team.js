@@ -17,6 +17,12 @@ const teamSchema = new mongoose.Schema(
         ref: 'User'
       }
     ],
+    teamManagers: [ // ✅ NEW FIELD
+      {
+        type: mongoose.Schema.Types.ObjectId,
+        ref: 'User'
+      }
+    ],
     createdBy: {
       type: mongoose.Schema.Types.ObjectId,
       ref: 'User',

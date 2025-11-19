@@ -1,13 +1,13 @@
 import React, { useState, useContext, useEffect } from "react";
 import { TeamContext } from "../context/TeamContext";
-import { useAuth } from "../context/AuthContext";
+import { useAuth } from "../hooks/useAuth";
 import axios from "axios";
 import "./TeamManagement.css";
 import Chat from "./Chat";
 
 export default function TeamManagement() {
-  const { teams, addTeam, updateTeam, deleteTeam } = useContext(TeamContext);
-  const { user } = useAuth();
+  const { teams, addTeam, updateTeam, deleteTeam, addTeamManager, removeTeamManager } = useContext(TeamContext);
+  const { user, isAdmin } = useAuth();
 
   const [showForm, setShowForm] = useState(false);
   const [editingTeam, setEditingTeam] = useState(null);
@@ -16,7 +16,9 @@ export default function TeamManagement() {
   const [chatTarget, setChatTarget] = useState(null);
   const [users, setUsers] = useState([]);
   const [selectedUsers, setSelectedUsers] = useState([]);
+  const [selectedManagers, setSelectedManagers] = useState([]);
   const [searchTerm, setSearchTerm] = useState("");
+  const [managerSearchTerm, setManagerSearchTerm] = useState("");
   const [teamSearchTerm, setTeamSearchTerm] = useState("");
   const [form, setForm] = useState({
     name: "",
@@ -32,15 +34,42 @@ export default function TeamManagement() {
 
   const fetchUsers = async () => {
     try {
-      const { data } = await axios.get("http://localhost:5000/api/auth/users");
-      setUsers(data.filter((u) => u.role === "user"));
+      const token = localStorage.getItem("token"); // ✅ ADDED
+      const { data } = await axios.get(
+        "http://localhost:5000/api/admin/users", // ✅ CHANGED
+        { headers: { Authorization: `Bearer ${token}` } } // ✅ ADDED
+      );
+      console.log("Fetched users:", data); // ✅ ADDED
+      console.log("Team managers:", data.filter(u => u.role === "team-manager")); // ✅ ADDED
+      setUsers(data);
     } catch (err) {
       console.error("Error fetching users:", err);
     }
   };
 
+  // Rest of your code remains the same...
+
+
+
+
+
+
+
+  // ✅ NEW: Separate users by role
+  const regularUsers = users.filter((u) => u.role === "user");
+  const teamManagerUsers = users.filter((u) => u.role === "team-manager");
+
   const handleUserToggle = (userId) => {
     setSelectedUsers((prev) =>
+      prev.includes(userId)
+        ? prev.filter((id) => id !== userId)
+        : [...prev, userId]
+    );
+  };
+
+  // ✅ NEW: Handle team manager toggle
+  const handleManagerToggle = (userId) => {
+    setSelectedManagers((prev) =>
       prev.includes(userId)
         ? prev.filter((id) => id !== userId)
         : [...prev, userId]
@@ -70,16 +99,21 @@ export default function TeamManagement() {
     const teamData = {
       ...form,
       members: selectedUsers,
+      teamManagers: selectedManagers, // ✅ NEW
       createdBy: user.id
     };
 
-    if (editingTeam) {
-      await updateTeam(editingTeam._id, teamData);
-    } else {
-      await addTeam(teamData);
+    try {
+      if (editingTeam) {
+        await updateTeam(editingTeam._id, teamData);
+      } else {
+        await addTeam(teamData);
+      }
+      resetForm();
+    } catch (err) {
+      console.error("Error saving team:", err);
+      alert("Failed to save team. Please try again.");
     }
-
-    resetForm();
   };
 
   const handleEditTeam = (team, e) => {
@@ -90,13 +124,16 @@ export default function TeamManagement() {
       description: team.description || ""
     });
     setSelectedUsers(team.members.map((m) => m._id));
+    setSelectedManagers(team.teamManagers?.map((m) => m._id) || []); // ✅ NEW
     setShowForm(true);
   };
 
   const resetForm = () => {
     setForm({ name: "", description: "" });
     setSelectedUsers([]);
+    setSelectedManagers([]); // ✅ NEW
     setSearchTerm("");
+    setManagerSearchTerm(""); // ✅ NEW
     setShowForm(false);
     setEditingTeam(null);
   };
@@ -104,7 +141,12 @@ export default function TeamManagement() {
   const handleDeleteTeam = async (teamId, e) => {
     e.stopPropagation();
     if (window.confirm("Are you sure you want to delete this team?")) {
-      await deleteTeam(teamId);
+      try {
+        await deleteTeam(teamId);
+      } catch (err) {
+        console.error("Error deleting team:", err);
+        alert("Failed to delete team. Please try again.");
+      }
     }
   };
 
@@ -112,10 +154,17 @@ export default function TeamManagement() {
     setSelectedTeamDetail(team);
   };
 
-  const filteredUsers = users.filter(
+  const filteredUsers = regularUsers.filter(
     (u) =>
       u.username.toLowerCase().includes(searchTerm.toLowerCase()) ||
       u.email.toLowerCase().includes(searchTerm.toLowerCase())
+  );
+
+  // ✅ NEW: Filter team managers
+  const filteredManagers = teamManagerUsers.filter(
+    (u) =>
+      u.username.toLowerCase().includes(managerSearchTerm.toLowerCase()) ||
+      u.email.toLowerCase().includes(managerSearchTerm.toLowerCase())
   );
 
   const filteredTeams = teams.filter(
@@ -137,15 +186,17 @@ export default function TeamManagement() {
     <div className="team-management-container">
       <div className="team-header">
         <h1 className="page-title">Team Management</h1>
-        <button
-          className="new-team-btn"
-          onClick={() => {
-            if (showForm && editingTeam) resetForm();
-            else setShowForm(!showForm);
-          }}
-        >
-          {showForm ? "✕ Cancel" : "+ Create Team"}
-        </button>
+        {isAdmin && (
+          <button
+            className="new-team-btn"
+            onClick={() => {
+              if (showForm && editingTeam) resetForm();
+              else setShowForm(!showForm);
+            }}
+          >
+            {showForm ? "✕ Cancel" : "+ Create Team"}
+          </button>
+        )}
       </div>
 
       {/* Search box */}
@@ -178,7 +229,7 @@ export default function TeamManagement() {
       </div>
 
       {/* Form UI */}
-      {showForm && (
+      {showForm && isAdmin && (
         <div className="team-form-wrapper">
           <form className="team-form" onSubmit={handleSubmit}>
             <h3>{editingTeam ? "Edit Team" : "Create New Team"}</h3>
@@ -204,6 +255,55 @@ export default function TeamManagement() {
                 }
                 rows="2"
               />
+            </div>
+
+            {/* ✅ NEW: Team Managers Section */}
+            <div className="form-group">
+              <label>Select Team Managers (Optional)</label>
+              <input
+                type="text"
+                className="search-input"
+                placeholder="🔍 Search team managers..."
+                value={managerSearchTerm}
+                onChange={(e) => setManagerSearchTerm(e.target.value)}
+              />
+
+              <div className="user-dropdown">
+                {filteredManagers.length > 0 ? (
+                  filteredManagers.map((u) => (
+                    <div
+                      key={u._id}
+                      className={`user-item ${
+                        selectedManagers.includes(u._id) ? "selected" : ""
+                      }`}
+                      onClick={() => handleManagerToggle(u._id)}
+                    >
+                      <input
+                        type="checkbox"
+                        checked={selectedManagers.includes(u._id)}
+                        onClick={(e) => e.stopPropagation()}
+                        readOnly
+                      />
+
+                      <div className="user-details">
+                        <span className="user-name">{u.username}</span>
+                        <span className="user-email">{u.email}</span>
+                        <span className="user-role-badge">👔 Team Manager</span>
+                      </div>
+
+                      {selectedManagers.includes(u._id) && (
+                        <span className="check-icon">✓</span>
+                      )}
+                    </div>
+                  ))
+                ) : (
+                  <div className="no-users">No team managers available</div>
+                )}
+              </div>
+
+              <div className="selected-count">
+                {selectedManagers.length} manager(s) selected
+              </div>
             </div>
 
             <div className="form-group">
@@ -292,26 +392,47 @@ export default function TeamManagement() {
                 <div className="team-card-header">
                   <h3>{team.name}</h3>
 
-                  <div className="team-actions">
-                    <button
-                      className="edit-team-btn"
-                      onClick={(e) => handleEditTeam(team, e)}
-                    >
-                      ✏️
-                    </button>
+                  {isAdmin && (
+                    <div className="team-actions">
+                      <button
+                        className="edit-team-btn"
+                        onClick={(e) => handleEditTeam(team, e)}
+                      >
+                        ✏️
+                      </button>
 
-                    <button
-                      className="delete-team-btn"
-                      onClick={(e) => handleDeleteTeam(team._id, e)}
-                    >
-                      🗑
-                    </button>
-                  </div>
+                      <button
+                        className="delete-team-btn"
+                        onClick={(e) => handleDeleteTeam(team._id, e)}
+                      >
+                        🗑
+                      </button>
+                    </div>
+                  )}
                 </div>
 
                 {team.description && (
                   <div className="team-description-preview">
                     <p>{team.description}</p>
+                  </div>
+                )}
+
+                {/* ✅ NEW: Show team managers */}
+                {team.teamManagers && team.teamManagers.length > 0 && (
+                  <div className="team-managers">
+                    <strong>Managers ({team.teamManagers.length}):</strong>
+                    <div className="managers-list">
+                      {team.teamManagers.slice(0, 2).map((manager) => (
+                        <span key={manager._id} className="manager-tag">
+                          👔 {manager.username}
+                        </span>
+                      ))}
+                      {team.teamManagers.length > 2 && (
+                        <span className="manager-tag more-managers">
+                          +{team.teamManagers.length - 2} more
+                        </span>
+                      )}
+                    </div>
                   </div>
                 )}
 
@@ -338,7 +459,7 @@ export default function TeamManagement() {
         )}
       </div>
 
-      {/* FIXED BOTTOM PAGINATION */}
+      {/* Pagination */}
       {totalPages > 1 && (
         <div
           style={{
@@ -382,8 +503,7 @@ export default function TeamManagement() {
               border: "none",
               borderRadius: "6px",
               fontWeight: "bold",
-              cursor:
-                page === totalPages ? "not-allowed" : "pointer",
+              cursor: page === totalPages ? "not-allowed" : "pointer",
               boxShadow: "0 2px 8px rgba(91,127,255,0.08)"
             }}
           >
@@ -419,6 +539,34 @@ export default function TeamManagement() {
                   <p className="detail-description">
                     {selectedTeamDetail.description}
                   </p>
+                </div>
+              )}
+
+              {/* ✅ NEW: Team Managers Section in Modal */}
+              {selectedTeamDetail.teamManagers && selectedTeamDetail.teamManagers.length > 0 && (
+                <div className="detail-section">
+                  <h4>
+                    Team Managers ({selectedTeamDetail.teamManagers.length})
+                  </h4>
+                  <div className="detail-members-grid">
+                    {selectedTeamDetail.teamManagers.map((manager) => (
+                      <div key={manager._id} className="detail-member-card manager-card">
+                        <div className="member-avatar manager-avatar">
+                          {manager.username?.substring(0, 2).toUpperCase()}
+                        </div>
+
+                        <div className="member-info">
+                          <div className="member-name-detail">
+                            {manager.username}
+                          </div>
+                          <div className="member-email-detail">
+                            {manager.email}
+                          </div>
+                          <span className="role-badge-detail">Team Manager</span>
+                        </div>
+                      </div>
+                    ))}
+                  </div>
                 </div>
               )}
 
@@ -491,27 +639,29 @@ export default function TeamManagement() {
               </div>
             </div>
 
-            <div className="modal-footer">
-              <button
-                className="modal-edit-btn"
-                onClick={(e) => {
-                  setSelectedTeamDetail(null);
-                  handleEditTeam(selectedTeamDetail, e);
-                }}
-              >
-                ✏️ Edit Team
-              </button>
+            {isAdmin && (
+              <div className="modal-footer">
+                <button
+                  className="modal-edit-btn"
+                  onClick={(e) => {
+                    setSelectedTeamDetail(null);
+                    handleEditTeam(selectedTeamDetail, e);
+                  }}
+                >
+                  ✏️ Edit Team
+                </button>
 
-              <button
-                className="modal-delete-btn"
-                onClick={(e) => {
-                  setSelectedTeamDetail(null);
-                  handleDeleteTeam(selectedTeamDetail._id, e);
-                }}
-              >
-                🗑 Delete Team
-              </button>
-            </div>
+                <button
+                  className="modal-delete-btn"
+                  onClick={(e) => {
+                    setSelectedTeamDetail(null);
+                    handleDeleteTeam(selectedTeamDetail._id, e);
+                  }}
+                >
+                  🗑 Delete Team
+                </button>
+              </div>
+            )}
           </div>
         </div>
       )}

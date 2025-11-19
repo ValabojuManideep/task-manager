@@ -1,16 +1,14 @@
 import React, { useState } from "react";
 import { Link, useLocation } from "react-router-dom";
-import { useAuth } from "../context/AuthContext";
+import { useAuth } from "../hooks/useAuth";
 import "./Navbar.css";
 
 export default function Navbar() {
   const location = useLocation();
-  const { user, logout } = useAuth();
+  const { user, logout, isAdmin, isTeamManager } = useAuth();
   const [expandTasks, setExpandTasks] = useState(
     location.pathname.startsWith("/tasks")
   );
-
-  const isAdmin = user?.role === "admin";
 
   const getInitials = (name) => {
     if (!name) return "U";
@@ -127,14 +125,36 @@ export default function Navbar() {
             <span className="nav-label">Profile</span>
           </Link>
 
-          {/* Teams - Only for Admin */}
-          {isAdmin && (
+          {/* ✅ Team Manager Dashboard - Only for team-managers */}
+          {isTeamManager && (
+            <Link
+              to="/team-manager"
+              className={`nav-item ${location.pathname === "/team-manager" ? "active" : ""}`}
+            >
+              <span className="nav-icon">👔</span>
+              <span className="nav-label">My Teams</span>
+            </Link>
+          )}
+
+          {/* ✅ Teams - For Admin and Team Managers */}
+          {(isAdmin || isTeamManager) && (
             <Link
               to="/teams"
               className={`nav-item ${location.pathname === "/teams" ? "active" : ""}`}
             >
               <span className="nav-icon">👥</span>
               <span className="nav-label">Teams</span>
+            </Link>
+          )}
+
+          {/* ✅ NEW: User Management - Admin only - MOVED TO CORRECT PLACE */}
+          {isAdmin && (
+            <Link
+              to="/admin/users"
+              className={`nav-item ${location.pathname === "/admin/users" ? "active" : ""}`}
+            >
+              <span className="nav-icon">⚙️</span>
+              <span className="nav-label">User Management</span>
             </Link>
           )}
         </div>
@@ -144,6 +164,12 @@ export default function Navbar() {
           <div className="user-info">
             <div className="user-name">{user?.username || "User"}</div>
             <div className="user-email">{user?.email || "No email"}</div>
+            {/* Show user role */}
+            {user?.role && user.role !== "user" && (
+              <div className="user-role-badge">
+                {user.role === "team-manager" ? "Team Manager" : "Admin"}
+              </div>
+            )}
           </div>
         </div>
       </div>
@@ -207,13 +233,36 @@ export default function Navbar() {
           <span>Profile</span>
         </Link>
 
-        {isAdmin && (
+        {/* Team Manager link for mobile */}
+        {isTeamManager && (
+          <Link
+            to="/team-manager"
+            className={`mobile-nav-item ${location.pathname === "/team-manager" ? "active" : ""}`}
+          >
+            <span className="mobile-nav-icon">👔</span>
+            <span>My Teams</span>
+          </Link>
+        )}
+
+        {/* Teams link for mobile */}
+        {(isAdmin || isTeamManager) && (
           <Link
             to="/teams"
             className={`mobile-nav-item ${location.pathname === "/teams" ? "active" : ""}`}
           >
             <span className="mobile-nav-icon">👥</span>
             <span>Teams</span>
+          </Link>
+        )}
+
+        {/* ✅ User Management for mobile - Admin only */}
+        {isAdmin && (
+          <Link
+            to="/admin/users"
+            className={`mobile-nav-item ${location.pathname === "/admin/users" ? "active" : ""}`}
+          >
+            <span className="mobile-nav-icon">⚙️</span>
+            <span>Users</span>
           </Link>
         )}
       </div>

@@ -1,0 +1,123 @@
+import React, { useState, useEffect } from "react";
+import axios from "axios";
+import { useAuth } from "../hooks/useAuth";
+import "./UserManagement.css";
+
+export default function UserManagement() {
+  const { user } = useAuth();
+  const [users, setUsers] = useState([]);
+  const [loading, setLoading] = useState(true);
+  const [selectedUser, setSelectedUser] = useState(null);
+
+  useEffect(() => {
+    fetchUsers();
+  }, []);
+
+  const fetchUsers = async () => {
+    try {
+      const token = localStorage.getItem("token");
+      const { data } = await axios.get(
+        "http://localhost:5000/api/admin/users",
+        { headers: { Authorization: `Bearer ${token}` } }
+      );
+      setUsers(data);
+    } catch (err) {
+      console.error("Error fetching users:", err);
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const handleRoleChange = async (userId, newRole) => {
+    if (!window.confirm(`Change user role to ${newRole}?`)) return;
+
+    try {
+      const token = localStorage.getItem("token");
+      await axios.put(
+        `http://localhost:5000/api/admin/users/${userId}/role`,
+        { role: newRole },
+        { headers: { Authorization: `Bearer ${token}` } }
+      );
+      
+      alert("User role updated successfully!");
+      fetchUsers(); // Refresh list
+    } catch (err) {
+      console.error("Error updating role:", err);
+      alert("Failed to update user role");
+    }
+  };
+
+  const getRoleBadgeColor = (role) => {
+    switch (role) {
+      case "admin": return "#ef4444";
+      case "team-manager": return "#8b5cf6";
+      case "user": return "#3b82f6";
+      default: return "#6b7280";
+    }
+  };
+
+  if (loading) return <div>Loading users...</div>;
+
+  return (
+    <div className="user-management-container">
+      <div className="header">
+        <h1>User Management</h1>
+        <p className="subtitle">Manage user roles and permissions</p>
+      </div>
+
+      <div className="users-table">
+        <table>
+          <thead>
+            <tr>
+              <th>Username</th>
+              <th>Email</th>
+              <th>Current Role</th>
+              <th>Actions</th>
+            </tr>
+          </thead>
+          <tbody>
+            {users.map((u) => (
+              <tr key={u._id}>
+                <td>
+                  <div className="user-info">
+                    <div className="avatar">
+                      {u.username.substring(0, 2).toUpperCase()}
+                    </div>
+                    <span>{u.username}</span>
+                  </div>
+                </td>
+                <td>{u.email}</td>
+                <td>
+                  <span 
+                    className="role-badge"
+                    style={{ backgroundColor: getRoleBadgeColor(u.role) }}
+                  >
+                    {u.role === "team-manager" ? "Team Manager" : u.role}
+                  </span>
+                </td>
+                <td>
+                  <select
+                    className="role-select"
+                    value={u.role}
+                    onChange={(e) => handleRoleChange(u._id, e.target.value)}
+                    disabled={u._id === user.id} // Can't change own role
+                  >
+                    <option value="user">User</option>
+                    <option value="team-manager">Team Manager</option>
+                    <option value="admin">Admin</option>
+                  </select>
+                </td>
+              </tr>
+            ))}
+          </tbody>
+        </table>
+      </div>
+
+      {users.length === 0 && (
+        <div className="empty-state">
+          <p>No users found</p>
+        </div>
+      )}
+    </div>
+  );
+}

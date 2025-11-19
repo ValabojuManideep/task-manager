@@ -13,7 +13,7 @@ const createAdmin = async () => {
     const adminData = {
       username: "admin",
       email: "admin@gmail.com",
-      password: "admin123" // Change this to a strong password
+      password: "admin123" 
     };
 
     const adminExists = await User.findOne({ username: adminData.username });

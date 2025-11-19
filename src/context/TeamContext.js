@@ -26,6 +26,7 @@ export const TeamProvider = ({ children }) => {
       return data;
     } catch (err) {
       console.error("Error adding team:", err);
+      throw err;
     }
   };
 
@@ -36,6 +37,7 @@ export const TeamProvider = ({ children }) => {
       return data;
     } catch (err) {
       console.error("Error updating team:", err);
+      throw err;
     }
   };
 
@@ -45,11 +47,102 @@ export const TeamProvider = ({ children }) => {
       await fetchTeams();
     } catch (err) {
       console.error("Error deleting team:", err);
+      throw err;
+    }
+  };
+
+  // ✅ NEW: Assign team manager (admin only)
+  const addTeamManager = async (teamId, userId) => {
+    try {
+      const token = localStorage.getItem("token");
+      const { data } = await axios.post(
+        `http://localhost:5000/api/teams/${teamId}/managers`,
+        { userId },
+        { headers: { Authorization: `Bearer ${token}` } }
+      );
+      await fetchTeams();
+      return data;
+    } catch (err) {
+      console.error("Error adding team manager:", err);
+      throw err;
+    }
+  };
+
+  // ✅ NEW: Remove team manager (admin only)
+  const removeTeamManager = async (teamId, userId) => {
+    try {
+      const token = localStorage.getItem("token");
+      await axios.delete(
+        `http://localhost:5000/api/teams/${teamId}/managers/${userId}`,
+        { headers: { Authorization: `Bearer ${token}` } }
+      );
+      await fetchTeams();
+    } catch (err) {
+      console.error("Error removing team manager:", err);
+      throw err;
+    }
+  };
+
+  // ✅ NEW: Get team tasks (team-manager can access)
+  const getTeamTasks = async (teamId) => {
+    try {
+      const token = localStorage.getItem("token");
+      const { data } = await axios.get(
+        `http://localhost:5000/api/teams/${teamId}/tasks`,
+        { headers: { Authorization: `Bearer ${token}` } }
+      );
+      return data;
+    } catch (err) {
+      console.error("Error fetching team tasks:", err);
+      throw err;
+    }
+  };
+
+  // ✅ NEW: Add member to team (team-manager can do this)
+  const addTeamMember = async (teamId, userId) => {
+    try {
+      const token = localStorage.getItem("token");
+      const { data } = await axios.post(
+        `http://localhost:5000/api/teams/${teamId}/members`,
+        { userId },
+        { headers: { Authorization: `Bearer ${token}` } }
+      );
+      await fetchTeams();
+      return data;
+    } catch (err) {
+      console.error("Error adding team member:", err);
+      throw err;
+    }
+  };
+
+  // ✅ NEW: Remove member from team (team-manager can do this)
+  const removeTeamMember = async (teamId, userId) => {
+    try {
+      const token = localStorage.getItem("token");
+      await axios.delete(
+        `http://localhost:5000/api/teams/${teamId}/members/${userId}`,
+        { headers: { Authorization: `Bearer ${token}` } }
+      );
+      await fetchTeams();
+    } catch (err) {
+      console.error("Error removing team member:", err);
+      throw err;
     }
   };
 
   return (
-    <TeamContext.Provider value={{ teams, addTeam, updateTeam, deleteTeam, fetchTeams }}>
+    <TeamContext.Provider value={{ 
+      teams, 
+      addTeam, 
+      updateTeam, 
+      deleteTeam, 
+      fetchTeams,
+      addTeamManager,       // ✅ NEW
+      removeTeamManager,    // ✅ NEW
+      getTeamTasks,         // ✅ NEW
+      addTeamMember,        // ✅ NEW
+      removeTeamMember      // ✅ NEW
+    }}>
       {children}
     </TeamContext.Provider>
   );
