@@ -1,25 +1,49 @@
-import React, { useState, useContext, useEffect } from "react";
-import { TaskContext } from "../context/TaskContext";
-import { useAuth } from "../context/AuthContext";
+import React, { useEffect } from "react";
+import { useAuth } from "../hooks/useAuth";
 import TaskForm from "./TaskForm";
 import TaskList from "./TaskList";
 import axios from "axios";
+import useAppStore from "../store/useAppStore";
 import "./TaskBoard.css";
 
 export default function TaskBoard({ taskType = "team" }) {
   // Search bar state
-  const [taskSearchTerm, setTaskSearchTerm] = useState("");
+  const taskSearchTerm = useAppStore((s) => s.taskBoard_taskSearchTerm);
+  const setTaskSearchTerm = useAppStore((s) => s.setTaskBoard_taskSearchTerm);
   const { user } = useAuth();
-  const [statusFilter, setStatusFilter] = useState("All");
-  const [priorityFilter, setPriorityFilter] = useState("All Priority");
-  const [userFilter, setUserFilter] = useState("All Users");
-  const [showForm, setShowForm] = useState(false);
-  const [users, setUsers] = useState([]);
-  const [showPrivateSection, setShowPrivateSection] = useState(false);
-  const [securityKey, setSecurityKey] = useState("");
-  const [privateKeyEntered, setPrivateKeyEntered] = useState(false);
+  const statusFilter = useAppStore((s) => s.taskBoard_statusFilter);
+  const setStatusFilter = useAppStore((s) => s.setTaskBoard_statusFilter);
+  const priorityFilter = useAppStore((s) => s.taskBoard_priorityFilter);
+  const setPriorityFilter = useAppStore((s) => s.setTaskBoard_priorityFilter);
+  const userFilter = useAppStore((s) => s.taskBoard_userFilter);
+  const setUserFilter = useAppStore((s) => s.setTaskBoard_userFilter);
+  const showForm = useAppStore((s) => s.taskBoard_showForm);
+  const setShowForm = useAppStore((s) => s.setTaskBoard_showForm);
+  const users = useAppStore((s) => s.taskBoard_users);
+  const setUsers = useAppStore((s) => s.setTaskBoard_users);
+  const showPrivateSection = useAppStore((s) => s.taskBoard_showPrivateSection);
+  const setShowPrivateSection = useAppStore((s) => s.setTaskBoard_showPrivateSection);
+  const securityKey = useAppStore((s) => s.taskBoard_securityKey);
+  const setSecurityKey = useAppStore((s) => s.setTaskBoard_securityKey);
+  const privateKeyEntered = useAppStore((s) => s.taskBoard_privateKeyEntered);
+  const setPrivateKeyEntered = useAppStore((s) => s.setTaskBoard_privateKeyEntered);
 
-  const { tasks, allTasks, privateTasks, fetchPrivateTasks } = useContext(TaskContext);
+  const tasks = useAppStore((s) => s.tasks);
+  const allTasks = useAppStore((s) => s.allTasks);
+  const privateTasks = useAppStore((s) => s.privateTasks);
+  const fetchPrivateTasks = async (key) => {
+    try {
+      const { data } = await axios.get("http://localhost:5000/api/tasks/private", {
+        headers: { "x-private-key": key }
+      });
+      useAppStore.setState({ privateTasks: data });
+      return data;
+    } catch (err) {
+      console.error("Error fetching private tasks:", err);
+      useAppStore.setState({ privateTasks: [] });
+      return [];
+    }
+  };
 
   const isAdmin = user?.role === "admin";
 

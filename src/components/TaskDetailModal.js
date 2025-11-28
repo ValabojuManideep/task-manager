@@ -1,8 +1,9 @@
 
-import React, { useState, useEffect } from "react";
-import { useAuth } from "../context/AuthContext";
+import React, { useEffect } from "react";
+import { useAuth } from "../hooks/useAuth";
 import { format } from "date-fns";
 import axios from "axios";
+import useAppStore from "../store/useAppStore";
 import "./TaskDetailModal.css";
 
 // Highlight @username mentions in comment text
@@ -29,13 +30,20 @@ function highlightMentions(text) {
 }
 export default function TaskDetailModal({ task, onClose, onUpdate, onDelete, onRefresh }) {
   const { user } = useAuth();
-  const [commentText, setCommentText] = useState("");
-  const [editingComment, setEditingComment] = useState(null);
-  const [editText, setEditText] = useState("");
-  const [deletingAttachment, setDeletingAttachment] = useState(null);
-  const [users, setUsers] = useState([]);
-  const [mentionDropdown, setMentionDropdown] = useState({ show: false, search: "", pos: { left: 0, top: 40 } });
-  const [mentionDropdownSelected, setMentionDropdownSelected] = useState(0);
+  const commentText = useAppStore((s) => s.taskDetail_commentText);
+  const setCommentText = useAppStore((s) => s.setTaskDetail_commentText);
+  const editingComment = useAppStore((s) => s.taskDetail_editingComment);
+  const setEditingComment = useAppStore((s) => s.setTaskDetail_editingComment);
+  const editText = useAppStore((s) => s.taskDetail_editText);
+  const setEditText = useAppStore((s) => s.setTaskDetail_editText);
+  const deletingAttachment = useAppStore((s) => s.taskDetail_deletingAttachment);
+  const setDeletingAttachment = useAppStore((s) => s.setTaskDetail_deletingAttachment);
+  const users = useAppStore((s) => s.taskDetail_users);
+  const setUsers = useAppStore((s) => s.setTaskDetail_users);
+  const mentionDropdown = useAppStore((s) => s.taskDetail_mentionDropdown);
+  const setMentionDropdown = useAppStore((s) => s.setTaskDetail_mentionDropdown);
+  const mentionDropdownSelected = useAppStore((s) => s.taskDetail_mentionDropdownSelected);
+  const setMentionDropdownSelected = useAppStore((s) => s.setTaskDetail_mentionDropdownSelected);
 
   useEffect(() => {
     async function fetchUsers() {

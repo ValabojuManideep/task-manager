@@ -1,15 +1,20 @@
-import React, { useEffect, useState } from "react";
-import { useAuth } from "../context/AuthContext";
+import React, { useEffect } from "react";
+import { useAuth } from "../hooks/useAuth";
 import axios from "axios";
 import { format } from "date-fns";
+import useAppStore from "../store/useAppStore";
 import "./Profile.css";
 
 export default function Profile() {
   const { user } = useAuth();
-  const [profile, setProfile] = useState(null);
-  const [loading, setLoading] = useState(true);
-  const [error, setError] = useState(null);
-  const [mentions, setMentions] = useState([]);
+  const profile = useAppStore((s) => s.profile_profile);
+  const setProfile = useAppStore((s) => s.setProfile_profile);
+  const loading = useAppStore((s) => s.profile_loading);
+  const setLoading = useAppStore((s) => s.setProfile_loading);
+  const error = useAppStore((s) => s.profile_error);
+  const setError = useAppStore((s) => s.setProfile_error);
+  const mentions = useAppStore((s) => s.profile_mentions);
+  const setMentions = useAppStore((s) => s.setProfile_mentions);
 
   useEffect(() => {
     const fetchProfile = async () => {

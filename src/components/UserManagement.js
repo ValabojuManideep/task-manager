@@ -1,13 +1,17 @@
-import React, { useState, useEffect } from "react";
+import React, { useEffect } from "react";
 import axios from "axios";
 import { useAuth } from "../hooks/useAuth";
+import useAppStore from "../store/useAppStore";
 import "./UserManagement.css";
 
 export default function UserManagement() {
   const { user } = useAuth();
-  const [users, setUsers] = useState([]);
-  const [loading, setLoading] = useState(true);
-  const [selectedUser, setSelectedUser] = useState(null);
+  const users = useAppStore((state) => state.users);
+  const setUsers = useAppStore((state) => state.setUsers);
+  const loading = useAppStore((state) => state.loading);
+  const setLoading = useAppStore((state) => state.setLoading);
+  const selectedUser = useAppStore((state) => state.selectedUser);
+  const setSelectedUser = useAppStore((state) => state.setSelectedUser);
 
   useEffect(() => {
     fetchUsers();

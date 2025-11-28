@@ -1,40 +1,50 @@
-import React, { useContext, useState, useEffect } from "react";
-import { TaskContext } from "../context/TaskContext";
-import { TeamContext } from "../context/TeamContext";
-import { useAuth } from "../context/AuthContext";
+import React, { useEffect } from "react";
+import { useAuth } from "../hooks/useAuth";
 import axios from "axios";
+import useAppStore from "../store/useAppStore";
 import "./TaskForm.css";
 
 export default function TaskForm({ onClose }) {
-  const { addTask } = useContext(TaskContext);
-  const { teams } = useContext(TeamContext);
+  const teams = useAppStore((s) => s.teams);
+  const addTask = async (task) => {
+    try {
+      await axios.post("http://localhost:5000/api/tasks", task);
+      const { data } = await axios.get("http://localhost:5000/api/tasks");
+      useAppStore.setState({ tasks: data, allTasks: data });
+    } catch (err) {
+      console.error("Error adding task:", err);
+    }
+  };
   const { user } = useAuth();
-  const [users, setUsers] = useState([]);
-  const [assignmentType, setAssignmentType] = useState("user");
-  const [userSearchTerm, setUserSearchTerm] = useState("");
-  const [teamSearchTerm, setTeamSearchTerm] = useState("");
-  const [showUserDropdown, setShowUserDropdown] = useState(false);
-  const [showTeamDropdown, setShowTeamDropdown] = useState(false);
-  
+  const users = useAppStore((s) => s.taskForm_users);
+  const setUsers = useAppStore((s) => s.setTaskForm_users);
+  const assignmentType = useAppStore((s) => s.taskForm_assignmentType);
+  const setAssignmentType = useAppStore((s) => s.setTaskForm_assignmentType);
+  const userSearchTerm = useAppStore((s) => s.taskForm_userSearchTerm);
+  const setUserSearchTerm = useAppStore((s) => s.setTaskForm_userSearchTerm);
+  const teamSearchTerm = useAppStore((s) => s.taskForm_teamSearchTerm);
+  const setTeamSearchTerm = useAppStore((s) => s.setTaskForm_teamSearchTerm);
+  const showUserDropdown = useAppStore((s) => s.taskForm_showUserDropdown);
+  const setShowUserDropdown = useAppStore((s) => s.setTaskForm_showUserDropdown);
+  const showTeamDropdown = useAppStore((s) => s.taskForm_showTeamDropdown);
+  const setShowTeamDropdown = useAppStore((s) => s.setTaskForm_showTeamDropdown);
+
   // FILE UPLOAD STATE
-  const [files, setFiles] = useState([]);
-  const [fileError, setFileError] = useState("");
-  const [uploading, setUploading] = useState(false);
-  
-  const [form, setForm] = useState({
-    title: "",
-    description: "",
-    status: "todo",
-    priority: "medium",
-    dueDate: "",
-    assignedTo: "",
-    assignedToTeam: "",
-    recurrencePattern: "none",
-    recurrenceEndDate: ""
-  });
-  const [isPrivate, setIsPrivate] = useState(false);
-  const [privateKey, setPrivateKey] = useState("");
-  const [privateKeyError, setPrivateKeyError] = useState("");
+  const files = useAppStore((s) => s.taskForm_files);
+  const setFiles = useAppStore((s) => s.setTaskForm_files);
+  const fileError = useAppStore((s) => s.taskForm_fileError);
+  const setFileError = useAppStore((s) => s.setTaskForm_fileError);
+  const uploading = useAppStore((s) => s.taskForm_uploading);
+  const setUploading = useAppStore((s) => s.setTaskForm_uploading);
+
+  const form = useAppStore((s) => s.taskForm_form);
+  const setForm = useAppStore((s) => s.setTaskForm_form);
+  const isPrivate = useAppStore((s) => s.taskForm_isPrivate);
+  const setIsPrivate = useAppStore((s) => s.setTaskForm_isPrivate);
+  const privateKey = useAppStore((s) => s.taskForm_privateKey);
+  const setPrivateKey = useAppStore((s) => s.setTaskForm_privateKey);
+  const privateKeyError = useAppStore((s) => s.taskForm_privateKeyError);
+  const setPrivateKeyError = useAppStore((s) => s.setTaskForm_privateKeyError);
 
   const today = new Date().toISOString().split('T')[0];
   const nowForDateTimeLocal = new Date().toISOString().slice(0,16);

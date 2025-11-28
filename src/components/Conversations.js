@@ -1,16 +1,19 @@
-import React, { useEffect, useState, useContext } from "react";
+import React, { useEffect } from "react";
 import axios from "axios";
-import { TeamContext } from "../context/TeamContext";
-import { useAuth } from "../context/AuthContext";
+import { useAuth } from "../hooks/useAuth";
 import Chat from "./Chat";
 import "./Chat.css";
+import useAppStore from "../store/useAppStore";
 
 export default function Conversations() {
-  const { teams } = useContext(TeamContext);
+  const teams = useAppStore((s) => s.teams);
   const { user } = useAuth();
-  const [userTeams, setUserTeams] = useState([]);
-  const [selectedTeam, setSelectedTeam] = useState(null);
-  const [activeConv, setActiveConv] = useState(null);
+  const userTeams = useAppStore((s) => s.conv_userTeams);
+  const setUserTeams = useAppStore((s) => s.setConv_userTeams);
+  const selectedTeam = useAppStore((s) => s.conv_selectedTeam);
+  const setSelectedTeam = useAppStore((s) => s.setConv_selectedTeam);
+  const activeConv = useAppStore((s) => s.conv_activeConv);
+  const setActiveConv = useAppStore((s) => s.setConv_activeConv);
 
   useEffect(() => {
     if (!teams || !user) return setUserTeams([]);

@@ -1,5 +1,4 @@
-import { useContext } from "react";
-import { AuthContext } from "../context/AuthContext";
+import useAppStore from "../store/useAppStore";
 
 // Role constants
 export const ROLES = {
@@ -9,13 +8,11 @@ export const ROLES = {
 };
 
 export function useAuth() {
-  const context = useContext(AuthContext);
-  
-  if (!context) {
-    throw new Error("useAuth must be used within AuthProvider");
-  }
-
-  const { user, ...rest } = context;
+  const user = useAppStore((s) => s.user);
+  const login = useAppStore((s) => s.loginAction);
+  const register = useAppStore((s) => s.registerAction);
+  const logout = useAppStore((s) => s.logoutAction);
+  const updateUser = useAppStore((s) => s.updateUser);
 
   // Helper functions for role checking
   const isAdmin = user?.role === ROLES.ADMIN;
@@ -30,11 +27,14 @@ export function useAuth() {
 
   return {
     user,
+    login,
+    register,
+    logout,
+    updateUser,
     isAdmin,
     isTeamManager,
     isUser,
     hasRole,
-    canManageTeams,
-    ...rest
+    canManageTeams
   };
 }

@@ -1,15 +1,22 @@
-import React, { useState, useEffect } from "react";
+import React, { useEffect } from "react";
 import axios from "axios";
+import useAppStore from "../store/useAppStore";
 import "./Leaderboard.css";
 
 export default function Leaderboard() {
-  const [activeTab, setActiveTab] = useState("teams");
-  const [teamLeaderboard, setTeamLeaderboard] = useState([]);
-  const [memberLeaderboard, setMemberLeaderboard] = useState([]);
+  const activeTab = useAppStore((s) => s.leaderboard_activeTab);
+  const setActiveTab = useAppStore((s) => s.setLeaderboard_activeTab);
+  const teamLeaderboard = useAppStore((s) => s.leaderboard_teamLeaderboard);
+  const setTeamLeaderboard = useAppStore((s) => s.setLeaderboard_teamLeaderboard);
+  const memberLeaderboard = useAppStore((s) => s.leaderboard_memberLeaderboard);
+  const setMemberLeaderboard = useAppStore((s) => s.setLeaderboard_memberLeaderboard);
   // team member modal removed; no local state required for per-team members
-  const [loading, setLoading] = useState(false);
-  const [error, setError] = useState(null);
-  const [currentPage, setCurrentPage] = useState(1);
+  const loading = useAppStore((s) => s.leaderboard_loading);
+  const setLoading = useAppStore((s) => s.setLeaderboard_loading);
+  const error = useAppStore((s) => s.leaderboard_error);
+  const setError = useAppStore((s) => s.setLeaderboard_error);
+  const currentPage = useAppStore((s) => s.leaderboard_currentPage);
+  const setCurrentPage = useAppStore((s) => s.setLeaderboard_currentPage);
   const itemsPerPage = 5;
 
   useEffect(() => {

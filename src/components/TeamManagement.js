@@ -1,31 +1,41 @@
-import React, { useState, useContext, useEffect } from "react";
-import { TeamContext } from "../context/TeamContext";
+import React, { useEffect } from "react";
 import { useAuth } from "../hooks/useAuth";
 import axios from "axios";
+import useAppStore from "../store/useAppStore";
 import "./TeamManagement.css";
 import Chat from "./Chat";
 
 export default function TeamManagement() {
-  const { teams, addTeam, updateTeam, deleteTeam, addTeamManager, removeTeamManager } = useContext(TeamContext);
+  const teams = useAppStore((s) => s.teams);
   const { user, isAdmin } = useAuth();
 
-  const [showForm, setShowForm] = useState(false);
-  const [editingTeam, setEditingTeam] = useState(null);
-  const [selectedTeamDetail, setSelectedTeamDetail] = useState(null);
-  const [showChatModal, setShowChatModal] = useState(false);
-  const [chatTarget, setChatTarget] = useState(null);
-  const [users, setUsers] = useState([]);
-  const [selectedUsers, setSelectedUsers] = useState([]);
-  const [selectedManagers, setSelectedManagers] = useState([]);
-  const [searchTerm, setSearchTerm] = useState("");
-  const [managerSearchTerm, setManagerSearchTerm] = useState("");
-  const [teamSearchTerm, setTeamSearchTerm] = useState("");
-  const [form, setForm] = useState({
-    name: "",
-    description: ""
-  });
+  const showForm = useAppStore((s) => s.teamMgmt_showForm);
+  const setShowForm = useAppStore((s) => s.setTeamMgmt_showForm);
+  const editingTeam = useAppStore((s) => s.teamMgmt_editingTeam);
+  const setEditingTeam = useAppStore((s) => s.setTeamMgmt_editingTeam);
+  const selectedTeamDetail = useAppStore((s) => s.teamMgmt_selectedTeamDetail);
+  const setSelectedTeamDetail = useAppStore((s) => s.setTeamMgmt_selectedTeamDetail);
+  const showChatModal = useAppStore((s) => s.teamMgmt_showChatModal);
+  const setShowChatModal = useAppStore((s) => s.setTeamMgmt_showChatModal);
+  const chatTarget = useAppStore((s) => s.teamMgmt_chatTarget);
+  const setChatTarget = useAppStore((s) => s.setTeamMgmt_chatTarget);
+  const users = useAppStore((s) => s.teamMgmt_users);
+  const setUsers = useAppStore((s) => s.setTeamMgmt_users);
+  const selectedUsers = useAppStore((s) => s.teamMgmt_selectedUsers);
+  const setSelectedUsers = useAppStore((s) => s.setTeamMgmt_selectedUsers);
+  const selectedManagers = useAppStore((s) => s.teamMgmt_selectedManagers);
+  const setSelectedManagers = useAppStore((s) => s.setTeamMgmt_selectedManagers);
+  const searchTerm = useAppStore((s) => s.teamMgmt_searchTerm);
+  const setSearchTerm = useAppStore((s) => s.setTeamMgmt_searchTerm);
+  const managerSearchTerm = useAppStore((s) => s.teamMgmt_managerSearchTerm);
+  const setManagerSearchTerm = useAppStore((s) => s.setTeamMgmt_managerSearchTerm);
+  const teamSearchTerm = useAppStore((s) => s.teamMgmt_teamSearchTerm);
+  const setTeamSearchTerm = useAppStore((s) => s.setTeamMgmt_teamSearchTerm);
+  const form = useAppStore((s) => s.teamMgmt_form);
+  const setForm = useAppStore((s) => s.setTeamMgmt_form);
 
-  const [page, setPage] = useState(1);
+  const page = useAppStore((s) => s.teamMgmt_page);
+  const setPage = useAppStore((s) => s.setTeamMgmt_page);
   const pageSize = 9;
 
   useEffect(() => {
@@ -44,6 +54,41 @@ export default function TeamManagement() {
       setUsers(data);
     } catch (err) {
       console.error("Error fetching users:", err);
+    }
+  };
+
+  const addTeam = async (team) => {
+    try {
+      const { data } = await axios.post("http://localhost:5000/api/teams", team);
+      const updatedTeams = [...teams, data];
+      useAppStore.setState({ teams: updatedTeams });
+      return data;
+    } catch (err) {
+      console.error("Error adding team:", err);
+      throw err;
+    }
+  };
+
+  const updateTeam = async (id, updates) => {
+    try {
+      const { data } = await axios.put(`http://localhost:5000/api/teams/${id}`, updates);
+      const updatedTeams = teams.map(t => t._id === id ? data : t);
+      useAppStore.setState({ teams: updatedTeams });
+      return data;
+    } catch (err) {
+      console.error("Error updating team:", err);
+      throw err;
+    }
+  };
+
+  const deleteTeam = async (id) => {
+    try {
+      await axios.delete(`http://localhost:5000/api/teams/${id}`);
+      const updatedTeams = teams.filter(t => t._id !== id);
+      useAppStore.setState({ teams: updatedTeams });
+    } catch (err) {
+      console.error("Error deleting team:", err);
+      throw err;
     }
   };
 

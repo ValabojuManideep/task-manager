@@ -1,20 +1,23 @@
-import React, { useContext, useMemo, useState, useEffect } from "react";
-import { TaskContext } from "../context/TaskContext";
-import { useAuth } from "../context/AuthContext";
+import React, { useMemo, useEffect } from "react";
+import { useAuth } from "../hooks/useAuth";
 import { Chart as ChartJS, ArcElement, Tooltip, Legend, CategoryScale, LinearScale, BarElement } from "chart.js";
 import { Pie, Bar, Doughnut } from "react-chartjs-2";
 import axios from "axios";
+import useAppStore from "../store/useAppStore";
 import SearchableSelect from "./SearchableSelect";
 import "./Analytics.css";
 
 ChartJS.register(ArcElement, Tooltip, Legend, CategoryScale, LinearScale, BarElement);
 
 export default function Analytics() {
-  const { allTasks } = useContext(TaskContext);
+  const allTasks = useAppStore((s) => s.allTasks);
   const { user } = useAuth();
-  const [chartType, setChartType] = useState("pie");
-  const [userFilter, setUserFilter] = useState("All Users");
-  const [users, setUsers] = useState([]);
+  const chartType = useAppStore((s) => s.analytics_chartType);
+  const setChartType = useAppStore((s) => s.setAnalytics_chartType);
+  const userFilter = useAppStore((s) => s.analytics_userFilter);
+  const setUserFilter = useAppStore((s) => s.setAnalytics_userFilter);
+  const users = useAppStore((s) => s.analytics_users);
+  const setUsers = useAppStore((s) => s.setAnalytics_users);
 
   const isAdmin = user?.role === "admin";
 
@@ -144,9 +147,11 @@ export default function Analytics() {
   ];
 
   // Export logic
-  const { teams } = useContext(require("../context/TeamContext").TeamContext);
-  const [exportFormat, setExportFormat] = useState("csv");
-  const [showExportModal, setShowExportModal] = useState(false);
+  const teams = useAppStore((s) => s.teams);
+  const exportFormat = useAppStore((s) => s.analytics_exportFormat);
+  const setExportFormat = useAppStore((s) => s.setAnalytics_exportFormat);
+  const showExportModal = useAppStore((s) => s.analytics_showExportModal);
+  const setShowExportModal = useAppStore((s) => s.setAnalytics_showExportModal);
 
   function downloadFile(data, filename, type) {
     const blob = new Blob([data], { type });

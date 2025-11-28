@@ -1,14 +1,8 @@
-import { useEffect, useState } from "react";
+import useAppStore from "../store/useAppStore";
 
 export const useDarkMode = () => {
-  const [darkMode, setDarkMode] = useState(
-    localStorage.getItem("theme") === "dark"
-  );
-
-  useEffect(() => {
-    document.body.className = darkMode ? "dark" : "";
-    localStorage.setItem("theme", darkMode ? "dark" : "light");
-  }, [darkMode]);
+  const darkMode = useAppStore((s) => s.darkMode);
+  const setDarkMode = useAppStore((s) => s.setDarkMode);
 
   return [darkMode, setDarkMode];
 };

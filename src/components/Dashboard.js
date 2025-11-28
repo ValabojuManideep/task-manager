@@ -1,13 +1,12 @@
-import React, { useContext, useMemo } from "react";
-import { TaskContext } from "../context/TaskContext";
-import { TeamContext } from "../context/TeamContext";
-import { useAuth } from "../hooks/useAuth"; // ✅ Use enhanced hook
+import React, { useMemo } from "react";
+import { useAuth } from "../hooks/useAuth";
+import useAppStore from "../store/useAppStore";
 import { useNavigate } from "react-router-dom";
 import "./Dashboard.css";
 
 export default function Dashboard() {
-  const { allTasks } = useContext(TaskContext);
-  const { teams } = useContext(TeamContext);
+  const allTasks = useAppStore((s) => s.allTasks);
+  const teams = useAppStore((s) => s.teams);
   const { user, isAdmin, isTeamManager } = useAuth(); // ✅ Use helper functions
   const navigate = useNavigate();
 

@@ -1,12 +1,11 @@
 
-import React, { useContext, useState, useEffect } from "react";
-import { TaskContext } from "../context/TaskContext";
-import { useAuth } from "../context/AuthContext";
-import { TeamContext } from "../context/TeamContext";
+import React, { useEffect } from "react";
+import { useAuth } from "../hooks/useAuth";
 import { format } from "date-fns";
 import axios from "axios";
 import TaskDetailModal from "./TaskDetailModal";
 import "./TaskList.css";
+import useAppStore from "../store/useAppStore";
 
 // Highlight @username mentions in comment text
 function highlightMentions(text) {
@@ -32,11 +31,13 @@ function highlightMentions(text) {
 }
 
 export default function TaskList({ statusFilter, priorityFilter, displayTasks }) {
-  const { teams } = useContext(TeamContext);
+  const teams = useAppStore((s) => s.teams);
   console.log("All tasks:", displayTasks);
 
-  const [showRecurrentEnd, setShowRecurrentEnd] = useState(false);
-  const [endedTaskTitle, setEndedTaskTitle] = useState("");
+  const showRecurrentEnd = useAppStore((s) => s.taskList_showRecurrentEnd);
+  const setShowRecurrentEnd = useAppStore((s) => s.setTaskList_showRecurrentEnd);
+  const endedTaskTitle = useAppStore((s) => s.taskList_endedTaskTitle);
+  const setEndedTaskTitle = useAppStore((s) => s.setTaskList_endedTaskTitle);
 
   useEffect(() => {
     if (!displayTasks || showRecurrentEnd) return;
@@ -55,18 +56,52 @@ export default function TaskList({ statusFilter, priorityFilter, displayTasks })
     }
   }, [displayTasks, showRecurrentEnd]);
 
-  const [expandedTask, setExpandedTask] = useState(null);
-  const [selectedTask, setSelectedTask] = useState(null);
-  const [commentInputs, setCommentInputs] = useState({});
-  const [mentionDropdowns, setMentionDropdowns] = useState({});
-  const [mentionDropdownSelected, setMentionDropdownSelected] = useState({});
-  const [editingComment, setEditingComment] = useState(null);
-  const [editText, setEditText] = useState("");
-  const [logTaskId, setLogTaskId] = useState(null);
+  const expandedTask = useAppStore((s) => s.taskList_expandedTask);
+  const setExpandedTask = useAppStore((s) => s.setTaskList_expandedTask);
+  const selectedTask = useAppStore((s) => s.taskList_selectedTask);
+  const setSelectedTask = useAppStore((s) => s.setTaskList_selectedTask);
+  const commentInputs = useAppStore((s) => s.taskList_commentInputs);
+  const setCommentInputs = useAppStore((s) => s.setTaskList_commentInputs);
+  const mentionDropdowns = useAppStore((s) => s.taskList_mentionDropdowns);
+  const setMentionDropdowns = useAppStore((s) => s.setTaskList_mentionDropdowns);
+  const mentionDropdownSelected = useAppStore((s) => s.taskList_mentionDropdownSelected);
+  const setMentionDropdownSelected = useAppStore((s) => s.setTaskList_mentionDropdownSelected);
+  const editingComment = useAppStore((s) => s.taskList_editingComment);
+  const setEditingComment = useAppStore((s) => s.setTaskList_editingComment);
+  const editText = useAppStore((s) => s.taskList_editText);
+  const setEditText = useAppStore((s) => s.setTaskList_editText);
+  const logTaskId = useAppStore((s) => s.taskList_logTaskId);
+  const setLogTaskId = useAppStore((s) => s.setTaskList_logTaskId);
 
-  const { updateTask, deleteTask, fetchTasks } = useContext(TaskContext);
+  const updateTask = async (taskId, updates) => {
+    try {
+      await axios.put(`http://localhost:5000/api/tasks/${taskId}`, updates);
+      const { data } = await axios.get("http://localhost:5000/api/tasks");
+      useAppStore.setState({ tasks: data, allTasks: data });
+    } catch (err) {
+      console.error("Error updating task:", err);
+    }
+  };
+  const deleteTask = async (taskId) => {
+    try {
+      await axios.delete(`http://localhost:5000/api/tasks/${taskId}`);
+      const { data } = await axios.get("http://localhost:5000/api/tasks");
+      useAppStore.setState({ tasks: data, allTasks: data });
+    } catch (err) {
+      console.error("Error deleting task:", err);
+    }
+  };
+  const fetchTasks = async () => {
+    try {
+      const { data } = await axios.get("http://localhost:5000/api/tasks");
+      useAppStore.setState({ tasks: data, allTasks: data });
+    } catch (err) {
+      console.error("Error fetching tasks:", err);
+    }
+  };
   const { user } = useAuth();
-  const [users, setUsers] = useState([]);
+  const users = useAppStore((s) => s.taskList_users);
+  const setUsers = useAppStore((s) => s.setTaskList_users);
 
   useEffect(() => {
     async function fetchUsers() {
@@ -84,7 +119,8 @@ export default function TaskList({ statusFilter, priorityFilter, displayTasks })
   const currentUserId = user?.id || user?._id;
 
   // ---------------- PAGINATION ----------------
-  const [page, setPage] = useState(1);
+  const page = useAppStore((s) => s.taskList_page);
+  const setPage = useAppStore((s) => s.setTaskList_page);
   const pageSize = 9;
 
   const filtered = (displayTasks || []).filter((t) => {

@@ -1,10 +1,10 @@
-import React, { createContext, useState, useEffect } from "react";
+import { useEffect } from "react";
 import axios from "axios";
-
-export const TeamContext = createContext();
+import useAppStore from "../store/useAppStore";
 
 export const TeamProvider = ({ children }) => {
-  const [teams, setTeams] = useState([]);
+  const teams = useAppStore((s) => s.teams);
+  const setTeams = useAppStore((s) => s.setTeams);
 
   const fetchTeams = async () => {
     try {
@@ -51,7 +51,7 @@ export const TeamProvider = ({ children }) => {
     }
   };
 
-  // ✅ NEW: Assign team manager (admin only)
+  // Add team manager (admin only)
   const addTeamManager = async (teamId, userId) => {
     try {
       const token = localStorage.getItem("token");
@@ -68,7 +68,7 @@ export const TeamProvider = ({ children }) => {
     }
   };
 
-  // ✅ NEW: Remove team manager (admin only)
+  // Remove team manager (admin only)
   const removeTeamManager = async (teamId, userId) => {
     try {
       const token = localStorage.getItem("token");
@@ -83,7 +83,7 @@ export const TeamProvider = ({ children }) => {
     }
   };
 
-  // ✅ NEW: Get team tasks (team-manager can access)
+  // Get team tasks (team-manager can access)
   const getTeamTasks = async (teamId) => {
     try {
       const token = localStorage.getItem("token");
@@ -98,7 +98,7 @@ export const TeamProvider = ({ children }) => {
     }
   };
 
-  // ✅ NEW: Add member to team (team-manager can do this)
+  // Add member to team (team-manager can do this)
   const addTeamMember = async (teamId, userId) => {
     try {
       const token = localStorage.getItem("token");
@@ -115,7 +115,7 @@ export const TeamProvider = ({ children }) => {
     }
   };
 
-  // ✅ NEW: Remove member from team (team-manager can do this)
+  // Remove member from team (team-manager can do this)
   const removeTeamMember = async (teamId, userId) => {
     try {
       const token = localStorage.getItem("token");
@@ -130,20 +130,5 @@ export const TeamProvider = ({ children }) => {
     }
   };
 
-  return (
-    <TeamContext.Provider value={{ 
-      teams, 
-      addTeam, 
-      updateTeam, 
-      deleteTeam, 
-      fetchTeams,
-      addTeamManager,       // ✅ NEW
-      removeTeamManager,    // ✅ NEW
-      getTeamTasks,         // ✅ NEW
-      addTeamMember,        // ✅ NEW
-      removeTeamMember      // ✅ NEW
-    }}>
-      {children}
-    </TeamContext.Provider>
-  );
+  return children;
 };

@@ -1,9 +1,11 @@
-import React, { useState } from "react";
+import React from "react";
+import useAppStore from "./store/useAppStore";
 import { BrowserRouter, Routes, Route, Navigate, useNavigate } from "react-router-dom";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
-import { AuthProvider, useAuth } from "./context/AuthContext";
+import { AuthProvider } from "./context/AuthContext";
 import { TaskProvider } from "./context/TaskContext";
 import { TeamProvider } from "./context/TeamContext";
+import { useAuth } from "./hooks/useAuth";
 import ProtectedRoute from "./ProtectedRoute";
 import Navbar from "./components/Navbar";
 import Dashboard from "./components/Dashboard";
@@ -21,9 +23,8 @@ import "./App.css";
 const queryClient = new QueryClient();
 
 function WithTasks({ children }) {
-  const { user } = useAuth();
   return (
-    <TaskProvider userId={user?.id}>
+    <TaskProvider>
       <TeamProvider>
         {children}
       </TeamProvider>
@@ -34,11 +35,11 @@ function WithTasks({ children }) {
 function AppLayout({ children }) {
   const { logout } = useAuth();
   const navigate = useNavigate();
-  const [darkMode, setDarkMode] = useState(false);
+  const darkMode = useAppStore((s) => s.darkMode);
+  const setDarkMode = useAppStore((s) => s.setDarkMode);
 
   const toggleDarkMode = () => {
     setDarkMode(!darkMode);
-    document.body.classList.toggle("dark-mode");
   };
 
   return (

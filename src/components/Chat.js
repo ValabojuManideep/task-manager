@@ -1,11 +1,15 @@
-import React, { useEffect, useState, useRef } from "react";
+import React, { useEffect, useRef } from "react";
 import axios from "axios";
 import "./Chat.css";
+import useAppStore from "../store/useAppStore";
 
 export default function Chat({ teamId, otherUser, currentUser, onClose, conversation: initialConversation }) {
-  const [conversation, setConversation] = useState(initialConversation || null);
-  const [messages, setMessages] = useState([]);
-  const [text, setText] = useState("");
+  const conversation = useAppStore((s) => s.chat_conversation) || initialConversation || null;
+  const setConversation = useAppStore((s) => s.setChat_conversation);
+  const messages = useAppStore((s) => s.chat_messages);
+  const setMessages = useAppStore((s) => s.setChat_messages);
+  const text = useAppStore((s) => s.chat_text);
+  const setText = useAppStore((s) => s.setChat_text);
   const bodyRef = useRef();
 
   useEffect(() => {
@@ -52,7 +56,8 @@ export default function Chat({ teamId, otherUser, currentUser, onClose, conversa
   }, [conversation]);
 
   // derive the display user (other participant) when otherUser not provided
-  const [displayUser, setDisplayUser] = useState(otherUser || null);
+  const displayUser = useAppStore((s) => s.chat_displayUser) || otherUser || null;
+  const setDisplayUser = useAppStore((s) => s.setChat_displayUser);
 
   useEffect(() => {
     const resolveOther = async () => {

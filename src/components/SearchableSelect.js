@@ -1,9 +1,12 @@
-import React, { useState, useRef, useEffect } from "react";
+import React, { useRef, useEffect } from "react";
+import useAppStore from "../store/useAppStore";
 import "./SearchableSelect.css";
 
 export default function SearchableSelect({ options, value, onChange, placeholder = "Select..." }) {
-  const [isOpen, setIsOpen] = useState(false);
-  const [searchTerm, setSearchTerm] = useState("");
+  const isOpen = useAppStore((s) => s.searchable_isOpen);
+  const setIsOpen = useAppStore((s) => s.setSearchable_isOpen);
+  const searchTerm = useAppStore((s) => s.searchable_searchTerm);
+  const setSearchTerm = useAppStore((s) => s.setSearchable_searchTerm);
   const dropdownRef = useRef(null);
 
   const filteredOptions = options.filter(option =>

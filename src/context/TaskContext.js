@@ -1,14 +1,15 @@
-import React, { createContext, useState, useEffect } from "react";
+import { useEffect } from "react";
 import axios from "axios";
-import { useAuth } from "./AuthContext";
-
-export const TaskContext = createContext();
+import useAppStore from "../store/useAppStore";
 
 export const TaskProvider = ({ children }) => {
-  const [tasks, setTasks] = useState([]);
-  const [allTasks, setAllTasks] = useState([]);
-  const [privateTasks, setPrivateTasks] = useState([]);
-  const { user } = useAuth();
+  const tasks = useAppStore((s) => s.tasks);
+  const setTasks = useAppStore((s) => s.setTasks);
+  const allTasks = useAppStore((s) => s.allTasks);
+  const setAllTasks = useAppStore((s) => s.setAllTasks);
+  const privateTasks = useAppStore((s) => s.privateTasks);
+  const setPrivateTasks = useAppStore((s) => s.setPrivateTasks);
+  const user = useAppStore((s) => s.user);
 
   const fetchTasks = async () => {
     try {
@@ -69,18 +70,5 @@ export const TaskProvider = ({ children }) => {
     }
   };
 
-  return (
-    <TaskContext.Provider value={{
-      tasks,
-      allTasks,
-      privateTasks,
-      addTask,
-      updateTask,
-      deleteTask,
-      fetchTasks,
-      fetchPrivateTasks
-    }}>
-      {children}
-    </TaskContext.Provider>
-  );
+  return children;
 };

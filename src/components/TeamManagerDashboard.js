@@ -1,16 +1,21 @@
-import React, { useState, useEffect, useContext } from "react";
-import { TeamContext } from "../context/TeamContext";
+import React, { useEffect } from "react";
 import { useAuth } from "../hooks/useAuth";
+import useAppStore from "../store/useAppStore";
 import "./TeamManagerDashboard.css";
 
 const TeamManagerDashboard = () => {
   const { user } = useAuth();
-  const { teams, getTeamTasks, addTeamMember, removeTeamMember } = useContext(TeamContext);
-  const [managedTeams, setManagedTeams] = useState([]);
-  const [selectedTeam, setSelectedTeam] = useState(null);
-  const [teamTasks, setTeamTasks] = useState([]);
-  const [loading, setLoading] = useState(false);
-  const [error, setError] = useState(null);
+  const teams = useAppStore((s) => s.teams);
+  const managedTeams = useAppStore((s) => s.managedTeams);
+  const setManagedTeams = useAppStore((s) => s.setManagedTeams);
+  const selectedTeam = useAppStore((s) => s.selectedTeam);
+  const setSelectedTeam = useAppStore((s) => s.setSelectedTeam);
+  const teamTasks = useAppStore((s) => s.teamTasks);
+  const setTeamTasks = useAppStore((s) => s.setTeamTasks);
+  const loading = useAppStore((s) => s.teamManagerLoading);
+  const setLoading = useAppStore((s) => s.setTeamManagerLoading);
+  const error = useAppStore((s) => s.teamManagerError);
+  const setError = useAppStore((s) => s.setTeamManagerError);
 
   useEffect(() => {
     // Filter teams where current user is a team manager

@@ -1,15 +1,20 @@
-import React, { useEffect, useState } from "react";
-import { useAuth } from "../context/AuthContext";
+import React, { useEffect } from "react";
+import { useAuth } from "../hooks/useAuth";
 import axios from "axios";
 import { format } from "date-fns";
+import useAppStore from "../store/useAppStore";
 import "./Activity.css";
 
 export default function Activity() {
   const { user } = useAuth();
-  const [activities, setActivities] = useState([]);
-  const [loading, setLoading] = useState(true);
-  const [userFilter, setUserFilter] = useState("All Users");
-  const [users, setUsers] = useState([]);
+  const activities = useAppStore((s) => s.activity_activities);
+  const setActivities = useAppStore((s) => s.setActivity_activities);
+  const loading = useAppStore((s) => s.activity_loading);
+  const setLoading = useAppStore((s) => s.setActivity_loading);
+  const userFilter = useAppStore((s) => s.activity_userFilter);
+  const setUserFilter = useAppStore((s) => s.setActivity_userFilter);
+  const users = useAppStore((s) => s.activity_users);
+  const setUsers = useAppStore((s) => s.setActivity_users);
 
   const isAdmin = user?.role === "admin";
 

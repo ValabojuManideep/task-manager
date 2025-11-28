@@ -1,14 +1,18 @@
-import React, { useState } from "react";
-import { useAuth } from "../context/AuthContext";
+import React from "react";
+import { useAuth } from "../hooks/useAuth";
 import { useNavigate } from "react-router-dom";
+import useAppStore from "../store/useAppStore";
 import "./Login.css";
 
 export default function SignUp() {
   const { register } = useAuth();
   const navigate = useNavigate();
-  const [form, setForm] = useState({ username: "", email: "", password: "" }); // Removed role
-  const [error, setError] = useState("");
-  const [loading, setLoading] = useState(false);
+  const form = useAppStore((s) => s.signup_form);
+  const setForm = useAppStore((s) => s.setSignup_form);
+  const error = useAppStore((s) => s.signup_error);
+  const setError = useAppStore((s) => s.setSignup_error);
+  const loading = useAppStore((s) => s.signup_loading);
+  const setLoading = useAppStore((s) => s.setSignup_loading);
 
   const handleChange = (e) => setForm({ ...form, [e.target.name]: e.target.value });
 

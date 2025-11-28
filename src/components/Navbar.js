@@ -1,14 +1,21 @@
-import React, { useState } from "react";
+import React, { useEffect } from "react";
 import { Link, useLocation } from "react-router-dom";
 import { useAuth } from "../hooks/useAuth";
 import "./Navbar.css";
+import useAppStore from "../store/useAppStore";
 
 export default function Navbar() {
   const location = useLocation();
   const { user, logout, isAdmin, isTeamManager } = useAuth();
-  const [expandTasks, setExpandTasks] = useState(
-    location.pathname.startsWith("/tasks")
-  );
+  const expandTasks = useAppStore((s) => s.navbar_expandTasks);
+  const setExpandTasks = useAppStore((s) => s.setNavbar_expandTasks);
+  const darkMode = useAppStore((s) => s.darkMode);
+  const setDarkMode = useAppStore((s) => s.setDarkMode);
+
+  useEffect(() => {
+    // keep expansion in sync with current location on mount/navigation
+    setExpandTasks(location.pathname.startsWith("/tasks"));
+  }, [location.pathname, setExpandTasks]);
 
   const getInitials = (name) => {
     if (!name) return "U";
@@ -16,7 +23,7 @@ export default function Navbar() {
   };
 
   const toggleDarkMode = () => {
-    document.body.classList.toggle("dark-mode");
+    setDarkMode(!darkMode);
   };
 
   const isTasksActive = location.pathname.startsWith("/tasks");
