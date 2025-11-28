@@ -22,7 +22,6 @@ export default function SearchableSelect({ options, value, onChange, placeholder
         setSearchTerm("");
       }
     };
-
     document.addEventListener("mousedown", handleClickOutside);
     return () => document.removeEventListener("mousedown", handleClickOutside);
   }, []);

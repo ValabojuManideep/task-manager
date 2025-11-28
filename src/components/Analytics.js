@@ -124,18 +124,14 @@ export default function Analytics() {
   // Prepare user options for SearchableSelect
   const userOptions = useMemo(() => {
     const options = [{ value: "All Users", label: "All Users" }];
-    
     if (users.length > 0) {
-      users
-        .filter(u => u.role === "user")
-        .forEach(u => {
-          options.push({
-            value: u._id,
-            label: `${u.username} (${u.email})`
-          });
+      users.forEach(u => {
+        options.push({
+          value: u._id,
+          label: `${u.username} (${u.email})${u.role ? ` [${u.role}]` : ''}`
         });
+      });
     }
-    
     return options;
   }, [users]);
 
@@ -167,42 +163,85 @@ export default function Analytics() {
 
   // Export handler
   async function handleExport() {
-    // Fetch users (already in state)
-    const exportUsers = users.map(u => ({ username: u.username, email: u.email, role: u.role, createdAt: u.createdAt, _id: u._id }));
-    const exportTeams = teams.map(t => ({ name: t.name, description: t.description, members: t.members, createdBy: t.createdBy, createdAt: t.createdAt, _id: t._id }));
-    const exportTasks = allTasks.map(t => ({
-      title: t.title,
-      description: t.description,
-      status: t.status,
-      assignedTo: t.assignedTo?._id || t.assignedTo,
-      dueDate: t.dueDate,
-      isRecurrent: t.isRecurrent,
-      recurrencePattern: t.recurrencePattern,
-      recurrenceEndDate: t.recurrenceEndDate,
-      completionLog: t.completionLog,
-      createdAt: t.createdAt,
-      _id: t._id
-    }));
-
     let data, filename, type;
-    if (exportFormat === "csv") {
-      // XLSX export for CSV option: all entities in separate sheets
-      const XLSX = require('xlsx');
-      const wb = XLSX.utils.book_new();
-      const wsUsers = XLSX.utils.json_to_sheet(exportUsers);
-      const wsTeams = XLSX.utils.json_to_sheet(exportTeams);
-      const wsTasks = XLSX.utils.json_to_sheet(exportTasks);
-      XLSX.utils.book_append_sheet(wb, wsUsers, 'Users');
-      XLSX.utils.book_append_sheet(wb, wsTeams, 'Teams');
-      XLSX.utils.book_append_sheet(wb, wsTasks, 'Tasks');
-      const wbout = XLSX.write(wb, { bookType: 'xlsx', type: 'array' });
-      downloadFile(wbout, `analytics_export_${Date.now()}.xlsx`, 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet');
+    if (!isAdmin) {
+      // Only export logged-in user's data
+      const exportUser = { username: user.username, email: user.email, role: user.role, createdAt: user.createdAt, _id: user.id || user._id };
+      const exportTasks = allTasks.filter(t => t.assignedTo?._id === user.id || t.assignedTo === user.id).map(t => ({
+        title: t.title,
+        description: t.description,
+        status: t.status,
+        assignedTo: t.assignedTo?._id || t.assignedTo,
+        dueDate: t.dueDate,
+        isRecurrent: t.isRecurrent,
+        recurrencePattern: t.recurrencePattern,
+        recurrenceEndDate: t.recurrenceEndDate,
+        completionLog: t.completionLog,
+        createdAt: t.createdAt,
+        _id: t._id
+      }));
+      const userId = user.id || user._id;
+      const exportTeams = teams.filter(team =>
+        team.members?.some(member => (member._id || member) === userId)
+      ).map(t => ({
+        name: t.name,
+        description: t.description,
+        members: t.members,
+        createdBy: t.createdBy,
+        createdAt: t.createdAt,
+        _id: t._id
+      }));
+      if (exportFormat === "csv") {
+        const XLSX = require('xlsx');
+        const wb = XLSX.utils.book_new();
+        const wsUser = XLSX.utils.json_to_sheet([exportUser]);
+        const wsTeams = XLSX.utils.json_to_sheet(exportTeams);
+        const wsTasks = XLSX.utils.json_to_sheet(exportTasks);
+        XLSX.utils.book_append_sheet(wb, wsUser, 'User');
+        XLSX.utils.book_append_sheet(wb, wsTeams, 'Teams');
+        XLSX.utils.book_append_sheet(wb, wsTasks, 'Tasks');
+        const wbout = XLSX.write(wb, { bookType: 'xlsx', type: 'array' });
+        downloadFile(wbout, `analytics_export_${user.username}_${Date.now()}.xlsx`, 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet');
+      } else {
+        data = JSON.stringify({ user: exportUser, teams: exportTeams, tasks: exportTasks }, null, 2);
+        filename = `analytics_export_${user.username}_${Date.now()}.json`;
+        type = "application/json";
+        downloadFile(data, filename, type);
+      }
     } else {
-      // JSON: All entities in one file
-      data = JSON.stringify({ users: exportUsers, teams: exportTeams, tasks: exportTasks }, null, 2);
-      filename = `analytics_export_${Date.now()}.json`;
-      type = "application/json";
-      downloadFile(data, filename, type);
+      // Admin: export all data
+      const exportUsers = users.map(u => ({ username: u.username, email: u.email, role: u.role, createdAt: u.createdAt, _id: u._id }));
+      const exportTeams = teams.map(t => ({ name: t.name, description: t.description, members: t.members, createdBy: t.createdBy, createdAt: t.createdAt, _id: t._id }));
+      const exportTasks = allTasks.map(t => ({
+        title: t.title,
+        description: t.description,
+        status: t.status,
+        assignedTo: t.assignedTo?._id || t.assignedTo,
+        dueDate: t.dueDate,
+        isRecurrent: t.isRecurrent,
+        recurrencePattern: t.recurrencePattern,
+        recurrenceEndDate: t.recurrenceEndDate,
+        completionLog: t.completionLog,
+        createdAt: t.createdAt,
+        _id: t._id
+      }));
+      if (exportFormat === "csv") {
+        const XLSX = require('xlsx');
+        const wb = XLSX.utils.book_new();
+        const wsUsers = XLSX.utils.json_to_sheet(exportUsers);
+        const wsTeams = XLSX.utils.json_to_sheet(exportTeams);
+        const wsTasks = XLSX.utils.json_to_sheet(exportTasks);
+        XLSX.utils.book_append_sheet(wb, wsUsers, 'Users');
+        XLSX.utils.book_append_sheet(wb, wsTeams, 'Teams');
+        XLSX.utils.book_append_sheet(wb, wsTasks, 'Tasks');
+        const wbout = XLSX.write(wb, { bookType: 'xlsx', type: 'array' });
+        downloadFile(wbout, `analytics_export_${Date.now()}.xlsx`, 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet');
+      } else {
+        data = JSON.stringify({ users: exportUsers, teams: exportTeams, tasks: exportTasks }, null, 2);
+        filename = `analytics_export_${Date.now()}.json`;
+        type = "application/json";
+        downloadFile(data, filename, type);
+      }
     }
   }
 

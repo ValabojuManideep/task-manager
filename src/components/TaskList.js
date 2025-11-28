@@ -41,28 +41,7 @@ export default function TaskList({ statusFilter, priorityFilter, displayTasks })
   const notifiedRecurrentTasks = useAppStore((s) => s.taskList_notifiedRecurrentTasks);
   const setNotifiedRecurrentTasks = useAppStore((s) => s.setTaskList_notifiedRecurrentTasks);
 
-  useEffect(() => {
-    if (!displayTasks) return;
-    const now = new Date();
-    for (const task of displayTasks) {
-      const taskId = task._id || task.id;
-      // Skip if already notified about this task
-      if (notifiedRecurrentTasks.includes(taskId)) continue;
-      
-      if (
-        (task.isRecurrent || (task.recurrencePattern && task.recurrencePattern !== "none")) &&
-        task.recurrenceEndDate &&
-        new Date(task.recurrenceEndDate) <= now &&
-        task.status !== "done"
-      ) {
-        setShowRecurrentEnd(true);
-        setEndedTaskTitle(task.title);
-        // Mark this task as notified
-        setNotifiedRecurrentTasks([...notifiedRecurrentTasks, taskId]);
-        break;
-      }
-    }
-  }, [displayTasks]);
+  // Removed useEffect that showed recurrent task ended popup on login/page load
 
   const expandedTask = useAppStore((s) => s.taskList_expandedTask);
   const setExpandedTask = useAppStore((s) => s.setTaskList_expandedTask);
@@ -150,6 +129,8 @@ export default function TaskList({ statusFilter, priorityFilter, displayTasks })
   const handleMarkDone = (task) => {
     const id = task._id || task.id;
 
+
+    // Only show popup when marking a recurrent task as done and its due date matches recurrence end date
     if (
       (task.isRecurrent || (task.recurrencePattern && task.recurrencePattern !== "none")) &&
       task.recurrenceEndDate &&
@@ -269,11 +250,11 @@ export default function TaskList({ statusFilter, priorityFilter, displayTasks })
               color: "#3730a3",
               border: "none",
               borderRadius: "6px",
-              padding: "8px 22px",
-              fontWeight: 600,
+              padding: "8px 18px",
+              fontWeight: "bold",
               fontSize: "1em",
               cursor: "pointer",
-              boxShadow: "0 2px 8px rgba(99,102,241,0.07)",
+              boxShadow: "0 2px 8px rgba(91,127,255,0.08)",
             }}
           >
             OK

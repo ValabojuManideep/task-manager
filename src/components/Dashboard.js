@@ -1,10 +1,75 @@
-import React, { useMemo } from "react";
+import React, { useMemo, useState } from "react";
 import { useAuth } from "../hooks/useAuth";
 import useAppStore from "../store/useAppStore";
 import { useNavigate } from "react-router-dom";
 import "./Dashboard.css";
 
 export default function Dashboard() {
+    // Export logic for user dashboard (Zustand)
+    const showExportModal = useAppStore((s) => s.dashboard_showExportModal);
+    const setShowExportModal = useAppStore((s) => s.setDashboard_showExportModal);
+    const exportFormat = useAppStore((s) => s.dashboard_exportFormat);
+    const setExportFormat = useAppStore((s) => s.setDashboard_exportFormat);
+
+    function downloadFile(data, filename, type) {
+      const blob = new Blob([data], { type });
+      const url = URL.createObjectURL(blob);
+      const a = document.createElement("a");
+      a.href = url;
+      a.download = filename;
+      document.body.appendChild(a);
+      a.click();
+      document.body.removeChild(a);
+      URL.revokeObjectURL(url);
+    }
+
+    async function handleExport() {
+      const exportUser = { username: user.username, email: user.email, role: user.role, createdAt: user.createdAt, _id: user.id || user._id };
+      const exportTasks = userTasks.map(t => ({
+        title: t.title,
+        description: t.description,
+        status: t.status,
+        assignedTo: t.assignedTo?._id || t.assignedTo,
+        dueDate: t.dueDate,
+        isRecurrent: t.isRecurrent,
+        recurrencePattern: t.recurrencePattern,
+        recurrenceEndDate: t.recurrenceEndDate,
+        completionLog: t.completionLog,
+        createdAt: t.createdAt,
+        _id: t._id
+      }));
+      const userId = user.id || user._id;
+      const exportTeams = teams.filter(team =>
+        team.members?.some(member => (member._id || member) === userId)
+      ).map(t => ({
+        name: t.name,
+        description: t.description,
+        members: t.members,
+        createdBy: t.createdBy,
+        createdAt: t.createdAt,
+        _id: t._id
+      }));
+
+      if (exportFormat === "xlsx") {
+        // XLSX export: user, teams, tasks in separate sheets
+        const XLSX = require('xlsx');
+        const wb = XLSX.utils.book_new();
+        const wsUser = XLSX.utils.json_to_sheet([exportUser]);
+        const wsTeams = XLSX.utils.json_to_sheet(exportTeams);
+        const wsTasks = XLSX.utils.json_to_sheet(exportTasks);
+        XLSX.utils.book_append_sheet(wb, wsUser, 'User');
+        XLSX.utils.book_append_sheet(wb, wsTeams, 'Teams');
+        XLSX.utils.book_append_sheet(wb, wsTasks, 'Tasks');
+        const wbout = XLSX.write(wb, { bookType: 'xlsx', type: 'array' });
+        downloadFile(wbout, `user_export_${user.username}_${Date.now()}.xlsx`, 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet');
+      } else {
+        // JSON: all entities in one file
+        const data = JSON.stringify({ user: exportUser, teams: exportTeams, tasks: exportTasks }, null, 2);
+        const filename = `user_export_${user.username}_${Date.now()}.json`;
+        downloadFile(data, filename, "application/json");
+      }
+      setShowExportModal(false);
+    }
   const allTasks = useAppStore((s) => s.allTasks);
   const teams = useAppStore((s) => s.teams);
   const { user, isAdmin, isTeamManager } = useAuth(); // ✅ Use helper functions
@@ -104,9 +169,138 @@ export default function Dashboard() {
           <h1 className="page-title">{getDashboardTitle()}</h1>
           <p className="page-subtitle">{getDashboardSubtitle()}</p>
         </div>
-        <button className="view-all-btn" onClick={() => navigate("/tasks/team")}>
-          View All Tasks
-        </button>
+        <div style={{ display: 'flex', gap: '1rem', alignItems: 'center' }}>
+          <button className="view-all-btn" onClick={() => navigate("/tasks/team")}> 
+            View All Tasks
+          </button>
+          {/* Export Data button for user dashboard */}
+          {!isAdmin && (
+            <button
+              className="export-btn"
+              style={{
+                padding: '0.5rem 1.2rem',
+                background: '#5B7FFF',
+                color: '#fff',
+                border: 'none',
+                borderRadius: '6px',
+                fontWeight: 'bold',
+                cursor: 'pointer',
+                boxShadow: '0 2px 8px rgba(91,127,255,0.12)'
+              }}
+              onClick={() => setShowExportModal(true)}
+            >
+              Export Data
+            </button>
+          )}
+          {/* Export format modal */}
+          {showExportModal && (
+            <div style={{
+              position: 'fixed',
+              top: 0,
+              left: 0,
+              width: '100vw',
+              height: '100vh',
+              background: document.body.classList.contains('dark-mode') ? 'rgba(17,24,39,0.7)' : 'rgba(0,0,0,0.45)',
+              display: 'flex',
+              alignItems: 'center',
+              justifyContent: 'center',
+              zIndex: 9999
+            }}>
+              <div style={{
+                background: document.body.classList.contains('dark-mode')
+                  ? 'linear-gradient(135deg, #1e293b 0%, #374151 100%)'
+                  : 'linear-gradient(135deg, #f9fafb 0%, #e0e7ff 100%)',
+                borderRadius: '16px',
+                padding: '2.5rem 2rem 2rem 2rem',
+                minWidth: '340px',
+                boxShadow: document.body.classList.contains('dark-mode')
+                  ? '0 8px 32px rgba(91,127,255,0.28)'
+                  : '0 8px 32px rgba(91,127,255,0.18)',
+                display: 'flex',
+                flexDirection: 'column',
+                alignItems: 'center',
+                gap: '2rem',
+                position: 'relative',
+                border: document.body.classList.contains('dark-mode') ? '1px solid #374151' : '1px solid #e0e7ff'
+              }}>
+                <h2 style={{
+                  marginBottom: '0.5rem',
+                  fontSize: '2rem',
+                  fontWeight: 700,
+                  color: '#5B7FFF',
+                  textAlign: 'center',
+                  letterSpacing: '0.02em'
+                }}>Export Data</h2>
+                <p style={{
+                  marginBottom: '1rem',
+                  fontSize: '1.1rem',
+                  color: '#374151',
+                  textAlign: 'center',
+                  fontWeight: 500
+                }}>Choose export format:</p>
+                <button
+                  style={{
+                    padding: '0.7rem 1.2rem',
+                    background: '#5B7FFF',
+                    color: '#fff',
+                    border: 'none',
+                    borderRadius: '8px',
+                    fontWeight: 'bold',
+                    cursor: 'pointer',
+                    marginBottom: '0.7rem',
+                    width: '100%',
+                    fontSize: '1.1rem',
+                    boxShadow: '0 2px 8px rgba(91,127,255,0.12)',
+                    transition: 'background 0.2s',
+                  }}
+                  onMouseOver={e => e.currentTarget.style.background = '#3b5ccc'}
+                  onMouseOut={e => e.currentTarget.style.background = '#5B7FFF'}
+                  onClick={() => { setExportFormat('xlsx'); handleExport(); }}
+                >
+                  Excel (XLSX)
+                </button>
+                <button
+                  style={{
+                    padding: '0.7rem 1.2rem',
+                    background: '#10b981',
+                    color: '#fff',
+                    border: 'none',
+                    borderRadius: '8px',
+                    fontWeight: 'bold',
+                    cursor: 'pointer',
+                    width: '100%',
+                    fontSize: '1.1rem',
+                    boxShadow: '0 2px 8px rgba(16,185,129,0.12)',
+                    transition: 'background 0.2s',
+                  }}
+                  onMouseOver={e => e.currentTarget.style.background = '#059669'}
+                  onMouseOut={e => e.currentTarget.style.background = '#10b981'}
+                  onClick={() => { setExportFormat('json'); handleExport(); }}
+                >
+                  JSON
+                </button>
+                <button
+                  style={{
+                    position: 'absolute',
+                    top: '1rem',
+                    right: '1rem',
+                    background: 'transparent',
+                    border: 'none',
+                    fontSize: '2rem',
+                    color: '#5B7FFF',
+                    cursor: 'pointer',
+                    fontWeight: 700,
+                    lineHeight: 1
+                  }}
+                  aria-label="Close export modal"
+                  onClick={() => setShowExportModal(false)}
+                >
+                  &times;
+                </button>
+              </div>
+            </div>
+          )}
+        </div>
       </div>
 
       <div className="stats-grid">

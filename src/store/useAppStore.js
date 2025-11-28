@@ -2,6 +2,21 @@ import { create } from "zustand";
 import axios from "axios";
 
 const useAppStore = create((set, get) => ({
+        // Dashboard export modal state
+        dashboard_showExportModal: false,
+        setDashboard_showExportModal: (v) => set({ dashboard_showExportModal: v }),
+        dashboard_exportFormat: "json",
+        setDashboard_exportFormat: (v) => set({ dashboard_exportFormat: v }),
+      // Login component state
+      login_form: { usernameOrEmail: '', password: '' },
+      setLogin_form: (v) => set({ login_form: v }),
+      login_error: '',
+      setLogin_error: (v) => set({ login_error: v }),
+      login_loading: false,
+      setLogin_loading: (v) => set({ login_loading: v }),
+    // Toast state
+    toast: { show: false, title: '', description: '', variant: 'info' },
+    setToast: (toast) => set({ toast }),
   // Users list used by admin/user management
   users: [],
   setUsers: (users) => set({ users }),
