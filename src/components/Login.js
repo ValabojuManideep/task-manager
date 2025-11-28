@@ -28,7 +28,10 @@ export default function Login() {
     const result = await login(form.usernameOrEmail, form.password);
     setLoading(false);
 
-    if (!result.success) {
+    if (result.success) {
+      // Navigate on successful login
+      navigate("/");
+    } else {
       setError(result.error);
     }
   };

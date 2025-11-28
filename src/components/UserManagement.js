@@ -18,16 +18,19 @@ export default function UserManagement() {
   }, []);
 
   const fetchUsers = async () => {
+    setLoading(true);
     try {
       const token = localStorage.getItem("token");
+      console.log("Fetching users with token:", token ? "present" : "missing");
       const { data } = await axios.get(
-        "http://localhost:5000/api/admin/users",
+        "http://localhost:5000/api/auth/all-users",
         { headers: { Authorization: `Bearer ${token}` } }
       );
+      console.log("Users fetched successfully:", data);
       setUsers(data);
+      setLoading(false);
     } catch (err) {
-      console.error("Error fetching users:", err);
-    } finally {
+      console.error("Error fetching users:", err.response?.data || err.message);
       setLoading(false);
     }
   };
@@ -38,7 +41,7 @@ export default function UserManagement() {
     try {
       const token = localStorage.getItem("token");
       await axios.put(
-        `http://localhost:5000/api/admin/users/${userId}/role`,
+        `http://localhost:5000/api/auth/users/${userId}/role`,
         { role: newRole },
         { headers: { Authorization: `Bearer ${token}` } }
       );
@@ -60,7 +63,21 @@ export default function UserManagement() {
     }
   };
 
-  if (loading) return <div>Loading users...</div>;
+  if (loading) return <div className="user-management-container"><div style={{ padding: "20px", textAlign: "center" }}>Loading users...</div></div>;
+
+  if (!users || users.length === 0) {
+    return (
+      <div className="user-management-container">
+        <div className="header">
+          <h1>User Management</h1>
+          <p className="subtitle">Manage user roles and permissions</p>
+        </div>
+        <div className="empty-state">
+          <p>No users found</p>
+        </div>
+      </div>
+    );
+  }
 
   return (
     <div className="user-management-container">
@@ -104,7 +121,7 @@ export default function UserManagement() {
                     className="role-select"
                     value={u.role}
                     onChange={(e) => handleRoleChange(u._id, e.target.value)}
-                    disabled={u._id === user.id} // Can't change own role
+                    disabled={String(u._id) === String(user?.id || user?._id)} // Can't change own role
                   >
                     <option value="user">User</option>
                     <option value="team-manager">Team Manager</option>
@@ -116,12 +133,6 @@ export default function UserManagement() {
           </tbody>
         </table>
       </div>
-
-      {users.length === 0 && (
-        <div className="empty-state">
-          <p>No users found</p>
-        </div>
-      )}
     </div>
   );
 }

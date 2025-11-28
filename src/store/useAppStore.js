@@ -60,7 +60,10 @@ const useAppStore = create((set, get) => ({
   setDarkMode: (darkMode) => {
     set({ darkMode });
     try {
-      if (typeof document !== "undefined") document.body.className = darkMode ? "dark" : "";
+      if (typeof document !== "undefined") {
+        document.documentElement.classList.toggle("dark-mode", darkMode);
+        document.body.classList.toggle("dark-mode", darkMode);
+      }
       localStorage.setItem("theme", darkMode ? "dark" : "light");
     } catch (e) {
       // ignore in non-browser environments
@@ -124,6 +127,11 @@ const useAppStore = create((set, get) => ({
   setTaskList_showRecurrentEnd: (v) => set({ taskList_showRecurrentEnd: v }),
   taskList_endedTaskTitle: "",
   setTaskList_endedTaskTitle: (v) => set({ taskList_endedTaskTitle: v }),
+  taskList_notifiedRecurrentTasks: JSON.parse(localStorage.getItem("notifiedRecurrentTasks") || "[]"),
+  setTaskList_notifiedRecurrentTasks: (v) => {
+    set({ taskList_notifiedRecurrentTasks: v });
+    localStorage.setItem("notifiedRecurrentTasks", JSON.stringify(v));
+  },
   taskList_expandedTask: null,
   setTaskList_expandedTask: (v) => set({ taskList_expandedTask: v }),
   taskList_selectedTask: null,

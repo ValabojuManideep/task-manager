@@ -26,7 +26,15 @@ export default function Leaderboard() {
   useEffect(() => {
     // reset to first page when switching tabs or when data changes
     setCurrentPage(1);
-  }, [activeTab, teamLeaderboard.length, memberLeaderboard.length]);
+  }, [activeTab, teamLeaderboard.length, memberLeaderboard.length, setCurrentPage]);
+
+  useEffect(() => {
+    // Scroll to leaderboard content when page changes
+    const leaderboardContent = document.querySelector('.leaderboard-content');
+    if (leaderboardContent) {
+      leaderboardContent.scrollIntoView({ behavior: 'smooth', block: 'start' });
+    }
+  }, [currentPage]);
 
   const fetchLeaderboards = async () => {
     try {
@@ -202,8 +210,12 @@ export default function Leaderboard() {
           {teamLeaderboard.length > itemsPerPage && (
             <div className="pagination">
               <button
+                type="button"
                 className="pagination-button prev"
-                onClick={() => setCurrentPage((p) => Math.max(1, p - 1))}
+                onClick={() => {
+                  const newPage = Math.max(1, currentPage - 1);
+                  setCurrentPage(newPage);
+                }}
                 disabled={currentPage === 1}
               >
                 Prev
@@ -212,10 +224,13 @@ export default function Leaderboard() {
                 Page {currentPage} of {Math.max(1, Math.ceil(teamLeaderboard.length / itemsPerPage))}
               </div>
               <button
+                type="button"
                 className="pagination-button next"
-                onClick={() =>
-                  setCurrentPage((p) => Math.min(Math.ceil(teamLeaderboard.length / itemsPerPage), p + 1))
-                }
+                onClick={() => {
+                  const totalPages = Math.ceil(teamLeaderboard.length / itemsPerPage);
+                  const newPage = Math.min(totalPages, currentPage + 1);
+                  setCurrentPage(newPage);
+                }}
                 disabled={currentPage === Math.ceil(teamLeaderboard.length / itemsPerPage)}
               >
                 Next
@@ -318,8 +333,12 @@ export default function Leaderboard() {
           {memberLeaderboard.length > itemsPerPage && (
             <div className="pagination">
               <button
+                type="button"
                 className="pagination-button prev"
-                onClick={() => setCurrentPage((p) => Math.max(1, p - 1))}
+                onClick={() => {
+                  const newPage = Math.max(1, currentPage - 1);
+                  setCurrentPage(newPage);
+                }}
                 disabled={currentPage === 1}
               >
                 Prev
@@ -328,10 +347,13 @@ export default function Leaderboard() {
                 Page {currentPage} of {Math.max(1, Math.ceil(memberLeaderboard.length / itemsPerPage))}
               </div>
               <button
+                type="button"
                 className="pagination-button next"
-                onClick={() =>
-                  setCurrentPage((p) => Math.min(Math.ceil(memberLeaderboard.length / itemsPerPage), p + 1))
-                }
+                onClick={() => {
+                  const totalPages = Math.ceil(memberLeaderboard.length / itemsPerPage);
+                  const newPage = Math.min(totalPages, currentPage + 1);
+                  setCurrentPage(newPage);
+                }}
                 disabled={currentPage === Math.ceil(memberLeaderboard.length / itemsPerPage)}
               >
                 Next

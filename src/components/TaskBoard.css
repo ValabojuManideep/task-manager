@@ -29,8 +29,8 @@
 }
 
 .task-form-wrapper {
-  background: white;
-  border: 1px solid #e5e7eb;
+  background: var(--card-bg);
+  border: 1px solid var(--border-color);
   border-radius: 12px;
   padding: 24px;
   margin-bottom: 30px;
@@ -41,27 +41,32 @@
   gap: 20px;
   margin-bottom: 30px;
   flex-wrap: wrap;
+  align-items: center;
+  width: 100%;
+  overflow-x: auto;
 }
 
 .filter-group {
   display: flex;
-  gap: 8px;
+  gap: 4px;
   background: white;
-  padding: 6px;
+  padding: 3px;
   border-radius: 10px;
   border: 1px solid #e5e7eb;
+  flex-shrink: 0;
 }
 
 .filter-btn {
-  padding: 8px 20px;
+  padding: 6px 14px;
   background: none;
   border: none;
   border-radius: 6px;
-  font-size: 14px;
+  font-size: 12px;
   font-weight: 500;
   color: #6b7280;
   cursor: pointer;
   transition: all 0.2s;
+  white-space: nowrap;
 }
 
 .filter-btn:hover {
@@ -108,20 +113,22 @@
 }
 
 .user-filter {
-  margin-left: 20px;
+  flex-shrink: 0;
+  margin-left: 0;
 }
 
 .user-filter-select {
-  padding: 8px 16px;
+  padding: 6px 12px;
   border: 2px solid var(--border-color, #e5e7eb);
   border-radius: 8px;
   background: var(--card-bg, white);
   color: var(--text-color, #1f2937);
-  font-size: 14px;
+  font-size: 12px;
   font-weight: 500;
   cursor: pointer;
   transition: all 0.2s ease;
-  min-width: 150px;
+  min-width: 120px;
+  max-width: 150px;
 }
 
 .user-filter-select:hover {
@@ -133,32 +140,7 @@
   border-color: var(--primary-color, #5B7FFF);
   box-shadow: 0 0 0 3px rgba(91, 127, 255, 0.1);
 }
-.user-filter {
-  margin-left: 20px;
-}
 
-.user-filter-select {
-  padding: 8px 16px;
-  border: 2px solid var(--border-color, #e5e7eb);
-  border-radius: 8px;
-  background: var(--card-bg, white);
-  color: var(--text-color, #1f2937);
-  font-size: 14px;
-  font-weight: 500;
-  cursor: pointer;
-  transition: all 0.2s ease;
-  min-width: 150px;
-}
-
-.user-filter-select:hover {
-  border-color: var(--primary-color, #5B7FFF);
-}
-
-.user-filter-select:focus {
-  outline: none;
-  border-color: var(--primary-color, #5B7FFF);
-  box-shadow: 0 0 0 3px rgba(91, 127, 255, 0.1);
-}
 /* Fix dropdown options visibility */
 .user-filter-select option,
 .analytics-user-select option {

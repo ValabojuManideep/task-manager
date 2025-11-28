@@ -1,4 +1,4 @@
-import React from "react";
+import React, { useEffect } from "react";
 import useAppStore from "./store/useAppStore";
 import { BrowserRouter, Routes, Route, Navigate, useNavigate } from "react-router-dom";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
@@ -16,11 +16,28 @@ import TeamManagement from "./components/TeamManagement";
 import Leaderboard from "./components/Leaderboard";
 import Profile from "./components/Profile";
 import Conversations from "./components/Conversations";
+import UserManagement from "./components/UserManagement";
 import Login from "./components/Login";
 import SignUp from "./components/SignUp";
 import "./App.css";
 
 const queryClient = new QueryClient();
+
+// Initialize dark mode on app load
+function initializeDarkMode() {
+  if (typeof document !== "undefined") {
+    const isDark = localStorage.getItem("theme") === "dark";
+    if (isDark) {
+      document.documentElement.classList.add("dark-mode");
+      document.body.classList.add("dark-mode");
+    } else {
+      document.documentElement.classList.remove("dark-mode");
+      document.body.classList.remove("dark-mode");
+    }
+  }
+}
+
+initializeDarkMode();
 
 function WithTasks({ children }) {
   return (
@@ -37,6 +54,14 @@ function AppLayout({ children }) {
   const navigate = useNavigate();
   const darkMode = useAppStore((s) => s.darkMode);
   const setDarkMode = useAppStore((s) => s.setDarkMode);
+
+  useEffect(() => {
+    // Apply dark mode to root and body elements whenever it changes
+    if (typeof document !== "undefined") {
+      document.documentElement.classList.toggle("dark-mode", darkMode);
+      document.body.classList.toggle("dark-mode", darkMode);
+    }
+  }, [darkMode]);
 
   const toggleDarkMode = () => {
     setDarkMode(!darkMode);
@@ -174,6 +199,16 @@ export default function App() {
                   <ProtectedRoute>
                     <AppLayout>
                       <Profile />
+                    </AppLayout>
+                  </ProtectedRoute>
+                }
+              />
+              <Route
+                path="/admin/users"
+                element={
+                  <ProtectedRoute>
+                    <AppLayout>
+                      <UserManagement />
                     </AppLayout>
                   </ProtectedRoute>
                 }

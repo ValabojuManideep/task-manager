@@ -10,16 +10,16 @@
 
 .header h1 {
   font-size: 2rem;
-  color: #1f2937;
+  color: var(--text-color);
   margin-bottom: 0.5rem;
 }
 
 .subtitle {
-  color: #6b7280;
+  color: var(--text-muted);
 }
 
 .users-table {
-  background: white;
+  background: var(--card-bg);
   border-radius: 12px;
   overflow: hidden;
   box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
@@ -31,17 +31,18 @@
 }
 
 .users-table th {
-  background: #f9fafb;
+  background: var(--hover-bg);
   padding: 1rem;
   text-align: left;
   font-weight: 600;
-  color: #374151;
-  border-bottom: 2px solid #e5e7eb;
+  color: var(--text-color);
+  border-bottom: 2px solid var(--border-color);
 }
 
 .users-table td {
   padding: 1rem;
-  border-bottom: 1px solid #e5e7eb;
+  border-bottom: 1px solid var(--border-color);
+  color: var(--text-color);
 }
 
 .user-info {
@@ -75,11 +76,12 @@
 
 .role-select {
   padding: 0.5rem 1rem;
-  border: 2px solid #e5e7eb;
+  border: 2px solid var(--border-color);
   border-radius: 8px;
   font-size: 0.875rem;
   cursor: pointer;
-  background: white;
+  background: var(--card-bg);
+  color: var(--text-color);
   transition: border-color 0.2s;
 }
 
@@ -95,5 +97,5 @@
 .empty-state {
   text-align: center;
   padding: 3rem;
-  color: #6b7280;
+  color: var(--text-muted);
 }

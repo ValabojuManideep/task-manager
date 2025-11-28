@@ -28,7 +28,10 @@ export default function SignUp() {
     const result = await register(form.username, form.email, form.password);
     setLoading(false);
 
-    if (!result.success) {
+    if (result.success) {
+      // Navigate on successful signup
+      navigate("/");
+    } else {
       setError(result.error);
     }
   };

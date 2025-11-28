@@ -1,6 +1,7 @@
 import express from "express";
 import jwt from "jsonwebtoken";
 import User from "../models/User.js";
+import { authenticate, authorize } from "../middleware/authMiddleware.js";
 
 const router = express.Router();
 const JWT_SECRET = process.env.JWT_SECRET || "your-secret-key-change-this";
@@ -76,6 +77,37 @@ router.get("/users", async (req, res) => {
   try {
     const users = await User.find({ role: "user" }, "username email role _id");
     res.json(users);
+  } catch (err) {
+    res.status(500).json({ error: err.message });
+  }
+});
+
+// Get ALL users (for admin user management)
+router.get("/all-users", authenticate, authorize("admin"), async (req, res) => {
+  try {
+    const users = await User.find({}, "username email role _id createdAt");
+    res.json(users);
+  } catch (err) {
+    res.status(500).json({ error: err.message });
+  }
+});
+
+// Update user role (admin only)
+router.put("/users/:userId/role", authenticate, authorize("admin"), async (req, res) => {
+  try {
+    const { userId } = req.params;
+    const { role } = req.body;
+    
+    if (!["user", "team-manager", "admin"].includes(role)) {
+      return res.status(400).json({ error: "Invalid role" });
+    }
+    
+    const user = await User.findByIdAndUpdate(userId, { role }, { new: true });
+    if (!user) {
+      return res.status(404).json({ error: "User not found" });
+    }
+    
+    res.json({ message: "User role updated", user });
   } catch (err) {
     res.status(500).json({ error: err.message });
   }

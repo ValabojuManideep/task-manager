@@ -38,11 +38,17 @@ export default function TaskList({ statusFilter, priorityFilter, displayTasks })
   const setShowRecurrentEnd = useAppStore((s) => s.setTaskList_showRecurrentEnd);
   const endedTaskTitle = useAppStore((s) => s.taskList_endedTaskTitle);
   const setEndedTaskTitle = useAppStore((s) => s.setTaskList_endedTaskTitle);
+  const notifiedRecurrentTasks = useAppStore((s) => s.taskList_notifiedRecurrentTasks);
+  const setNotifiedRecurrentTasks = useAppStore((s) => s.setTaskList_notifiedRecurrentTasks);
 
   useEffect(() => {
-    if (!displayTasks || showRecurrentEnd) return;
+    if (!displayTasks) return;
     const now = new Date();
     for (const task of displayTasks) {
+      const taskId = task._id || task.id;
+      // Skip if already notified about this task
+      if (notifiedRecurrentTasks.includes(taskId)) continue;
+      
       if (
         (task.isRecurrent || (task.recurrencePattern && task.recurrencePattern !== "none")) &&
         task.recurrenceEndDate &&
@@ -51,10 +57,12 @@ export default function TaskList({ statusFilter, priorityFilter, displayTasks })
       ) {
         setShowRecurrentEnd(true);
         setEndedTaskTitle(task.title);
+        // Mark this task as notified
+        setNotifiedRecurrentTasks([...notifiedRecurrentTasks, taskId]);
         break;
       }
     }
-  }, [displayTasks, showRecurrentEnd]);
+  }, [displayTasks]);
 
   const expandedTask = useAppStore((s) => s.taskList_expandedTask);
   const setExpandedTask = useAppStore((s) => s.setTaskList_expandedTask);

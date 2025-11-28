@@ -5,7 +5,7 @@
 .form-title {
   font-size: 20px;
   font-weight: 600;
-  color: #111827;
+  color: var(--text-color);
   margin-bottom: 20px;
 }
 
@@ -17,7 +17,7 @@
   display: block;
   font-size: 14px;
   font-weight: 500;
-  color: #374151;
+  color: var(--text-muted);
   margin-bottom: 8px;
 }
 
@@ -26,11 +26,13 @@
 .form-group select {
   width: 100%;
   padding: 10px 14px;
-  border: 1px solid #d1d5db;
+  border: 1px solid var(--border-color);
   border-radius: 8px;
   font-size: 14px;
   font-family: inherit;
   transition: all 0.2s;
+  background: var(--card-bg);
+  color: var(--text-color);
 }
 
 .form-group input:focus,
@@ -65,13 +67,13 @@
 }
 
 .cancel-btn {
-  background: white;
-  border: 1px solid #d1d5db;
-  color: #6b7280;
+  background: var(--card-bg);
+  border: 1px solid var(--border-color);
+  color: var(--text-muted);
 }
 
 .cancel-btn:hover {
-  background: #f9fafb;
+  background: var(--hover-bg);
 }
 
 .submit-btn {
@@ -94,8 +96,9 @@
 .toggle-btn {
   flex: 1;
   padding: 10px;
-  border: 2px solid #ddd;
-  background: white;
+  border: 2px solid var(--border-color);
+  background: var(--card-bg);
+  color: var(--text-color);
   border-radius: 6px;
   cursor: pointer;
   font-weight: 600;

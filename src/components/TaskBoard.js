@@ -53,6 +53,11 @@ export default function TaskBoard({ taskType = "team" }) {
     }
   }, [isAdmin]);
 
+  // Close form when switching between user/team tasks
+  useEffect(() => {
+    setShowForm(false);
+  }, [taskType]);
+
   const fetchUsers = async () => {
     try {
       const { data } = await axios.get("http://localhost:5000/api/auth/users");
@@ -170,11 +175,12 @@ export default function TaskBoard({ taskType = "team" }) {
         <div
           style={{
             display: "flex",
-            gap: "1.5rem",
+            gap: "0.8rem",
             alignItems: "center",
             flexWrap: "nowrap",
             width: "100%",
-            marginTop: "0.5rem"
+            marginTop: "0.5rem",
+            overflowX: "auto"
           }}
         >
           <div className="filter-group" style={{ flexShrink: 0 }}>
@@ -237,7 +243,7 @@ export default function TaskBoard({ taskType = "team" }) {
                 className="user-filter-select"
                 value={userFilter}
                 onChange={(e) => setUserFilter(e.target.value)}
-                style={{ minWidth: "160px", height: "44px", fontSize: "1em" }}
+                style={{ minWidth: "120px", height: "32px", fontSize: "0.85em" }}
               >
                 <option value="All Users">All Users</option>
                 {users.map(u => (
@@ -250,19 +256,19 @@ export default function TaskBoard({ taskType = "team" }) {
           )}
 
           {/* Search bar beside filters */}
-          <div style={{ position: "relative", width: "340px", flexShrink: 1 }}>
+          <div style={{ position: "relative", minWidth: "140px", maxWidth: "240px", flex: 1, flexShrink: 1 }}>
             <input
               type="text"
               className="task-search-input"
-              placeholder="Search tasks by name or description..."
+              placeholder="Search..."
               value={taskSearchTerm}
               onChange={e => setTaskSearchTerm(e.target.value)}
               style={{
-                padding: "8px 40px 8px 16px",
+                padding: "6px 36px 6px 12px",
                 borderRadius: "8px",
                 border: "1.5px solid #222",
                 width: "100%",
-                fontSize: "1.1em",
+                fontSize: "0.9em",
                 marginBottom: "4px"
               }}
             />

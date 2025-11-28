@@ -44,13 +44,13 @@ export default function TeamManagement() {
 
   const fetchUsers = async () => {
     try {
-      const token = localStorage.getItem("token"); // ✅ ADDED
+      const token = localStorage.getItem("token");
       const { data } = await axios.get(
-        "http://localhost:5000/api/admin/users", // ✅ CHANGED
-        { headers: { Authorization: `Bearer ${token}` } } // ✅ ADDED
+        "http://localhost:5000/api/auth/all-users",
+        { headers: { Authorization: `Bearer ${token}` } }
       );
-      console.log("Fetched users:", data); // ✅ ADDED
-      console.log("Team managers:", data.filter(u => u.role === "team-manager")); // ✅ ADDED
+      console.log("Fetched users:", data);
+      console.log("Team managers:", data.filter(u => u.role === "team-manager"));
       setUsers(data);
     } catch (err) {
       console.error("Error fetching users:", err);
