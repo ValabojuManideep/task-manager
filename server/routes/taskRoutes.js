@@ -11,7 +11,7 @@ const PRIVATE_TASK_KEY = process.env.PRIVATE_TASK_KEY;
 
 const router = express.Router();
 
-// ✅ Configure multer for file uploads - NO EXTERNAL IMPORT
+// ✅ Configure multer for file uploads
 const storage = multer.memoryStorage();
 const fileUpload = multer({
   storage: storage,
@@ -196,7 +196,8 @@ router.delete("/:taskId/attachment/:attachmentId", async (req, res) => {
     
     await task.save();
 
-    const username = req.body.username || "User";
+    // ✅ Use safe default — don't rely on req.body
+    const username = "User"; // ← Fixed: no req.body.username
     await logActivity("updated", task.title, username, `Removed attachment: ${filename}`);
 
     res.json({ message: "Attachment deleted successfully" });
@@ -215,7 +216,7 @@ router.put("/:id", async (req, res) => {
     }
 
     const oldStatus = task.status;
-    const username = req.body.userId || "User";
+    const username = req.body.userId || "User"; // ← This is okay — userId is optional
     const { userId, ...updateData } = req.body;
     if (updateData.recurrenceEndDate) {
       updateData.recurrenceEndDate = new Date(updateData.recurrenceEndDate);
@@ -281,19 +282,31 @@ router.put("/:id", async (req, res) => {
   }
 });
 
-// Delete task
+// ✅ Delete task — FIXED TO PREVENT 500 ERROR
 router.delete("/:id", async (req, res) => {
   try {
+    // ✅ Validate ID format
+    if (!mongoose.Types.ObjectId.isValid(req.params.id)) {
+      return res.status(400).json({ error: "Invalid task ID format" });
+    }
+
     const task = await Task.findById(req.params.id);
     if (!task) {
       return res.status(404).json({ error: "Task not found" });
     }
+
+    const taskId = task._id;
     const taskTitle = task.title;
+
+    // ✅ Delete first
     await Task.findByIdAndDelete(req.params.id);
-    const adminUsername = req.body.username || "Admin";
-    await logActivity("deleted", taskTitle, adminUsername, "Task deleted");
+
+    // ✅ Log activity with safe values
+    const adminUsername = "Admin"; // ← Safe default
+    await logActivity("deleted", taskId, adminUsername, `Task "${taskTitle}" deleted`);
 
     res.json({ message: "Task deleted successfully" });
+
   } catch (err) {
     console.error("Delete error:", err);
     res.status(500).json({ error: err.message });

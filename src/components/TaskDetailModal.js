@@ -5,6 +5,7 @@ import { format } from "date-fns";
 import axios from "axios";
 import useAppStore from "../store/useAppStore";
 import "./TaskDetailModal.css";
+import { useConfirm } from '../hooks/useConfirm';
 
 // Highlight @username mentions in comment text
 function highlightMentions(text) {
@@ -29,7 +30,9 @@ function highlightMentions(text) {
   return parts;
 }
 export default function TaskDetailModal({ task, onClose, onUpdate, onDelete, onRefresh }) {
+ // const [deleteConfirm, setDeleteConfirm] = React.useState(false);
   const { user } = useAuth();
+  const { confirmAction } = useConfirm();
   const commentText = useAppStore((s) => s.taskDetail_commentText);
   const setCommentText = useAppStore((s) => s.setTaskDetail_commentText);
   const editingComment = useAppStore((s) => s.taskDetail_editingComment);
@@ -101,26 +104,28 @@ export default function TaskDetailModal({ task, onClose, onUpdate, onDelete, onR
   };
 
   const handleDeleteAttachment = async (attachmentId, filename) => {
-    if (!window.confirm(`Delete "${filename}"?`)) return;
+  const confirmed = await confirmAction(
+    'Delete Attachment?',
+    `Are you sure you want to delete "${filename}"?`,
+    'warning'
+  );
+  if (!confirmed) return;
 
-    setDeletingAttachment(attachmentId);
-    try {
-      await axios.delete(
-        `http://localhost:5000/api/tasks/${task._id}/attachment/${attachmentId}`,
-        { 
-          data: { username: user.username || 'Admin' }
-        }
-      );
-      
-      alert('Attachment deleted successfully');
-      onRefresh(); // Refresh task data
-    } catch (error) {
-      console.error('Delete attachment error:', error);
-      alert('Failed to delete attachment');
-    } finally {
-      setDeletingAttachment(null);
-    }
-  };
+  setDeletingAttachment(attachmentId);
+  try {
+    await axios.delete(
+      `http://localhost:5000/api/tasks/${task._id}/attachment/${attachmentId}`,
+      { data: { username: user.username || 'Admin' } }
+    );
+    alert('Attachment deleted successfully');
+    onRefresh();
+  } catch (error) {
+    console.error('Delete attachment error:', error);
+    alert('Failed to delete attachment');
+  } finally {
+    setDeletingAttachment(null);
+  }
+};
 
   const handleAddComment = async () => {
     if (!commentText.trim()) return;
@@ -156,7 +161,12 @@ export default function TaskDetailModal({ task, onClose, onUpdate, onDelete, onR
   };
 
   const handleDeleteComment = async (commentId) => {
-    if (!window.confirm("Delete this comment?")) return;
+    const confirmed = await confirmAction(
+      'Delete Comment?',
+      'Are you sure you want to delete this comment?',
+      'warning'
+    );
+    if (!confirmed) return;
 
     try {
       await axios.delete(`http://localhost:5000/api/tasks/${task._id}/comment/${commentId}`);
@@ -333,9 +343,22 @@ export default function TaskDetailModal({ task, onClose, onUpdate, onDelete, onR
                 <button className="modal-btn done-btn" onClick={() => { onUpdate(task._id, { status: "done" }); onClose(); }}>
                   ✓ Mark Done
                 </button>
-                <button className="modal-btn delete-btn" onClick={() => { onDelete(task._id); onClose(); }}>
-                  🗑 Delete
-                </button>
+                <button 
+                          className="modal-btn delete-btn" 
+                          onClick={async () => {
+                            const confirmed = await confirmAction(
+                              'Delete Task?',
+                              `Are you sure you want to delete "${task.title}"? This action cannot be undone.`,
+                              'error'
+                            );
+                            if (confirmed) {
+                              onDelete(task._id);
+                              onClose();
+                            }
+                          }}
+                        >
+                          🗑 Delete
+                        </button>
               </>
             ) : (
               <>
@@ -521,6 +544,8 @@ export default function TaskDetailModal({ task, onClose, onUpdate, onDelete, onR
           </div>
         </div>
       </div>
+
+      
     </div>
   );
 }

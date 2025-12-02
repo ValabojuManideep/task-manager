@@ -4,10 +4,13 @@ import axios from "axios";
 import useAppStore from "../store/useAppStore";
 import "./TeamManagement.css";
 import Chat from "./Chat";
+import { toast } from "react-hot-toast";
+import { useConfirm } from '../hooks/useConfirm';
 
 export default function TeamManagement() {
   const teams = useAppStore((s) => s.teams);
   const { user, isAdmin } = useAuth();
+  const { confirmAction } = useConfirm();
 
   const showForm = useAppStore((s) => s.teamMgmt_showForm);
   const setShowForm = useAppStore((s) => s.setTeamMgmt_showForm);
@@ -92,15 +95,6 @@ export default function TeamManagement() {
     }
   };
 
-  // Rest of your code remains the same...
-
-
-
-
-
-
-
-  // ✅ NEW: Separate users by role
   const regularUsers = users.filter((u) => u.role === "user");
   const teamManagerUsers = users.filter((u) => u.role === "team-manager");
 
@@ -112,7 +106,6 @@ export default function TeamManagement() {
     );
   };
 
-  // ✅ NEW: Handle team manager toggle
   const handleManagerToggle = (userId) => {
     setSelectedManagers((prev) =>
       prev.includes(userId)
@@ -125,7 +118,7 @@ export default function TeamManagement() {
     e.preventDefault();
 
     if (selectedUsers.length < 2) {
-      alert("A team must have at least 2 members.");
+      toast.error("A team must have at least 2 members.");
       return;
     }
 
@@ -137,27 +130,29 @@ export default function TeamManagement() {
     );
 
     if (duplicate) {
-      alert("A team with this name already exists.");
+      toast.error("A team with this name already exists.");
       return;
     }
 
     const teamData = {
       ...form,
       members: selectedUsers,
-      teamManagers: selectedManagers, // ✅ NEW
+      teamManagers: selectedManagers,
       createdBy: user.id
     };
 
     try {
       if (editingTeam) {
         await updateTeam(editingTeam._id, teamData);
+        toast.success("Team updated successfully!");
       } else {
         await addTeam(teamData);
+        toast.success("Team created successfully!");
       }
       resetForm();
     } catch (err) {
       console.error("Error saving team:", err);
-      alert("Failed to save team. Please try again.");
+      toast.error("Failed to save team. Please try again.");
     }
   };
 
@@ -169,29 +164,39 @@ export default function TeamManagement() {
       description: team.description || ""
     });
     setSelectedUsers(team.members.map((m) => m._id));
-    setSelectedManagers(team.teamManagers?.map((m) => m._id) || []); // ✅ NEW
+    setSelectedManagers(team.teamManagers?.map((m) => m._id) || []);
     setShowForm(true);
   };
 
   const resetForm = () => {
     setForm({ name: "", description: "" });
     setSelectedUsers([]);
-    setSelectedManagers([]); // ✅ NEW
+    setSelectedManagers([]);
     setSearchTerm("");
-    setManagerSearchTerm(""); // ✅ NEW
+    setManagerSearchTerm("");
     setShowForm(false);
     setEditingTeam(null);
   };
 
   const handleDeleteTeam = async (teamId, e) => {
     e.stopPropagation();
-    if (window.confirm("Are you sure you want to delete this team?")) {
-      try {
-        await deleteTeam(teamId);
-      } catch (err) {
-        console.error("Error deleting team:", err);
-        alert("Failed to delete team. Please try again.");
-      }
+    
+    const team = teams.find(t => t._id === teamId);
+    const confirmed = await confirmAction(
+      'Delete Team?',
+      `Are you sure you want to delete "${team?.name || 'this team'}"? This action cannot be undone.`,
+      'warning',
+      { confirmButtonText: 'Delete', confirmButtonColor: '#ef4444' }
+    );
+    
+    if (!confirmed) return;
+
+    try {
+      await deleteTeam(teamId);
+      toast.success("Team deleted successfully!");
+    } catch (err) {
+      console.error("Error deleting team:", err);
+      toast.error("Failed to delete team. Please try again.");
     }
   };
 
@@ -205,7 +210,6 @@ export default function TeamManagement() {
       u.email.toLowerCase().includes(searchTerm.toLowerCase())
   );
 
-  // ✅ NEW: Filter team managers
   const filteredManagers = teamManagerUsers.filter(
     (u) =>
       u.username.toLowerCase().includes(managerSearchTerm.toLowerCase()) ||
@@ -244,7 +248,6 @@ export default function TeamManagement() {
         )}
       </div>
 
-      {/* Search box */}
       <div className="team-search-section">
         <div className="search-box">
           <span className="search-icon">🔍</span>
@@ -273,7 +276,6 @@ export default function TeamManagement() {
         )}
       </div>
 
-      {/* Form UI */}
       {showForm && isAdmin && (
         <div className="team-form-wrapper">
           <form className="team-form" onSubmit={handleSubmit}>
@@ -302,7 +304,6 @@ export default function TeamManagement() {
               />
             </div>
 
-            {/* ✅ NEW: Team Managers Section */}
             <div className="form-group">
               <label>Select Team Managers (Optional)</label>
               <input
@@ -399,7 +400,25 @@ export default function TeamManagement() {
             </div>
 
             <div className="form-actions">
-              <button type="button" className="cancel-btn" onClick={resetForm}>
+              <button 
+                type="button" 
+                className="cancel-btn" 
+                onClick={async () => {
+                  const hasChanges = form.name || form.description || selectedUsers.length > 0 || selectedManagers.length > 0;
+                  
+                  if (hasChanges) {
+                    const ok = await confirmAction(
+                      'Discard changes?',
+                      'Any unsaved changes will be lost.',
+                      'question',
+                      { confirmButtonText: 'Discard' }
+                    );
+                    if (!ok) return;
+                  }
+                  
+                  resetForm();
+                }}
+              >
                 Cancel
               </button>
               <button
@@ -414,7 +433,6 @@ export default function TeamManagement() {
         </div>
       )}
 
-      {/* Team Cards */}
       <div className="teams-list">
         {filteredTeams.length === 0 ? (
           <div className="empty-state">
@@ -462,7 +480,6 @@ export default function TeamManagement() {
                   </div>
                 )}
 
-                {/* ✅ NEW: Show team managers */}
                 {team.teamManagers && team.teamManagers.length > 0 && (
                   <div className="team-managers">
                     <strong>Managers ({team.teamManagers.length}):</strong>
@@ -504,7 +521,6 @@ export default function TeamManagement() {
         )}
       </div>
 
-      {/* Pagination */}
       {totalPages > 1 && (
         <div
           style={{
@@ -557,7 +573,6 @@ export default function TeamManagement() {
         </div>
       )}
 
-      {/* Team Modal */}
       {selectedTeamDetail && (
         <div
           className="team-detail-modal-overlay"
@@ -587,7 +602,6 @@ export default function TeamManagement() {
                 </div>
               )}
 
-              {/* ✅ NEW: Team Managers Section in Modal */}
               {selectedTeamDetail.teamManagers && selectedTeamDetail.teamManagers.length > 0 && (
                 <div className="detail-section">
                   <h4>

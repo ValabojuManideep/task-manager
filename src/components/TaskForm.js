@@ -3,19 +3,15 @@ import { useAuth } from "../hooks/useAuth";
 import axios from "axios";
 import useAppStore from "../store/useAppStore";
 import "./TaskForm.css";
+import { toast } from 'react-hot-toast';
+import { useConfirm } from '../hooks/useConfirm';
 
 export default function TaskForm({ onClose }) {
   const teams = useAppStore((s) => s.teams);
-  const addTask = async (task) => {
-    try {
-      await axios.post("http://localhost:5000/api/tasks", task);
-      const { data } = await axios.get("http://localhost:5000/api/tasks");
-      useAppStore.setState({ tasks: data, allTasks: data });
-    } catch (err) {
-      console.error("Error adding task:", err);
-    }
-  };
+
   const { user } = useAuth();
+  const { confirmAction } = useConfirm();
+
   const users = useAppStore((s) => s.taskForm_users);
   const setUsers = useAppStore((s) => s.setTaskForm_users);
   const assignmentType = useAppStore((s) => s.taskForm_assignmentType);
@@ -46,7 +42,6 @@ export default function TaskForm({ onClose }) {
   const privateKeyError = useAppStore((s) => s.taskForm_privateKeyError);
   const setPrivateKeyError = useAppStore((s) => s.setTaskForm_privateKeyError);
 
-  const today = new Date().toISOString().split('T')[0];
   const nowForDateTimeLocal = new Date().toISOString().slice(0,16);
 
   useEffect(() => {
@@ -68,17 +63,12 @@ export default function TaskForm({ onClose }) {
   const handleFileChange = (e) => {
     const selectedFiles = Array.from(e.target.files);
     setFileError("");
-    
-    // Validate file count (max 5)
     if (selectedFiles.length > 5) {
       setFileError("Maximum 5 files allowed");
       return;
     }
-    
-    // Validate file size (max 5MB per file)
     const maxSize = 5 * 1024 * 1024;
     const validFiles = [];
-    
     for (let file of selectedFiles) {
       if (file.size > maxSize) {
         setFileError(`${file.name} exceeds 5MB limit`);
@@ -86,7 +76,6 @@ export default function TaskForm({ onClose }) {
       }
       validFiles.push(file);
     }
-    
     setFiles(validFiles);
   };
 
@@ -109,21 +98,32 @@ export default function TaskForm({ onClose }) {
     e.preventDefault();
     setUploading(true);
 
+    // Simple validation
     if (
       form.recurrenceEndDate &&
       form.dueDate &&
       new Date(form.dueDate) > new Date(form.recurrenceEndDate)
     ) {
-      alert("Due date cannot be after recurrence end date.");
+      toast.error("Due date cannot be after recurrence end date.");
+      setUploading(false);
+      return;
+    }
+
+    // Confirm create
+    const ok = await confirmAction(
+      'Create task?',
+      `Create "${form.title || 'this task'}" now?`,
+      'question',
+      { confirmButtonText: 'Create' }
+    );
+    if (!ok) {
       setUploading(false);
       return;
     }
 
     try {
-      // Create FormData for file upload
+      // Build multipart form data
       const formData = new FormData();
-      
-      // Append all form fields
       formData.append('title', form.title);
       formData.append('description', form.description);
       formData.append('status', form.status);
@@ -133,28 +133,21 @@ export default function TaskForm({ onClose }) {
       formData.append('isTeamTask', assignmentType === "team");
       formData.append('isRecurrent', form.recurrencePattern && form.recurrencePattern !== "none");
       formData.append('isPrivate', isPrivate);
-      
+
       if (form.dueDate) {
         formData.append('dueDate', new Date(form.dueDate).toISOString());
       }
-      
       if (form.recurrencePattern && form.recurrencePattern !== "none") {
         formData.append('recurrencePattern', form.recurrencePattern);
         if (form.recurrenceEndDate) {
           formData.append('recurrenceEndDate', new Date(form.recurrenceEndDate).toISOString());
         }
       }
-
       if (assignmentType === "team") {
-        if (form.assignedToTeam) {
-          formData.append('assignedToTeam', form.assignedToTeam);
-        }
+        if (form.assignedToTeam) formData.append('assignedToTeam', form.assignedToTeam);
       } else {
-        if (form.assignedTo) {
-          formData.append('assignedTo', form.assignedTo);
-        }
+        if (form.assignedTo) formData.append('assignedTo', form.assignedTo);
       }
-
       if (isPrivate) {
         if (!privateKey) {
           setPrivateKeyError("Enter security key.");
@@ -164,17 +157,11 @@ export default function TaskForm({ onClose }) {
         setPrivateKeyError("");
         formData.append('privateKey', privateKey);
       }
+      files.forEach(file => formData.append('files', file));
 
-      // Append files
-      files.forEach(file => {
-        formData.append('files', file);
-      });
-
-      // Send to backend
+      // Create on backend
       const response = await axios.post('http://localhost:5000/api/tasks', formData, {
-        headers: {
-          'Content-Type': 'multipart/form-data'
-        }
+        headers: { 'Content-Type': 'multipart/form-data' }
       });
 
       if (response.data.error && isPrivate) {
@@ -184,12 +171,12 @@ export default function TaskForm({ onClose }) {
       }
 
       // Reset form
-      setForm({ 
-        title: "", 
-        description: "", 
-        status: "todo", 
-        priority: "medium", 
-        dueDate: "", 
+      setForm({
+        title: "",
+        description: "",
+        status: "todo",
+        priority: "medium",
+        dueDate: "",
         assignedTo: "",
         assignedToTeam: "",
         recurrencePattern: "none",
@@ -200,14 +187,16 @@ export default function TaskForm({ onClose }) {
       setIsPrivate(false);
       setPrivateKey("");
       setPrivateKeyError("");
-      
-      // Refresh tasks in context
-      await addTask(null); // Trigger refresh
-      
+
+      // Refresh task list (GET — avoids POSTing null)
+      const { data } = await axios.get("http://localhost:5000/api/tasks");
+      useAppStore.setState({ tasks: data, allTasks: data });
+
       if (onClose) onClose();
+      toast.success("Task created successfully!");
     } catch (error) {
       console.error("Error creating task:", error);
-      alert("Failed to create task: " + (error.response?.data?.error || error.message));
+      toast.error(`Failed to create task: ${error.response?.data?.error || error.message}`);
     } finally {
       setUploading(false);
     }
@@ -220,7 +209,7 @@ export default function TaskForm({ onClose }) {
 
   const filteredTeams = teams.filter(team =>
     team.name.toLowerCase().includes(teamSearchTerm.toLowerCase()) ||
-    team.members?.some(member => 
+    team.members?.some(member =>
       member.username.toLowerCase().includes(teamSearchTerm.toLowerCase())
     )
   );
@@ -229,7 +218,7 @@ export default function TaskForm({ onClose }) {
     if (!form.assignedTo) return "Select User";
     const user = users.find(u => u._id === form.assignedTo);
     return user ? user.username : "Select User";
-  };
+    };
 
   const getSelectedTeamName = () => {
     if (!form.assignedToTeam) return "Select Team";
@@ -281,14 +270,14 @@ export default function TaskForm({ onClose }) {
       {form.recurrencePattern !== "none" && (
         <div className="form-group">
           <label>Recurrent Until (End Date)</label>
-            <input
-              type="datetime-local"
-              name="recurrenceEndDate"
-              min={nowForDateTimeLocal}
-              value={form.recurrenceEndDate}
-              onChange={handleChange}
-              required={form.recurrencePattern !== "none"}
-            />
+          <input
+            type="datetime-local"
+            name="recurrenceEndDate"
+            min={nowForDateTimeLocal}
+            value={form.recurrenceEndDate}
+            onChange={handleChange}
+            required={form.recurrencePattern !== "none"}
+          />
         </div>
       )}
 
@@ -322,7 +311,7 @@ export default function TaskForm({ onClose }) {
         <div className="form-group">
           <label>Assign To User</label>
           <div className="custom-dropdown-wrapper">
-            <div 
+            <div
               className="custom-dropdown-header"
               onClick={() => setShowUserDropdown(!showUserDropdown)}
             >
@@ -377,7 +366,7 @@ export default function TaskForm({ onClose }) {
         <div className="form-group">
           <label>Assign To Team</label>
           <div className="custom-dropdown-wrapper">
-            <div 
+            <div
               className="custom-dropdown-header"
               onClick={() => setShowTeamDropdown(!showTeamDropdown)}
             >
@@ -453,10 +442,10 @@ export default function TaskForm({ onClose }) {
 
       <div className="form-group">
         <label>Due Date</label>
-        <input 
-          type="datetime-local" 
-          name="dueDate" 
-          value={form.dueDate} 
+        <input
+          type="datetime-local"
+          name="dueDate"
+          value={form.dueDate}
           onChange={handleChange}
           min={nowForDateTimeLocal}
         />
@@ -484,22 +473,22 @@ export default function TaskForm({ onClose }) {
 
       {/* SELECTED FILES PREVIEW */}
       {files.length > 0 && (
-        <div style={{ 
-          background: "#f5f5f5", 
-          padding: "12px", 
-          borderRadius: "6px", 
-          marginBottom: "15px" 
+        <div style={{
+          background: "#f5f5f5",
+          padding: "12px",
+          borderRadius: "6px",
+          marginBottom: "15px"
         }}>
           <p style={{ fontWeight: "600", marginBottom: "8px", fontSize: "0.95em" }}>
             Selected Files ({files.length})
           </p>
           <div style={{ display: "flex", flexDirection: "column", gap: "8px" }}>
             {files.map((file, index) => (
-              <div 
-                key={index} 
-                style={{ 
-                  display: "flex", 
-                  alignItems: "center", 
+              <div
+                key={index}
+                style={{
+                  display: "flex",
+                  alignItems: "center",
                   justifyContent: "space-between",
                   background: "white",
                   padding: "8px 12px",
@@ -509,8 +498,8 @@ export default function TaskForm({ onClose }) {
               >
                 <div style={{ display: "flex", alignItems: "center", gap: "8px", flex: 1, minWidth: 0 }}>
                   <span style={{ fontSize: "1.2em" }}>{getFileIcon(file)}</span>
-                  <span style={{ 
-                    fontSize: "0.9em", 
+                  <span style={{
+                    fontSize: "0.9em",
                     color: "#333",
                     overflow: "hidden",
                     textOverflow: "ellipsis",
@@ -541,7 +530,7 @@ export default function TaskForm({ onClose }) {
           </div>
         </div>
       )}
-      
+
       <div className="form-group">
         <label>
           <input

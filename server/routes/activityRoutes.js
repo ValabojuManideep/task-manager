@@ -21,10 +21,19 @@ export const logActivity = async (action, task, user, details = "") => {
     console.log("Task:", task);
     console.log("User:", user);
     console.log("Details:", details);
+
+   let taskRef = task;
+
+    // If task is a string (like task title), store it as text
+    if (typeof task === 'string') {
+      taskRef = null; // Or store in a different field if needed
+      // Optional: add task title to details
+      details = `${details} | Task: ${task}`;
+    } 
     
     const activity = new Activity({ 
       action, 
-      task, 
+      task: taskRef, 
       user, 
       details 
     });

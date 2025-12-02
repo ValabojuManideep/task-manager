@@ -1,4 +1,3 @@
-
 import React, { useEffect } from "react";
 import { useAuth } from "../hooks/useAuth";
 import { format } from "date-fns";
@@ -6,6 +5,8 @@ import axios from "axios";
 import TaskDetailModal from "./TaskDetailModal";
 import "./TaskList.css";
 import useAppStore from "../store/useAppStore";
+import { toast } from 'react-hot-toast';
+import { useConfirm } from '../hooks/useConfirm';
 
 // Highlight @username mentions in comment text
 function highlightMentions(text) {
@@ -60,24 +61,46 @@ export default function TaskList({ statusFilter, priorityFilter, displayTasks })
   const logTaskId = useAppStore((s) => s.taskList_logTaskId);
   const setLogTaskId = useAppStore((s) => s.setTaskList_logTaskId);
 
+  const { confirmAction } = useConfirm(); // ✅ Import SweetAlert2 hook
+
   const updateTask = async (taskId, updates) => {
     try {
       await axios.put(`http://localhost:5000/api/tasks/${taskId}`, updates);
       const { data } = await axios.get("http://localhost:5000/api/tasks");
       useAppStore.setState({ tasks: data, allTasks: data });
+      toast.success("Task updated successfully!");
     } catch (err) {
+      toast.error("Failed to update task!");
       console.error("Error updating task:", err);
     }
   };
+
   const deleteTask = async (taskId) => {
     try {
-      await axios.delete(`http://localhost:5000/api/tasks/${taskId}`);
+      console.log("🗑 Attempting to delete task:", taskId);
+      const response = await axios.delete(`http://localhost:5000/api/tasks/${taskId}`);
+      console.log("✅ Task deleted successfully:", response.data);
+      toast.success("Task deleted successfully!");
       const { data } = await axios.get("http://localhost:5000/api/tasks");
       useAppStore.setState({ tasks: data, allTasks: data });
     } catch (err) {
-      console.error("Error deleting task:", err);
+      console.error("❌ Error deleting task:", err.response?.data || err.message);
+      toast.error("Failed to delete task!");
+      alert(`Failed to delete task: ${err.response?.data?.error || err.message}`);
     }
   };
+
+  const handleDeleteClick = async (taskId, taskName) => {
+    const confirmed = await confirmAction(
+      'Delete Task?',
+      `Are you sure you want to delete "${taskName}"? This action cannot be undone.`,
+      'error'
+    );
+    if (confirmed) {
+      deleteTask(taskId);
+    }
+  };
+
   const fetchTasks = async () => {
     try {
       const { data } = await axios.get("http://localhost:5000/api/tasks");
@@ -86,6 +109,7 @@ export default function TaskList({ statusFilter, priorityFilter, displayTasks })
       console.error("Error fetching tasks:", err);
     }
   };
+
   const { user } = useAuth();
   const users = useAppStore((s) => s.taskList_users);
   const setUsers = useAppStore((s) => s.setTaskList_users);
@@ -126,19 +150,22 @@ export default function TaskList({ statusFilter, priorityFilter, displayTasks })
 
   // -------------------------------------------------
 
-  const handleMarkDone = (task) => {
+  const handleMarkDone = async (task) => {
     const id = task._id || task.id;
 
-
-    // Only show popup when marking a recurrent task as done and its due date matches recurrence end date
+    // Optional: Confirm before marking recurrent task as done (if it's the last occurrence)
     if (
       (task.isRecurrent || (task.recurrencePattern && task.recurrencePattern !== "none")) &&
       task.recurrenceEndDate &&
       task.dueDate &&
       new Date(task.dueDate).toDateString() === new Date(task.recurrenceEndDate).toDateString()
     ) {
-      setShowRecurrentEnd(true);
-      setEndedTaskTitle(task.title);
+      const confirmed = await confirmAction(
+        'Final Recurrent Task',
+        `This is the final occurrence of "${task.title}". Are you sure you want to mark it as done?`,
+        'info'
+      );
+      if (!confirmed) return;
     }
 
     updateTask(id, {
@@ -368,7 +395,7 @@ export default function TaskList({ statusFilter, priorityFilter, displayTasks })
                           className="task-action-btn delete-btn"
                           onClick={(e) => {
                             e.stopPropagation();
-                            deleteTask(id);
+                            handleDeleteClick(id, task.title);
                           }}
                         >
                           🗑 Delete
@@ -844,6 +871,9 @@ export default function TaskList({ statusFilter, priorityFilter, displayTasks })
           }}
         />
       )}
+
+      {/* ❌ REMOVED: Custom delete confirmation overlay */}
+      {/* {deleteConfirm.show && (...)} */}
     </>
   );
 }
