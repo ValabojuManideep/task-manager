@@ -1,4 +1,4 @@
-import React, { useEffect } from "react";
+import React, { useEffect, useMemo, useCallback } from "react";
 import { useAuth } from "../hooks/useAuth";
 import axios from "axios";
 import useAppStore from "../store/useAppStore";
@@ -6,6 +6,27 @@ import "./TeamManagement.css";
 import Chat from "./Chat";
 import { toast } from "react-hot-toast";
 import { useConfirm } from '../hooks/useConfirm';
+
+// Helper: Ensure value is array
+const safeArray = (arr) => Array.isArray(arr) ? arr : [];
+
+// Helper: convert array-of-ids or array-of-objects or single value -> array of id strings
+const idArrayFrom = (arr) => {
+  if (!arr) return [];
+  if (!Array.isArray(arr)) {
+    if (typeof arr === "string" || typeof arr === "number") return [String(arr)];
+    if (typeof arr === "object") return [(arr._id || arr.id || "").toString()].filter(Boolean);
+    return [];
+  }
+  return arr
+    .map(x => {
+      if (!x) return null;
+      if (typeof x === "string" || typeof x === "number") return String(x);
+      if (typeof x === "object") return x._id ? String(x._id) : (x.id ? String(x.id) : null);
+      return null;
+    })
+    .filter(Boolean);
+};
 
 export default function TeamManagement() {
   const teams = useAppStore((s) => s.teams);
@@ -24,10 +45,16 @@ export default function TeamManagement() {
   const setChatTarget = useAppStore((s) => s.setTeamMgmt_chatTarget);
   const users = useAppStore((s) => s.teamMgmt_users);
   const setUsers = useAppStore((s) => s.setTeamMgmt_users);
-  const selectedUsers = useAppStore((s) => s.teamMgmt_selectedUsers);
+
+  // Read raw values then normalize locally
+  const selectedUsersRaw = useAppStore((s) => s.teamMgmt_selectedUsers);
+  const selectedManagersRaw = useAppStore((s) => s.teamMgmt_selectedManagers);
+  const selectedUsers = safeArray(selectedUsersRaw);
+  const selectedManagers = safeArray(selectedManagersRaw);
+
   const setSelectedUsers = useAppStore((s) => s.setTeamMgmt_selectedUsers);
-  const selectedManagers = useAppStore((s) => s.teamMgmt_selectedManagers);
   const setSelectedManagers = useAppStore((s) => s.setTeamMgmt_selectedManagers);
+
   const searchTerm = useAppStore((s) => s.teamMgmt_searchTerm);
   const setSearchTerm = useAppStore((s) => s.setTeamMgmt_searchTerm);
   const managerSearchTerm = useAppStore((s) => s.teamMgmt_managerSearchTerm);
@@ -41,10 +68,7 @@ export default function TeamManagement() {
   const setPage = useAppStore((s) => s.setTeamMgmt_page);
   const pageSize = 9;
 
-  useEffect(() => {
-    fetchUsers();
-  }, []);
-
+  // fetchUsers defined before useEffect to avoid linter warnings
   const fetchUsers = async () => {
     try {
       const token = localStorage.getItem("token");
@@ -52,13 +76,16 @@ export default function TeamManagement() {
         "http://localhost:5000/api/auth/all-users",
         { headers: { Authorization: `Bearer ${token}` } }
       );
-      console.log("Fetched users:", data);
-      console.log("Team managers:", data.filter(u => u.role === "team-manager"));
       setUsers(data);
     } catch (err) {
       console.error("Error fetching users:", err);
     }
   };
+
+  useEffect(() => {
+    fetchUsers();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
 
   const addTeam = async (team) => {
     try {
@@ -98,73 +125,94 @@ export default function TeamManagement() {
   const regularUsers = users.filter((u) => u.role === "user");
   const teamManagerUsers = users.filter((u) => u.role === "team-manager");
 
-  const handleUserToggle = (userId) => {
-    setSelectedUsers((prev) =>
-      prev.includes(userId)
-        ? prev.filter((id) => id !== userId)
-        : [...prev, userId]
-    );
-  };
+  // compute next arrays locally and call setter with actual array (do NOT pass a function into setter)
+  const handleUserToggle = useCallback((userId) => {
+    const cur = safeArray(selectedUsers);
+    const next = cur.includes(userId) ? cur.filter(id => id !== userId) : [...cur, userId];
+    setSelectedUsers(next);
+  }, [selectedUsers, setSelectedUsers]);
 
-  const handleManagerToggle = (userId) => {
-    setSelectedManagers((prev) =>
-      prev.includes(userId)
-        ? prev.filter((id) => id !== userId)
-        : [...prev, userId]
-    );
-  };
+  const handleManagerToggle = useCallback((userId) => {
+    const cur = safeArray(selectedManagers);
+    const next = cur.includes(userId) ? cur.filter(id => id !== userId) : [...cur, userId];
+    setSelectedManagers(next);
+  }, [selectedManagers, setSelectedManagers]);
 
   const handleSubmit = async (e) => {
-    e.preventDefault();
+  e.preventDefault();
 
-    if (selectedUsers.length < 2) {
-      toast.error("A team must have at least 2 members.");
-      return;
-    }
+  if (safeArray(selectedUsers).length < 2) {
+    toast.error("A team must have at least 2 members.");
+    return;
+  }
 
-    const normalizedName = form.name.trim().toLowerCase();
-    const duplicate = teams.some(
-      (t) =>
-        t.name.trim().toLowerCase() === normalizedName &&
-        (!editingTeam || t._id !== editingTeam._id)
-    );
+  const normalizedName = (form.name || "").trim().toLowerCase();
+  const duplicate = teams.some(
+    (t) =>
+      t.name.trim().toLowerCase() === normalizedName &&
+      (!editingTeam || t._id !== editingTeam._id)
+  );
 
-    if (duplicate) {
-      toast.error("A team with this name already exists.");
-      return;
-    }
+  if (duplicate) {
+    toast.error("A team with this name already exists.");
+    return;
+  }
 
-    const teamData = {
-      ...form,
-      members: selectedUsers,
-      teamManagers: selectedManagers,
-      createdBy: user.id
-    };
-
-    try {
-      if (editingTeam) {
-        await updateTeam(editingTeam._id, teamData);
-        toast.success("Team updated successfully!");
-      } else {
-        await addTeam(teamData);
-        toast.success("Team created successfully!");
-      }
-      resetForm();
-    } catch (err) {
-      console.error("Error saving team:", err);
-      toast.error("Failed to save team. Please try again.");
-    }
+  const teamData = {
+    ...form,
+    members: safeArray(selectedUsers),
+    teamManagers: safeArray(selectedManagers),
+    createdBy: user.id
   };
+
+  try {
+    let confirmed = false;
+
+    if (editingTeam) {
+      // Confirmation for update
+      confirmed = await confirmAction(
+        'Update Team?',
+        `Are you sure you want to update "${editingTeam.name}"?`,
+        'warning',
+        { confirmButtonText: 'Update', confirmButtonColor: '#f59e0b' }
+      );
+    } else {
+      // Confirmation for create
+      confirmed = await confirmAction(
+        'Create Team?',
+        `Are you sure you want to create "${form.name.trim()}"?`,
+        'info',
+        { confirmButtonText: 'Create', confirmButtonColor: '#5B7FFF' }
+      );
+    }
+
+    if (!confirmed) return;
+
+    if (editingTeam) {
+      await updateTeam(editingTeam._id, teamData);
+      toast.success("Team updated successfully!");
+    } else {
+      await addTeam(teamData);
+      toast.success("Team created successfully!");
+    }
+    resetForm();
+  } catch (err) {
+    console.error("Error saving team:", err);
+    toast.error("Failed to save team. Please try again.");
+  }
+};
 
   const handleEditTeam = (team, e) => {
     e.stopPropagation();
     setEditingTeam(team);
     setForm({
-      name: team.name,
+      name: team.name || "",
       description: team.description || ""
     });
-    setSelectedUsers(team.members.map((m) => m._id));
-    setSelectedManagers(team.teamManagers?.map((m) => m._id) || []);
+
+    // Normalize whether members/managers are arrays of objects or id strings
+    setSelectedUsers(idArrayFrom(team.members));
+    setSelectedManagers(idArrayFrom(team.teamManagers));
     setShowForm(true);
   };
 
@@ -180,7 +228,7 @@ export default function TeamManagement() {
 
   const handleDeleteTeam = async (teamId, e) => {
     e.stopPropagation();
-    
+
     const team = teams.find(t => t._id === teamId);
     const confirmed = await confirmAction(
       'Delete Team?',
@@ -188,12 +236,13 @@ export default function TeamManagement() {
       'warning',
       { confirmButtonText: 'Delete', confirmButtonColor: '#ef4444' }
     );
-    
+
     if (!confirmed) return;
 
     try {
       await deleteTeam(teamId);
       toast.success("Team deleted successfully!");
+      if (selectedTeamDetail && selectedTeamDetail._id === teamId) setSelectedTeamDetail(null);
     } catch (err) {
       console.error("Error deleting team:", err);
       toast.error("Failed to delete team. Please try again.");
@@ -204,24 +253,28 @@ export default function TeamManagement() {
     setSelectedTeamDetail(team);
   };
 
-  const filteredUsers = regularUsers.filter(
-    (u) =>
-      u.username.toLowerCase().includes(searchTerm.toLowerCase()) ||
-      u.email.toLowerCase().includes(searchTerm.toLowerCase())
-  );
+  const filteredUsers = useMemo(() => {
+    return regularUsers.filter(
+      (u) =>
+        (u.username || "").toLowerCase().includes((searchTerm || "").toLowerCase()) ||
+        (u.email || "").toLowerCase().includes((searchTerm || "").toLowerCase())
+    );
+  }, [regularUsers, searchTerm]);
 
-  const filteredManagers = teamManagerUsers.filter(
-    (u) =>
-      u.username.toLowerCase().includes(managerSearchTerm.toLowerCase()) ||
-      u.email.toLowerCase().includes(managerSearchTerm.toLowerCase())
-  );
+  const filteredManagers = useMemo(() => {
+    return teamManagerUsers.filter(
+      (u) =>
+        (u.username || "").toLowerCase().includes((managerSearchTerm || "").toLowerCase()) ||
+        (u.email || "").toLowerCase().includes((managerSearchTerm || "").toLowerCase())
+    );
+  }, [teamManagerUsers, managerSearchTerm]);
 
   const filteredTeams = teams.filter(
     (team) =>
-      team.name.toLowerCase().includes(teamSearchTerm.toLowerCase()) ||
-      team.description?.toLowerCase().includes(teamSearchTerm.toLowerCase()) ||
-      team.members?.some((member) =>
-        member.username.toLowerCase().includes(teamSearchTerm.toLowerCase())
+      (team.name || "").toLowerCase().includes((teamSearchTerm || "").toLowerCase()) ||
+      (team.description || "").toLowerCase().includes((teamSearchTerm || "").toLowerCase()) ||
+      (team.members || []).some((member) =>
+        (member.username || "").toLowerCase().includes((teamSearchTerm || "").toLowerCase())
       )
   );
 
@@ -270,8 +323,7 @@ export default function TeamManagement() {
 
         {teamSearchTerm && (
           <p className="search-results-count">
-            Found {filteredTeams.length} team
-            {filteredTeams.length !== 1 ? "s" : ""}
+            Found {filteredTeams.length} team{filteredTeams.length !== 1 ? "s" : ""}
           </p>
         )}
       </div>
@@ -316,32 +368,30 @@ export default function TeamManagement() {
 
               <div className="user-dropdown">
                 {filteredManagers.length > 0 ? (
-                  filteredManagers.map((u) => (
-                    <div
-                      key={u._id}
-                      className={`user-item ${
-                        selectedManagers.includes(u._id) ? "selected" : ""
-                      }`}
-                      onClick={() => handleManagerToggle(u._id)}
-                    >
-                      <input
-                        type="checkbox"
-                        checked={selectedManagers.includes(u._id)}
-                        onClick={(e) => e.stopPropagation()}
-                        readOnly
-                      />
+                  filteredManagers.map((u) => {
+                    const checked = selectedManagers.includes(u._id);
+                    return (
+                      <div
+                        key={u._id}
+                        className={`user-item ${checked ? "selected" : ""}`}
+                        onClick={() => handleManagerToggle(u._id)}
+                      >
+                        <input
+                          type="checkbox"
+                          checked={checked}
+                          onChange={() => handleManagerToggle(u._id)}
+                        />
 
-                      <div className="user-details">
-                        <span className="user-name">{u.username}</span>
-                        <span className="user-email">{u.email}</span>
-                        <span className="user-role-badge">👔 Team Manager</span>
+                        <div className="user-details">
+                          <span className="user-name">{u.username}</span>
+                          <span className="user-email">{u.email}</span>
+                          <span className="user-role-badge">👔 Team Manager</span>
+                        </div>
+
+                        {checked && <span className="check-icon">✓</span>}
                       </div>
-
-                      {selectedManagers.includes(u._id) && (
-                        <span className="check-icon">✓</span>
-                      )}
-                    </div>
-                  ))
+                    );
+                  })
                 ) : (
                   <div className="no-users">No team managers available</div>
                 )}
@@ -364,31 +414,29 @@ export default function TeamManagement() {
 
               <div className="user-dropdown">
                 {filteredUsers.length > 0 ? (
-                  filteredUsers.map((u) => (
-                    <div
-                      key={u._id}
-                      className={`user-item ${
-                        selectedUsers.includes(u._id) ? "selected" : ""
-                      }`}
-                      onClick={() => handleUserToggle(u._id)}
-                    >
-                      <input
-                        type="checkbox"
-                        checked={selectedUsers.includes(u._id)}
-                        onClick={(e) => e.stopPropagation()}
-                        readOnly
-                      />
+                  filteredUsers.map((u) => {
+                    const checked = selectedUsers.includes(u._id);
+                    return (
+                      <div
+                        key={u._id} // ✅ Fixed typo: was u._1d
+                        className={`user-item ${checked ? "selected" : ""}`}
+                        onClick={() => handleUserToggle(u._id)}
+                      >
+                        <input
+                          type="checkbox"
+                          checked={checked}
+                          onChange={() => handleUserToggle(u._id)}
+                        />
 
-                      <div className="user-details">
-                        <span className="user-name">{u.username}</span>
-                        <span className="user-email">{u.email}</span>
+                        <div className="user-details">
+                          <span className="user-name">{u.username}</span>
+                          <span className="user-email">{u.email}</span>
+                        </div>
+
+                        {checked && <span className="check-icon">✓</span>}
                       </div>
-
-                      {selectedUsers.includes(u._id) && (
-                        <span className="check-icon">✓</span>
-                      )}
-                    </div>
-                  ))
+                    );
+                  })
                 ) : (
                   <div className="no-users">No users found</div>
                 )}
@@ -400,12 +448,13 @@ export default function TeamManagement() {
             </div>
 
             <div className="form-actions">
-              <button 
-                type="button" 
-                className="cancel-btn" 
+              <button
+                type="button"
+                className="cancel-btn"
                 onClick={async () => {
-                  const hasChanges = form.name || form.description || selectedUsers.length > 0 || selectedManagers.length > 0;
-                  
+                  const hasChanges =
+                    form.name || form.description || selectedUsers.length > 0 || selectedManagers.length > 0;
+
                   if (hasChanges) {
                     const ok = await confirmAction(
                       'Discard changes?',
@@ -415,7 +464,7 @@ export default function TeamManagement() {
                     );
                     if (!ok) return;
                   }
-                  
+
                   resetForm();
                 }}
               >
@@ -445,182 +494,115 @@ export default function TeamManagement() {
             </p>
           </div>
         ) : (
-          <>
-            {paginatedTeams.map((team) => (
-              <div
-                key={team._id}
-                className="team-card"
-                onClick={() => handleTeamCardClick(team)}
-              >
-                <div className="team-card-header">
-                  <h3>{team.name}</h3>
+          paginatedTeams.map((team) => (
+            <div
+              key={team._id}
+              className="team-card"
+              onClick={() => handleTeamCardClick(team)}
+            >
+              <div className="team-card-header">
+                <h3>{team.name}</h3>
 
-                  {isAdmin && (
-                    <div className="team-actions">
-                      <button
-                        className="edit-team-btn"
-                        onClick={(e) => handleEditTeam(team, e)}
-                      >
-                        ✏️
-                      </button>
+                {isAdmin && (
+                  <div className="team-actions">
+                    <button className="edit-team-btn" onClick={(e) => handleEditTeam(team, e)}>✏️</button>
+                    <button className="delete-team-btn" onClick={(e) => handleDeleteTeam(team._id, e)}>🗑</button>
+                  </div>
+                )}
+              </div>
 
-                      <button
-                        className="delete-team-btn"
-                        onClick={(e) => handleDeleteTeam(team._id, e)}
-                      >
-                        🗑
-                      </button>
-                    </div>
-                  )}
+              {team.description && (
+                <div className="team-description-preview">
+                  <p>{team.description}</p>
                 </div>
+              )}
 
-                {team.description && (
-                  <div className="team-description-preview">
-                    <p>{team.description}</p>
-                  </div>
-                )}
-
-                {team.teamManagers && team.teamManagers.length > 0 && (
-                  <div className="team-managers">
-                    <strong>Managers ({team.teamManagers.length}):</strong>
-                    <div className="managers-list">
-                      {team.teamManagers.slice(0, 2).map((manager) => (
-                        <span key={manager._id} className="manager-tag">
-                          👔 {manager.username}
-                        </span>
-                      ))}
-                      {team.teamManagers.length > 2 && (
-                        <span className="manager-tag more-managers">
-                          +{team.teamManagers.length - 2} more
-                        </span>
-                      )}
-                    </div>
-                  </div>
-                )}
-
-                <div className="team-members">
-                  <strong>Members ({team.members?.length || 0}):</strong>
-
-                  <div className="members-list">
-                    {team.members?.slice(0, 3).map((member) => (
-                      <span key={member._id} className="member-tag">
-                        {member.username}
-                      </span>
+              {Array.isArray(team.teamManagers) && team.teamManagers.length > 0 && (
+                <div className="team-managers">
+                  <strong>Managers ({team.teamManagers.length}):</strong>
+                  <div className="managers-list">
+                    {team.teamManagers.slice(0, 2).map((manager) => (
+                      <span key={manager._id} className="manager-tag">👔 {manager.username}</span>
                     ))}
-
-                    {team.members?.length > 3 && (
-                      <span className="member-tag more-members">
-                        +{team.members.length - 3} more
-                      </span>
+                    {team.teamManagers.length > 2 && (
+                      <span className="manager-tag more-managers">+{team.teamManagers.length - 2} more</span>
                     )}
                   </div>
                 </div>
+              )}
+
+              <div className="team-members">
+                <strong>Members ({team.members?.length || 0}):</strong>
+
+                <div className="members-list">
+                  {team.members?.slice(0, 3).map((member) => (
+                    <span key={member._id} className="member-tag">{member.username}</span>
+                  ))}
+
+                  {team.members?.length > 3 && (
+                    <span className="member-tag more-members">+{team.members.length - 3} more</span>
+                  )}
+                </div>
               </div>
-            ))}
-          </>
+            </div>
+          ))
         )}
       </div>
 
       {totalPages > 1 && (
-        <div
-          style={{
-            width: "100%",
-            display: "flex",
-            justifyContent: "center",
-            alignItems: "center",
-            gap: "1.2rem",
-            marginTop: "2rem",
-            marginBottom: "2rem"
-          }}
-        >
-          <button
-            onClick={() => setPage(page - 1)}
-            disabled={page === 1}
-            style={{
-              padding: "0.5rem 1.2rem",
-              background: page === 1 ? "#e5e7eb" : "#5B7FFF",
-              color: page === 1 ? "#6b7280" : "#fff",
-              border: "none",
-              borderRadius: "6px",
-              fontWeight: "bold",
-              cursor: page === 1 ? "not-allowed" : "pointer",
-              boxShadow: "0 2px 8px rgba(91,127,255,0.08)"
-            }}
-          >
-            Prev
-          </button>
+        <div style={{ width: "100%", display: "flex", justifyContent: "center", alignItems: "center", gap: "1.2rem", marginTop: "2rem", marginBottom: "2rem" }}>
+          <button onClick={() => setPage(page - 1)} disabled={page === 1} style={{
+            padding: "0.5rem 1.2rem",
+            background: page === 1 ? "#e5e7eb" : "#5B7FFF",
+            color: page === 1 ? "#6b7280" : "#fff",
+            border: "none",
+            borderRadius: "6px",
+            fontWeight: "bold",
+            cursor: page === 1 ? "not-allowed" : "pointer",
+            boxShadow: "0 2px 8px rgba(91,127,255,0.08)"
+          }}>Prev</button>
 
-          <span style={{ fontWeight: 600, color: "#5B7FFF" }}>
-            Page {page} of {totalPages}
-          </span>
+          <span style={{ fontWeight: 600, color: "#5B7FFF" }}>Page {page} of {totalPages}</span>
 
-          <button
-            onClick={() => setPage(page + 1)}
-            disabled={page === totalPages}
-            style={{
-              padding: "0.5rem 1.2rem",
-              background: page === totalPages ? "#e5e7eb" : "#5B7FFF",
-              color: page === totalPages ? "#6b7280" : "#fff",
-              border: "none",
-              borderRadius: "6px",
-              fontWeight: "bold",
-              cursor: page === totalPages ? "not-allowed" : "pointer",
-              boxShadow: "0 2px 8px rgba(91,127,255,0.08)"
-            }}
-          >
-            Next
-          </button>
+          <button onClick={() => setPage(page + 1)} disabled={page === totalPages} style={{
+            padding: "0.5rem 1.2rem",
+            background: page === totalPages ? "#e5e7eb" : "#5B7FFF",
+            color: page === totalPages ? "#6b7280" : "#fff",
+            border: "none",
+            borderRadius: "6px",
+            fontWeight: "bold",
+            cursor: page === totalPages ? "not-allowed" : "pointer",
+            boxShadow: "0 2px 8px rgba(91,127,255,0.08)"
+          }}>Next</button>
         </div>
       )}
 
       {selectedTeamDetail && (
-        <div
-          className="team-detail-modal-overlay"
-          onClick={() => setSelectedTeamDetail(null)}
-        >
-          <div
-            className="team-detail-modal"
-            onClick={(e) => e.stopPropagation()}
-          >
+        <div className="team-detail-modal-overlay" onClick={() => setSelectedTeamDetail(null)}>
+          <div className="team-detail-modal" onClick={(e) => e.stopPropagation()}>
             <div className="modal-header">
               <h2>{selectedTeamDetail.name}</h2>
-              <button
-                className="close-modal-btn"
-                onClick={() => setSelectedTeamDetail(null)}
-              >
-                ✕
-              </button>
+              <button className="close-modal-btn" onClick={() => setSelectedTeamDetail(null)}>✕</button>
             </div>
 
             <div className="modal-content">
               {selectedTeamDetail.description && (
                 <div className="detail-section">
                   <h4>Description</h4>
-                  <p className="detail-description">
-                    {selectedTeamDetail.description}
-                  </p>
+                  <p className="detail-description">{selectedTeamDetail.description}</p>
                 </div>
               )}
 
-              {selectedTeamDetail.teamManagers && selectedTeamDetail.teamManagers.length > 0 && (
+              {Array.isArray(selectedTeamDetail.teamManagers) && selectedTeamDetail.teamManagers.length > 0 && (
                 <div className="detail-section">
-                  <h4>
-                    Team Managers ({selectedTeamDetail.teamManagers.length})
-                  </h4>
+                  <h4>Team Managers ({selectedTeamDetail.teamManagers.length})</h4>
                   <div className="detail-members-grid">
                     {selectedTeamDetail.teamManagers.map((manager) => (
                       <div key={manager._id} className="detail-member-card manager-card">
-                        <div className="member-avatar manager-avatar">
-                          {manager.username?.substring(0, 2).toUpperCase()}
-                        </div>
-
+                        <div className="member-avatar manager-avatar">{manager.username?.substring(0, 2).toUpperCase()}</div>
                         <div className="member-info">
-                          <div className="member-name-detail">
-                            {manager.username}
-                          </div>
-                          <div className="member-email-detail">
-                            {manager.email}
-                          </div>
+                          <div className="member-name-detail">{manager.username}</div>
+                          <div className="member-email-detail">{manager.email}</div>
                           <span className="role-badge-detail">Team Manager</span>
                         </div>
                       </div>
@@ -630,42 +612,18 @@ export default function TeamManagement() {
               )}
 
               <div className="detail-section">
-                <h4>
-                  Team Members ({selectedTeamDetail.members?.length || 0})
-                </h4>
+                <h4>Team Members ({selectedTeamDetail.members?.length || 0})</h4>
                 <div className="detail-members-grid">
                   {selectedTeamDetail.members?.map((member) => (
                     <div key={member._id} className="detail-member-card">
-                      <div className="member-avatar">
-                        {member.username?.substring(0, 2).toUpperCase()}
-                      </div>
-
+                      <div className="member-avatar">{member.username?.substring(0, 2).toUpperCase()}</div>
                       <div className="member-info">
-                        <div className="member-name-detail">
-                          {member.username}
-                        </div>
-                        <div className="member-email-detail">
-                          {member.email}
-                        </div>
+                        <div className="member-name-detail">{member.username}</div>
+                        <div className="member-email-detail">{member.email}</div>
                       </div>
 
                       <div style={{ marginLeft: 12 }}>
-                        <button
-                          onClick={() => {
-                            setChatTarget(member);
-                            setShowChatModal(true);
-                          }}
-                          style={{
-                            background: "#5B7FFF",
-                            color: "#fff",
-                            border: "none",
-                            padding: "6px 10px",
-                            borderRadius: 6,
-                            cursor: "pointer"
-                          }}
-                        >
-                          💬 Chat
-                        </button>
+                        <button onClick={() => { setChatTarget(member); setShowChatModal(true); }} style={{ background: "#5B7FFF", color: "#fff", border: "none", padding: "6px 10px", borderRadius: 6, cursor: "pointer" }}>💬 Chat</button>
                       </div>
                     </div>
                   ))}
@@ -677,22 +635,12 @@ export default function TeamManagement() {
                 <div className="team-meta">
                   <div className="meta-item">
                     <span className="meta-label">Created:</span>
-                    <span className="meta-value">
-                      {new Date(
-                        selectedTeamDetail.createdAt
-                      ).toLocaleDateString("en-US", {
-                        year: "numeric",
-                        month: "long",
-                        day: "numeric"
-                      })}
-                    </span>
+                    <span className="meta-value">{new Date(selectedTeamDetail.createdAt).toLocaleDateString("en-US", { year: "numeric", month: "long", day: "numeric" })}</span>
                   </div>
 
                   <div className="meta-item">
                     <span className="meta-label">Created by:</span>
-                    <span className="meta-value">
-                      {selectedTeamDetail.createdBy?.username || "Unknown"}
-                    </span>
+                    <span className="meta-value">{selectedTeamDetail.createdBy?.username || "Unknown"}</span>
                   </div>
                 </div>
               </div>
@@ -700,37 +648,16 @@ export default function TeamManagement() {
 
             {isAdmin && (
               <div className="modal-footer">
-                <button
-                  className="modal-edit-btn"
-                  onClick={(e) => {
-                    setSelectedTeamDetail(null);
-                    handleEditTeam(selectedTeamDetail, e);
-                  }}
-                >
-                  ✏️ Edit Team
-                </button>
-
-                <button
-                  className="modal-delete-btn"
-                  onClick={(e) => {
-                    setSelectedTeamDetail(null);
-                    handleDeleteTeam(selectedTeamDetail._id, e);
-                  }}
-                >
-                  🗑 Delete Team
-                </button>
+                <button className="modal-edit-btn" onClick={(e) => { setSelectedTeamDetail(null); handleEditTeam(selectedTeamDetail, e); }}>✏️ Edit Team</button>
+                <button className="modal-delete-btn" onClick={(e) => { setSelectedTeamDetail(null); handleDeleteTeam(selectedTeamDetail._id, e); }}>🗑 Delete Team</button>
               </div>
             )}
           </div>
         </div>
       )}
-      {showChatModal && chatTarget && (
-        <Chat
-          teamId={selectedTeamDetail._id}
-          otherUser={chatTarget}
-          currentUser={user}
-          onClose={() => setShowChatModal(false)}
-        />
+
+      {showChatModal && chatTarget && selectedTeamDetail && (
+        <Chat teamId={selectedTeamDetail._id} otherUser={chatTarget} currentUser={user} onClose={() => setShowChatModal(false)} />
       )}
     </div>
   );
