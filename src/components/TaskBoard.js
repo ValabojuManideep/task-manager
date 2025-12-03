@@ -8,12 +8,19 @@ import "./TaskBoard.css";
 
 export default function TaskBoard({ taskType = "team" }) {
   // Search bar state
+  
+  
+  
   const taskSearchTerm = useAppStore((s) => s.taskBoard_taskSearchTerm);
   const setTaskSearchTerm = useAppStore((s) => s.setTaskBoard_taskSearchTerm);
   const { user } = useAuth();
   const statusFilter = useAppStore((s) => s.taskBoard_statusFilter);
   const setStatusFilter = useAppStore((s) => s.setTaskBoard_statusFilter);
   const priorityFilter = useAppStore((s) => s.taskBoard_priorityFilter);
+  
+  const viewMode = useAppStore((s) => s.taskList_viewMode);
+  const setViewMode = useAppStore((s) => s.setTaskList_viewMode);
+  
   const setPriorityFilter = useAppStore((s) => s.setTaskBoard_priorityFilter);
   const userFilter = useAppStore((s) => s.taskBoard_userFilter);
   const setUserFilter = useAppStore((s) => s.setTaskBoard_userFilter);

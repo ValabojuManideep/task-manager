@@ -7,7 +7,17 @@ const useAppStore = create((set, get) => ({
         setDashboard_showExportModal: (v) => set({ dashboard_showExportModal: v }),
         dashboard_exportFormat: "json",
         setDashboard_exportFormat: (v) => set({ dashboard_exportFormat: v }),
-      // Login component state
+      
+      taskList_viewMode: "list", // default view
+      setTaskList_viewMode: (mode) => set({ taskList_viewMode: mode }),
+      
+      
+      
+        // Login component state
+      
+      
+      
+      
       login_form: { usernameOrEmail: '', password: '' },
       setLogin_form: (v) => set({ login_form: v }),
       login_error: '',

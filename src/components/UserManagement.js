@@ -3,9 +3,13 @@ import axios from "axios";
 import { useAuth } from "../hooks/useAuth";
 import useAppStore from "../store/useAppStore";
 import "./UserManagement.css";
+import { useConfirm } from '../hooks/useConfirm';
+import Swal from 'sweetalert2';
 
 export default function UserManagement() {
   const { user } = useAuth();
+  const { confirmAction } = useConfirm();
+
   const users = useAppStore((state) => state.users);
   const setUsers = useAppStore((state) => state.setUsers);
   const loading = useAppStore((state) => state.loading);
@@ -36,7 +40,13 @@ export default function UserManagement() {
   };
 
   const handleRoleChange = async (userId, newRole) => {
-    if (!window.confirm(`Change user role to ${newRole}?`)) return;
+    const confirmed = await confirmAction(
+      'Change User Role?',
+      `Are you sure you want to change this user's role to "${newRole}"?`,
+      'warning'
+    );
+
+    if (!confirmed) return;
 
     try {
       const token = localStorage.getItem("token");
@@ -46,24 +56,48 @@ export default function UserManagement() {
         { headers: { Authorization: `Bearer ${token}` } }
       );
       
-      alert("User role updated successfully!");
-      fetchUsers(); // Refresh list
+      Swal.fire({
+        icon: 'success',
+        title: 'Role Updated!',
+        text: 'User role has been updated successfully.',
+        timer: 2000,
+        showConfirmButton: false,
+      });
+
+      fetchUsers();
     } catch (err) {
       console.error("Error updating role:", err);
-      alert("Failed to update user role");
+      Swal.fire({
+        icon: 'error',
+        title: 'Update Failed',
+        text: 'Failed to update user role. Please try again.',
+        confirmButtonColor: '#ef4444',
+      });
     }
   };
 
   const getRoleBadgeColor = (role) => {
     switch (role) {
-      case "admin": return "#ef4444";
-      case "team-manager": return "#8b5cf6";
-      case "user": return "#3b82f6";
-      default: return "#6b7280";
+      case "admin":
+        return "#ef4444";
+      case "team-manager":
+        return "#8b5cf6";
+      case "user":
+        return "#3b82f6";
+      default:
+        return "#6b7280";
     }
   };
 
-  if (loading) return <div className="user-management-container"><div style={{ padding: "20px", textAlign: "center" }}>Loading users...</div></div>;
+  if (loading) {
+    return (
+      <div className="user-management-container">
+        <div style={{ padding: "20px", textAlign: "center" }}>
+          Loading users...
+        </div>
+      </div>
+    );
+  }
 
   if (!users || users.length === 0) {
     return (
@@ -109,7 +143,7 @@ export default function UserManagement() {
                 </td>
                 <td>{u.email}</td>
                 <td>
-                  <span 
+                  <span
                     className="role-badge"
                     style={{ backgroundColor: getRoleBadgeColor(u.role) }}
                   >
@@ -121,7 +155,7 @@ export default function UserManagement() {
                     className="role-select"
                     value={u.role}
                     onChange={(e) => handleRoleChange(u._id, e.target.value)}
-                    disabled={String(u._id) === String(user?.id || user?._id)} // Can't change own role
+                    disabled={String(u._id) === String(user?.id || user?._id)}
                   >
                     <option value="user">User</option>
                     <option value="team-manager">Team Manager</option>

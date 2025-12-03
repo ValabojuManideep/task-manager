@@ -1,84 +1,67 @@
-.task-list-container {
-  display: grid;
-  grid-template-columns: repeat(auto-fill, minmax(320px, 1fr));
-  gap: 20px;
-  padding: 20px 0;
+/* TABLE / LIST LAYOUT */
+
+.task-table-wrapper {
+  width: 100%;
+  overflow-x: auto;
+  margin-top: 16px;
 }
 
-.task-card {
-  background: white;
-  border: 1px solid #e5e7eb;
-  border-radius: 16px;
-  padding: 24px;
-  transition: all 0.3s ease;
-  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.08);
-  position: relative;
-  cursor: pointer;
+.task-table {
+  width: 100%;
+  border-collapse: collapse;
+  background: #ffffff;
+  border-radius: 12px;
+  overflow: hidden;
+  font-size: 14px;
 }
 
-.task-card::before {
-  content: '';
-  position: absolute;
-  top: 0;
-  left: 0;
-  right: 0;
-  height: 4px;
-  background: linear-gradient(90deg, #5B7FFF, #7c9aff);
-  border-radius: 16px 16px 0 0;
-  opacity: 0;
-  transition: opacity 0.3s ease;
+.task-table thead {
+  background: #f9fafb;
 }
 
-.task-card:hover {
-  transform: translateY(-6px);
-  box-shadow: 0 12px 24px rgba(0, 0, 0, 0.15);
-  border-color: #d1d5db;
+.task-table th,
+.task-table td {
+  padding: 10px 12px;
+  border-bottom: 1px solid #e5e7eb;
+  text-align: left;
+  vertical-align: middle;
 }
 
-.task-card:hover::before {
-  opacity: 1;
+.task-table th {
+  font-weight: 600;
+  color: #374151;
+  white-space: nowrap;
 }
 
-.task-card:active {
-  transform: translateY(-2px);
+.task-row:hover {
+  background: #f3f4f6;
 }
 
-/* Dark mode */
-[data-theme="dark"] .task-card,
-.dark .task-card,
-body.dark-mode .task-card {
-  background: #1f2937;
-  border-color: #374151;
-  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.3);
-}
-
-[data-theme="dark"] .task-card:hover,
-.dark .task-card:hover,
-body.dark-mode .task-card:hover {
-  background: #252d3d;
-  box-shadow: 0 12px 24px rgba(0, 0, 0, 0.5);
-  border-color: #4b5563;
-}
-
-.task-card-header {
-  display: flex;
-  justify-content: space-between;
-  align-items: flex-start;
-  margin-bottom: 12px;
-}
-
-.task-card-title {
-  font-size: 18px;
+.task-title-cell {
   font-weight: 600;
   color: #111827;
-  margin: 0;
-  flex: 1;
 }
 
-[data-theme="dark"] .task-card-title,
-.dark .task-card-title,
-body.dark-mode .task-card-title {
-  color: #f9fafb;
+.task-desc-cell {
+  color: #4b5563;
+  max-width: 260px;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.task-assigned-cell {
+  color: #374151;
+}
+
+.task-status-badge {
+  display: inline-block;
+  padding: 2px 8px;
+  border-radius: 9999px;
+  font-size: 12px;
+  text-transform: capitalize;
+  background: #e5e7eb;
+  color: #374151;
 }
 
 .task-priority {
@@ -88,132 +71,94 @@ body.dark-mode .task-card-title {
   letter-spacing: 0.5px;
 }
 
-.task-description {
-  color: #6b7280;
-  font-size: 14px;
-  margin: 0 0 12px 0;
-  line-height: 1.5;
-  max-height: 60px;
-  overflow-y: auto;
-  word-wrap: break-word;
-}
-
-[data-theme="dark"] .task-description,
-.dark .task-description,
-body.dark-mode .task-description {
-  color: #d1d5db;
-}
-
-/* Custom scrollbar for description */
-.task-description::-webkit-scrollbar {
-  width: 6px;
-}
-
-.task-description::-webkit-scrollbar-track {
-  background: var(--hover-bg);
-  border-radius: 3px;
-}
-
-.task-description::-webkit-scrollbar-thumb {
-  background: var(--border-color);
-  border-radius: 3px;
-}
-
-.task-description::-webkit-scrollbar-thumb:hover {
-  background: #9ca3af;
-}
-
-.task-assigned {
-  display: flex;
-  align-items: center;
-  gap: 6px;
-  font-size: 14px;
-  color: #9ca3af;
-  margin-bottom: 12px;
-}
-
-[data-theme="dark"] .task-assigned,
-.dark .task-assigned,
-body.dark-mode .task-assigned {
-  color: #9ca3af;
-}
-
-.task-assigned strong {
-  color: #111827;
-  font-weight: 600;
-}
-
-[data-theme="dark"] .task-assigned strong,
-.dark .task-assigned strong,
-body.dark-mode .task-assigned strong {
-  color: #f9fafb;
-}
-
-.task-card-footer {
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
-  padding-top: 12px;
-  border-top: 1px solid var(--border-color);
-  margin-top: 12px;
-}
-
-.task-status-badge {
-  padding: 6px 12px;
-  border-radius: 6px;
+.task-recurrent-pill {
+  display: inline-block;
+  padding: 2px 8px;
+  border-radius: 9999px;
   font-size: 12px;
-  font-weight: 600;
-  text-transform: capitalize;
-  background: var(--hover-bg);
-  color: var(--text-color);
+  background: #e0e7ff;
+  color: #3730a3;
 }
 
-.task-due {
-  font-size: 12px;
-  color: var(--text-muted);
-}
-
-.task-actions {
+.task-actions-inline {
   display: flex;
-  gap: 8px;
-  margin-top: 16px;
   flex-wrap: wrap;
+  gap: 4px;
 }
 
 .task-action-btn {
-  flex: 1;
-  min-width: 100px;
-  padding: 10px 16px;
+  padding: 4px 8px;
+  border-radius: 6px;
   border: none;
-  border-radius: 8px;
-  font-size: 14px;
-  font-weight: 500;
+  font-size: 12px;
   cursor: pointer;
-  transition: all 0.2s;
+  white-space: nowrap;
   background: #6b7280;
-  color: white;
+  color: #ffffff;
+  transition: all 0.2s;
 }
 
 .task-action-btn:hover {
-  transform: translateY(-2px);
-  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+  transform: translateY(-1px);
+  box-shadow: 0 2px 6px rgba(0, 0, 0, 0.15);
 }
 
-.done-btn {
+.task-action-btn.done-btn {
   background: #10b981;
 }
 
-.delete-btn {
+.task-action-btn.delete-btn {
   background: #ef4444;
 }
 
-.progress-btn {
-  background: #5B7FFF;
+.task-action-btn.progress-btn {
+  background: #5b7fff;
 }
 
-.comment-btn {
+.task-action-btn.comment-btn {
   background: #f59e0b;
 }
+
+.task-action-btn.log-btn {
+  background: #6366f1;
+}
+
+.task-comments-row td {
+  background: #f9fafb;
+}
+
+/* DARK MODE TABLE */
+
+[data-theme="dark"] .task-table,
+.dark .task-table,
+body.dark-mode .task-table {
+  background: #111827;
+}
+
+[data-theme="dark"] .task-table th,
+[data-theme="dark"] .task-table td,
+.dark .task-table th,
+.dark .task-table td,
+body.dark-mode .task-table th,
+body.dark-mode .task-table td {
+  border-color: #374151;
+  color: #e5e7eb;
+}
+
+[data-theme="dark"] .task-row:hover,
+.dark .task-row:hover,
+body.dark-mode .task-row:hover {
+  background: #1f2937;
+}
+
+[data-theme="dark"] .task-status-badge,
+.dark .task-status-badge,
+body.dark-mode .task-status-badge {
+  background: #374151;
+  color: #e5e7eb;
+}
+
+/* COMMENTS, EMPTY STATE, CONFIRMATION (unchanged from your file) */
 
 .comments-section {
   margin-top: 20px;
@@ -261,7 +206,7 @@ body.dark-mode .task-assigned strong {
 }
 
 .comment-item.admin-comment {
-  border-left: 3px solid #5B7FFF;
+  border-left: 3px solid #5b7fff;
   background: rgba(91, 127, 255, 0.05);
 }
 
@@ -286,7 +231,7 @@ body.dark-mode .task-assigned strong {
 
 .admin-badge {
   padding: 2px 8px;
-  background: #5B7FFF;
+  background: #5b7fff;
   color: white;
   border-radius: 4px;
   font-size: 10px;
@@ -349,12 +294,12 @@ body.dark-mode .task-assigned strong {
 
 .comment-input:focus {
   outline: none;
-  border-color: #5B7FFF;
+  border-color: #5b7fff;
 }
 
 .comment-submit-btn {
   padding: 10px 20px;
-  background: #5B7FFF;
+  background: #5b7fff;
   color: white;
   border: none;
   border-radius: 8px;
@@ -414,7 +359,7 @@ body.dark-mode .task-assigned strong {
 
 .edit-comment-input:focus {
   outline: none;
-  border-color: #5B7FFF;
+  border-color: #5b7fff;
 }
 
 .edit-comment-actions {
@@ -453,42 +398,24 @@ body.dark-mode .task-assigned strong {
   text-align: center;
 }
 
-/* Mobile Responsive */
+/* Mobile responsive */
 @media (max-width: 768px) {
-  .task-list-container {
-    grid-template-columns: 1fr;
-    gap: 15px;
-    padding: 15px 0;
+  .task-table th,
+  .task-table td {
+    padding: 8px 10px;
+    font-size: 12px;
   }
 
-  .task-card {
-    padding: 16px;
+  .task-desc-cell {
+    max-width: 160px;
   }
 
-  .task-card-title {
-    font-size: 16px;
-  }
-
-  .task-actions {
-    flex-direction: column;
-    gap: 10px;
-  }
-
-  .task-action-btn {
-    width: 100%;
-    min-width: auto;
-  }
-
-  .comment-input-wrapper {
-    flex-direction: column;
-  }
-
-  .comment-submit-btn {
-    width: 100%;
+  .task-actions-inline {
+    gap: 2px;
   }
 }
 
-/* Existing styles remain the same, add these at the end */
+/* Extra bits from your original file */
 
 .team-members-count {
   color: #667eea;
@@ -496,7 +423,8 @@ body.dark-mode .task-assigned strong {
   font-size: 13px;
 }
 
-/* Confirmation Dialog Styles */
+/* Confirmation dialog styles (unchanged) */
+
 .confirmation-overlay {
   position: fixed;
   top: 0;
@@ -601,7 +529,8 @@ body.dark-mode .task-assigned strong {
   transform: scale(0.98);
 }
 
-/* Dark mode support */
+/* Dark mode support for confirmation */
+
 [data-theme="dark"] .confirmation-dialog,
 .dark .confirmation-dialog,
 body.dark-mode .confirmation-dialog {
@@ -638,3 +567,8 @@ body.dark-mode .confirmation-btn.cancel-btn {
 body.dark-mode .confirmation-btn.cancel-btn:hover {
   background: #4b5563;
 }
+
+
+
+
+/* END OF FILE */
