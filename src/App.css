@@ -65,15 +65,18 @@ body {
   display: flex;
   align-items: center;
   justify-content: space-between;
-  padding: 0 40px;
-  position: sticky;
+  padding: 0 20px;
+  position: fixed;
   top: 0;
+  left: 0;
+  right: 0;
   z-index: 100;
   transition: all 0.3s ease;
 }
 
 .top-bar-left {
   flex: 1;
+  margin-left: 280px;
 }
 
 .top-bar-right {
@@ -149,7 +152,7 @@ body {
 
 /* Page Content */
 .page-content {
-  padding: 40px;
+  padding: 110px 20px 40px 20px;
   width: 100%;
   box-sizing: border-box;
 }

@@ -56,13 +56,14 @@ export default function Chat({ teamId, otherUser, currentUser, onClose, conversa
   }, [conversation]);
 
   // derive the display user (other participant) when otherUser not provided
-  const displayUser = useAppStore((s) => s.chat_displayUser) || otherUser || null;
   const setDisplayUser = useAppStore((s) => s.setChat_displayUser);
+  const [displayUser, setLocalDisplayUser] = React.useState(otherUser || null);
 
   useEffect(() => {
     const resolveOther = async () => {
-      if (otherUser) return setDisplayUser(otherUser);
-      if (!conversation) return setDisplayUser(null);
+      // Always use otherUser if provided
+      if (otherUser) return setLocalDisplayUser(otherUser);
+      if (!conversation) return setLocalDisplayUser(null);
 
       // conversation may have participants populated or only ids
       const participants = conversation.participants || [];
@@ -70,7 +71,8 @@ export default function Chat({ teamId, otherUser, currentUser, onClose, conversa
       const hasObjects = participants.length > 0 && typeof participants[0] === 'object' && participants[0].username;
       if (hasObjects) {
         const other = participants.find((p) => String(p._id) !== String(currentUser.id) && String(p._id) !== String(currentUser._id));
-        return setDisplayUser(other || participants[0]);
+        setLocalDisplayUser(other || participants[0]);
+        return;
       }
 
       // otherwise fetch populated conversation from server
@@ -78,15 +80,15 @@ export default function Chat({ teamId, otherUser, currentUser, onClose, conversa
         const { data } = await axios.get(`http://localhost:5000/api/chat/conversations/${conversation._id}`);
         setConversation(data); // populated
         const other = data.participants.find((p) => String(p._id) !== String(currentUser.id) && String(p._id) !== String(currentUser._id));
-        setDisplayUser(other || data.participants[0]);
+        setLocalDisplayUser(other || data.participants[0]);
       } catch (err) {
         console.error('Failed to resolve conversation participants', err);
-        setDisplayUser(null);
+        setLocalDisplayUser(null);
       }
     };
 
     resolveOther();
-  }, [conversation, otherUser, currentUser]);
+  }, [conversation, otherUser, currentUser, setConversation]);
 
   const handleSend = async () => {
     if (!text.trim() || !conversation) return;

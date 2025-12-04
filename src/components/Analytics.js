@@ -38,15 +38,24 @@ export default function Analytics() {
 
   // Filter tasks based on role and user filter
   const userTasks = useMemo(() => {
-    let filtered = isAdmin 
-      ? allTasks 
-      : allTasks.filter(t => t.assignedTo?._id === user.id || t.assignedTo === user.id);
+    let filtered;
 
-    // Apply user filter for admin
-    if (isAdmin && userFilter !== "All Users") {
-      filtered = filtered.filter(t => {
+    if (isAdmin) {
+      // Admin viewing - start with all tasks
+      if (userFilter === "All Users") {
+        filtered = allTasks;
+      } else {
+        // Filter by specific user
+        filtered = allTasks.filter(t => {
+          const assignedId = t.assignedTo?._id || t.assignedTo;
+          return assignedId === userFilter;
+        });
+      }
+    } else {
+      // Regular user - only show their assigned tasks
+      filtered = allTasks.filter(t => {
         const assignedId = t.assignedTo?._id || t.assignedTo;
-        return assignedId === userFilter;
+        return assignedId === user?.id || assignedId === user?._id;
       });
     }
 
