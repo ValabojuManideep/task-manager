@@ -43,6 +43,10 @@ export default function TaskForm({ onClose }) {
   const setPrivateKeyError = useAppStore((s) => s.setTaskForm_privateKeyError);
 
   const nowForDateTimeLocal = new Date().toISOString().slice(0,16);
+  const capitalizeFirstLetter = (str) => {
+    if (!str) return "";
+    return str.charAt(0).toUpperCase() + str.slice(1);
+  };
 
   useEffect(() => {
     fetchUsers();
@@ -57,7 +61,17 @@ export default function TaskForm({ onClose }) {
     }
   };
 
-  const handleChange = (e) => setForm({ ...form, [e.target.name]: e.target.value });
+  const handleChange = (e) => {
+  let { name, value } = e.target;
+
+  // Auto capitalize first letter for title and description
+  if (name === "title" || name === "description") {
+    value = capitalizeFirstLetter(value);
+  }
+
+  setForm({ ...form, [name]: value });
+};
+
 
   // FILE UPLOAD HANDLERS
   const handleFileChange = (e) => {
