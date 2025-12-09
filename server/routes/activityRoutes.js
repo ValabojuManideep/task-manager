@@ -21,21 +21,30 @@ export const logActivity = async (action, task, user, details = "") => {
     console.log("Task:", task);
     console.log("User:", user);
     console.log("Details:", details);
+    // Normalize task to a string for the Activity model
+    // If `task` is an object (task document), prefer storing the title; fall back to id.
+    // If `task` is already a string, store it directly.
+    let taskRef = null;
+    if (task) {
+      if (typeof task === 'string') {
+        taskRef = task;
+      } else if (typeof task === 'object') {
+        taskRef = task.title || String(task._id || task.id || '') ;
+      } else {
+        taskRef = String(task);
+      }
+    }
 
-   let taskRef = task;
+    // If we still couldn't produce a taskRef, append task info to details
+    if (!taskRef && task) {
+      details = `${details} | Task: ${String(task)}`;
+    }
 
-    // If task is a string (like task title), store it as text
-    if (typeof task === 'string') {
-      taskRef = null; // Or store in a different field if needed
-      // Optional: add task title to details
-      details = `${details} | Task: ${task}`;
-    } 
-    
-    const activity = new Activity({ 
-      action, 
-      task: taskRef, 
-      user, 
-      details 
+    const activity = new Activity({
+      action,
+      task: taskRef || 'unknown',
+      user,
+      details
     });
     
     await activity.save();
