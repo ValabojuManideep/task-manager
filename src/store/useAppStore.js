@@ -233,6 +233,8 @@ const useAppStore = create((set, get) => ({
   setConv_selectedTeam: (v) => set({ conv_selectedTeam: v }),
   conv_activeConv: null,
   setConv_activeConv: (v) => set({ conv_activeConv: v }),
+  conv_activeTeamForConv: null,
+  setConv_activeTeamForConv: (v) => set({ conv_activeTeamForConv: v }),
 
   // Chat component state
   chat_conversation: null,

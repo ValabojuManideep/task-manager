@@ -3,7 +3,6 @@ import { useAuth } from "../hooks/useAuth";
 import axios from "axios";
 import useAppStore from "../store/useAppStore";
 import "./TeamManagement.css";
-import Chat from "./Chat";
 import { toast } from "react-hot-toast";
 import { useConfirm } from '../hooks/useConfirm';
 
@@ -39,10 +38,6 @@ export default function TeamManagement() {
   const setEditingTeam = useAppStore((s) => s.setTeamMgmt_editingTeam);
   const selectedTeamDetail = useAppStore((s) => s.teamMgmt_selectedTeamDetail);
   const setSelectedTeamDetail = useAppStore((s) => s.setTeamMgmt_selectedTeamDetail);
-  const showChatModal = useAppStore((s) => s.teamMgmt_showChatModal);
-  const setShowChatModal = useAppStore((s) => s.setTeamMgmt_showChatModal);
-  const chatTarget = useAppStore((s) => s.teamMgmt_chatTarget);
-  const setChatTarget = useAppStore((s) => s.setTeamMgmt_chatTarget);
   const users = useAppStore((s) => s.teamMgmt_users);
   const setUsers = useAppStore((s) => s.setTeamMgmt_users);
 
@@ -621,10 +616,6 @@ export default function TeamManagement() {
                         <div className="member-name-detail">{member.username}</div>
                         <div className="member-email-detail">{member.email}</div>
                       </div>
-
-                      <div style={{ marginLeft: 12 }}>
-                        <button onClick={() => { setChatTarget(member); setShowChatModal(true); }} style={{ background: "#5B7FFF", color: "#fff", border: "none", padding: "6px 10px", borderRadius: 6, cursor: "pointer" }}>💬 Chat</button>
-                      </div>
                     </div>
                   ))}
                 </div>
@@ -654,10 +645,6 @@ export default function TeamManagement() {
             )}
           </div>
         </div>
-      )}
-
-      {showChatModal && chatTarget && selectedTeamDetail && (
-        <Chat teamId={selectedTeamDetail._id} otherUser={chatTarget} currentUser={user} onClose={() => setShowChatModal(false)} />
       )}
     </div>
   );

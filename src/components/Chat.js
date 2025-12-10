@@ -1,15 +1,13 @@
-import React, { useEffect, useRef } from "react";
+import React, { useEffect, useRef, useState } from "react";
 import axios from "axios";
 import "./Chat.css";
 import useAppStore from "../store/useAppStore";
 
-export default function Chat({ teamId, otherUser, currentUser, onClose, conversation: initialConversation }) {
-  const conversation = useAppStore((s) => s.chat_conversation) || initialConversation || null;
-  const setConversation = useAppStore((s) => s.setChat_conversation);
-  const messages = useAppStore((s) => s.chat_messages);
-  const setMessages = useAppStore((s) => s.setChat_messages);
-  const text = useAppStore((s) => s.chat_text);
-  const setText = useAppStore((s) => s.setChat_text);
+export default function Chat({ teamId, otherUser, currentUser, onClose, conversation: initialConversation, teamName }) {
+  // Use local state for this specific chat instance instead of global store
+  const [conversation, setConversation] = useState(initialConversation || null);
+  const [messages, setMessages] = useState([]);
+  const [text, setText] = useState("");
   const bodyRef = useRef();
 
   useEffect(() => {
@@ -56,8 +54,7 @@ export default function Chat({ teamId, otherUser, currentUser, onClose, conversa
   }, [conversation]);
 
   // derive the display user (other participant) when otherUser not provided
-  const setDisplayUser = useAppStore((s) => s.setChat_displayUser);
-  const [displayUser, setLocalDisplayUser] = React.useState(otherUser || null);
+  const [displayUser, setLocalDisplayUser] = useState(otherUser || null);
 
   useEffect(() => {
     const resolveOther = async () => {
@@ -88,7 +85,7 @@ export default function Chat({ teamId, otherUser, currentUser, onClose, conversa
     };
 
     resolveOther();
-  }, [conversation, otherUser, currentUser, setConversation]);
+  }, [conversation, otherUser, currentUser]);
 
   const handleSend = async () => {
     if (!text.trim() || !conversation) return;
@@ -114,6 +111,7 @@ export default function Chat({ teamId, otherUser, currentUser, onClose, conversa
         <div className="chat-header">
           <div>
             <strong>Chat with {displayUser?.username || 'Conversation'}</strong>
+            {teamName && <div style={{ fontSize: 12, color: "#9ca3af", marginTop: 2 }}>Team: {teamName}</div>}
             <div style={{ fontSize: 12, color: "#6b7280" }}>{displayUser?.email || ''}</div>
           </div>
           <div>

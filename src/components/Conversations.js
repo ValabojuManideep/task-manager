@@ -14,6 +14,8 @@ export default function Conversations() {
   const setSelectedTeam = useAppStore((s) => s.setConv_selectedTeam);
   const activeConv = useAppStore((s) => s.conv_activeConv);
   const setActiveConv = useAppStore((s) => s.setConv_activeConv);
+  const activeTeamForConv = useAppStore((s) => s.conv_activeTeamForConv);
+  const setActiveTeamForConv = useAppStore((s) => s.setConv_activeTeamForConv);
 
   useEffect(() => {
     if (!teams || !user) return setUserTeams([]);
@@ -28,7 +30,7 @@ export default function Conversations() {
     setUserTeams(filtered);
   }, [teams, user]);
 
-  const openConversationWith = async (teamId, member) => {
+  const openConversationWith = async (teamId, member, teamName) => {
     try {
       const { data } = await axios.post("http://localhost:5000/api/chat/conversations", {
         teamId,
@@ -37,6 +39,7 @@ export default function Conversations() {
       });
       // data is the conversation
       setActiveConv(data);
+      setActiveTeamForConv(teamName);
     } catch (err) {
       console.error("Failed to open conversation", err.response?.data || err.message);
       alert(err.response?.data?.error || "Could not start conversation");
@@ -72,7 +75,7 @@ export default function Conversations() {
                         <div style={{ fontSize: 12, color: "#6b7280" }}>{member.email}</div>
                       </div>
                       <div>
-                        <button onClick={() => openConversationWith(t._id, member)} style={{ background: "#5B7FFF", color: "#fff", border: "none", padding: "6px 10px", borderRadius: 6 }}>💬 Chat</button>
+                        <button onClick={() => openConversationWith(t._id, member, t.name)} style={{ background: "#5B7FFF", color: "#fff", border: "none", padding: "6px 10px", borderRadius: 6 }}>💬 Chat</button>
                       </div>
                     </div>
                   ))}
@@ -87,6 +90,7 @@ export default function Conversations() {
         <Chat
           currentUser={user}
           conversation={activeConv}
+          teamName={activeTeamForConv}
           onClose={() => setActiveConv(null)}
         />
       )}
