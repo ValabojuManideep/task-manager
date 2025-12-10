@@ -60,6 +60,15 @@ export default function TaskDetailModal({ task, onClose, onUpdate, onDelete, onR
     fetchUsers();
   }, []);
 
+  // Clear comment text when modal opens or task changes to ensure fresh input
+  useEffect(() => {
+    setCommentText("");
+    setEditingComment(null);
+    setEditText("");
+    setMentionDropdown({ show: false, search: "", pos: { left: 0, top: 40 } });
+    setMentionDropdownSelected(0);
+  }, [task._id, setCommentText, setEditingComment, setEditText, setMentionDropdown, setMentionDropdownSelected]);
+
   const isAdmin = user?.role === "admin";
   const currentUserId = user?.id || user?._id;
 
@@ -149,14 +158,14 @@ export default function TaskDetailModal({ task, onClose, onUpdate, onDelete, onR
     if (!editText.trim()) return;
 
     try {
-      await axios.put(`http://localhost:5000/api/tasks/${task._id}/comment/${commentId}`, {
+      await axios.put(`http://localhost:5000/api/tasks/${task._id}/comments/${commentId}`, {
         text: editText
       });
       setEditingComment(null);
       setEditText("");
       onRefresh();
     } catch (err) {
-      console.error("Error editing comment:", err);
+      console.error("Error editing comment:", err.response?.data || err.message);
     }
   };
 
@@ -169,10 +178,10 @@ export default function TaskDetailModal({ task, onClose, onUpdate, onDelete, onR
     if (!confirmed) return;
 
     try {
-      await axios.delete(`http://localhost:5000/api/tasks/${task._id}/comment/${commentId}`);
+      await axios.delete(`http://localhost:5000/api/tasks/${task._id}/comments/${commentId}`);
       onRefresh();
     } catch (err) {
-      console.error("Error deleting comment:", err);
+      console.error("Error deleting comment:", err.response?.data || err.message);
     }
   };
 

@@ -1,4 +1,4 @@
-import React, { useEffect } from "react";
+import React, { useEffect, useState } from "react";
 import { useAuth } from "../hooks/useAuth";
 import { format } from "date-fns";
 import axios from "axios";
@@ -40,6 +40,10 @@ export default function TaskList({ statusFilter, priorityFilter, displayTasks })
   const teams = useAppStore((s) => s.teams);
   console.log("All tasks:", displayTasks);
 
+  // Local state for comment inputs (not Zustand)
+  const [commentInputs, setCommentInputs] = useState({});
+  const [editingComment, setEditingComment] = useState(null);
+  const [editText, setEditText] = useState("");
 
   const viewMode = useAppStore((s) => s.taskList_viewMode);
   const setViewMode = useAppStore((s) => s.setTaskList_viewMode);
@@ -58,8 +62,6 @@ export default function TaskList({ statusFilter, priorityFilter, displayTasks })
   const setExpandedTask = useAppStore((s) => s.setTaskList_expandedTask);
   const selectedTask = useAppStore((s) => s.taskList_selectedTask);
   const setSelectedTask = useAppStore((s) => s.setTaskList_selectedTask);
-  const commentInputs = useAppStore((s) => s.taskList_commentInputs);
-  const setCommentInputs = useAppStore((s) => s.setTaskList_commentInputs);
   const mentionDropdowns = useAppStore((s) => s.taskList_mentionDropdowns);
   const setMentionDropdowns = useAppStore(
     (s) => s.setTaskList_mentionDropdowns
@@ -70,10 +72,6 @@ export default function TaskList({ statusFilter, priorityFilter, displayTasks })
   const setMentionDropdownSelected = useAppStore(
     (s) => s.setTaskList_mentionDropdownSelected
   );
-  const editingComment = useAppStore((s) => s.taskList_editingComment);
-  const setEditingComment = useAppStore((s) => s.setTaskList_editingComment);
-  const editText = useAppStore((s) => s.taskList_editText);
-  const setEditText = useAppStore((s) => s.setTaskList_editText);
   const logTaskId = useAppStore((s) => s.taskList_logTaskId);
   const setLogTaskId = useAppStore((s) => s.setTaskList_logTaskId);
 
@@ -245,25 +243,32 @@ export default function TaskList({ statusFilter, priorityFilter, displayTasks })
   };
 
   const handleEditComment = async (taskId, commentId) => {
-    if (!editText.trim()) return;
+    if (!editText.trim()) {
+      toast.error("Comment cannot be empty");
+      return;
+    }
     try {
-      await axios.put(`/api/tasks/${taskId}/comments/${commentId}`, {
+      const response = await axios.put(`/api/tasks/${taskId}/comments/${commentId}`, {
         text: editText,
       });
       setEditingComment(null);
       setEditText("");
+      toast.success("Comment updated successfully!");
       fetchTasks();
     } catch (error) {
-      console.error("Error editing comment:", error);
+      console.error("Error editing comment:", error.response?.data || error.message);
+      toast.error(error.response?.data?.error || "Failed to update comment");
     }
   };
 
   const handleDeleteComment = async (taskId, commentId) => {
     try {
       await axios.delete(`/api/tasks/${taskId}/comments/${commentId}`);
+      toast.success("Comment deleted successfully!");
       fetchTasks();
     } catch (error) {
-      console.error("Error deleting comment:", error);
+      console.error("Error deleting comment:", error.response?.data || error.message);
+      toast.error(error.response?.data?.error || "Failed to delete comment");
     }
   };
 
@@ -712,11 +717,12 @@ export default function TaskList({ statusFilter, priorityFilter, displayTasks })
                               </div>
 
                               <div className="comment-input-wrapper">
-                                <div style={{ position: "relative" }}>
+                                <div style={{ position: "relative", display: "flex", gap: "8px", alignItems: "center" }}>
                                   <input
                                     type="text"
                                     className="comment-input"
                                     placeholder="Add a comment..."
+                                    autoFocus
                                     value={commentInputs[id] || ""}
                                     onChange={(e) => {
                                       const val = e.target.value;
@@ -1033,30 +1039,24 @@ export default function TaskList({ statusFilter, priorityFilter, displayTasks })
                                       </div>
                                     )}
                                 </div>
-                                {/* <button
+                                <button
                                   type="button"
                                   className="comment-submit-btn"
                                   onClick={() => {
                                     handleAddComment(
-                                      id, */}
-                                            <button
-                                    type="button"
-                                    className="comment-submit-btn"
-                                    onClick={() => {
-                                      handleAddComment(
-                                        id,
-                                        commentInputs[id] || ""
-                                      );
-                                      setCommentInputs((inputs) => ({
-                                        ...inputs,
-                                        [id]: "",
-                                      }));
-                                      setMentionDropdowns((dropdowns) => ({
-                                        ...dropdowns,
-                                        [id]: {
-                                          show: false,
-                                          search: "",
-                                          pos: { left: 0, top: 40 },
+                                      id,
+                                      commentInputs[id] || ""
+                                    );
+                                    setCommentInputs((inputs) => ({
+                                      ...inputs,
+                                      [id]: "",
+                                    }));
+                                    setMentionDropdowns((dropdowns) => ({
+                                      ...dropdowns,
+                                      [id]: {
+                                        show: false,
+                                        search: "",
+                                        pos: { left: 0, top: 40 },
                                         },
                                       }));
                                     }}
@@ -1134,12 +1134,17 @@ export default function TaskList({ statusFilter, priorityFilter, displayTasks })
             onClose={() => setSelectedTask(null)}
             onUpdate={updateTask}
             onDelete={deleteTask}
-            onRefresh={() => {
-              fetchTasks();
-              const updatedTask = displayTasks.find(
-                (t) => t._id === selectedTask._id
-              );
-              if (updatedTask) setSelectedTask(updatedTask);
+            onRefresh={async () => {
+              // Fetch the updated task directly
+              try {
+                const { data } = await axios.get(`http://localhost:5000/api/tasks/${selectedTask._id}`);
+                setSelectedTask(data);
+                // Also refresh the tasks list
+                await fetchTasks();
+              } catch (err) {
+                console.error("Error refreshing task:", err);
+                fetchTasks();
+              }
             }}
           />
         )}

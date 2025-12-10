@@ -56,6 +56,26 @@ router.get("/private", async (req, res) => {
   }
 });
 
+// Get single task by ID
+router.get("/:id", async (req, res) => {
+  try {
+    const task = await Task.findById(req.params.id)
+      .populate("assignedTo", "username email")
+      .populate({
+        path: "assignedToTeam",
+        populate: { path: "members", select: "username email" }
+      });
+    
+    if (!task) {
+      return res.status(404).json({ error: "Task not found" });
+    }
+    
+    res.json(task);
+  } catch (err) {
+    res.status(500).json({ error: err.message });
+  }
+});
+
 // ✅ Add a new task WITH FILE UPLOADS
 router.post("/", fileUpload.array('files', 5), async (req, res) => {
   try {
@@ -346,7 +366,7 @@ router.post("/:id/comment", async (req, res) => {
 });
 
 // Edit comment
-router.put("/:taskId/comment/:commentId", async (req, res) => {
+router.put("/:taskId/comments/:commentId", async (req, res) => {
   try {
     const { text } = req.body;
     const task = await Task.findById(req.params.taskId);
@@ -355,23 +375,28 @@ router.put("/:taskId/comment/:commentId", async (req, res) => {
       return res.status(404).json({ error: "Task not found" });
     }
 
-    const comment = task.comments.id(req.params.commentId);
-    if (!comment) {
+    // Find comment by ID
+    const commentIndex = task.comments.findIndex(
+      (c) => c._id.toString() === req.params.commentId
+    );
+
+    if (commentIndex === -1) {
       return res.status(404).json({ error: "Comment not found" });
     }
 
-    comment.text = text;
-    comment.updatedAt = new Date();
+    task.comments[commentIndex].text = text;
+    task.comments[commentIndex].updatedAt = new Date();
     await task.save();
 
     res.json(task);
   } catch (err) {
+    console.error("Error editing comment:", err);
     res.status(500).json({ error: err.message });
   }
 });
 
 // Delete comment
-router.delete("/:taskId/comment/:commentId", async (req, res) => {
+router.delete("/:taskId/comments/:commentId", async (req, res) => {
   try {
     const task = await Task.findById(req.params.taskId);
 
@@ -379,11 +404,18 @@ router.delete("/:taskId/comment/:commentId", async (req, res) => {
       return res.status(404).json({ error: "Task not found" });
     }
 
+    const initialLength = task.comments.length;
     task.comments = task.comments.filter(c => c._id.toString() !== req.params.commentId);
+    
+    if (task.comments.length === initialLength) {
+      return res.status(404).json({ error: "Comment not found" });
+    }
+
     await task.save();
 
     res.json(task);
   } catch (err) {
+    console.error("Error deleting comment:", err);
     res.status(500).json({ error: err.message });
   }
 });
