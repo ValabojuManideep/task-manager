@@ -270,3 +270,174 @@
   font-size: 0.7rem;
   margin-left: 0.5rem;
 }
+
+
+
+
+
+/* Team card actions */
+.team-card-actions {
+  display: flex;
+  gap: 8px;
+  margin-top: 12px;
+}
+
+.manage-team-btn {
+  flex: 1;
+  padding: 8px 12px;
+  background: #10b981;
+  color: white;
+  border: none;
+  border-radius: 6px;
+  cursor: pointer;
+  font-weight: 600;
+  font-size: 0.9em;
+  transition: background 0.2s;
+}
+
+.manage-team-btn:hover {
+  background: #059669;
+}
+
+.view-tasks-btn {
+  flex: 1;
+  padding: 8px 12px;
+  background: #5B7FFF;
+  color: white;
+  border: none;
+  border-radius: 6px;
+  cursor: pointer;
+  font-weight: 600;
+  font-size: 0.9em;
+  transition: background 0.2s;
+}
+
+.view-tasks-btn:hover {
+  background: #4c6edb;
+}
+
+/* Modal styles */
+.team-detail-modal-overlay {
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background: rgba(0, 0, 0, 0.5);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 1000;
+}
+
+.team-detail-modal {
+  background: white;
+  border-radius: 12px;
+  max-width: 800px;
+  width: 90%;
+  max-height: 85vh;
+  overflow-y: auto;
+  box-shadow: 0 20px 60px rgba(0, 0, 0, 0.3);
+}
+
+.modal-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 20px 24px;
+  border-bottom: 1px solid #e5e7eb;
+}
+
+.close-modal-btn {
+  background: none;
+  border: none;
+  font-size: 24px;
+  cursor: pointer;
+  color: #6b7280;
+  padding: 4px 8px;
+}
+
+.close-modal-btn:hover {
+  color: #ef4444;
+}
+
+.modal-content {
+  padding: 24px;
+}
+
+.detail-section {
+  margin-bottom: 24px;
+}
+
+.detail-section h4 {
+  margin-bottom: 12px;
+  color: #1f2937;
+}
+
+.detail-members-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
+  gap: 12px;
+}
+
+.detail-member-card {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 12px;
+  border: 1px solid #e5e7eb;
+  border-radius: 8px;
+  background: #f9fafb;
+}
+
+.member-avatar {
+  width: 40px;
+  height: 40px;
+  border-radius: 50%;
+  background: #5B7FFF;
+  color: white;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-weight: 600;
+  font-size: 14px;
+}
+
+.manager-avatar {
+  background: #10b981;
+}
+
+.member-info {
+  flex: 1;
+}
+
+.member-name-detail {
+  font-weight: 600;
+  margin-bottom: 2px;
+}
+
+.member-email-detail {
+  font-size: 0.85em;
+  color: #6b7280;
+}
+
+.role-badge-detail {
+  display: inline-block;
+  padding: 2px 8px;
+  background: #10b981;
+  color: white;
+  border-radius: 4px;
+  font-size: 0.75em;
+  font-weight: 600;
+  margin-top: 4px;
+}
+
+.user-item {
+  padding: 12px;
+  border-bottom: 1px solid #eee;
+  transition: background 0.2s;
+}
+
+.user-item:hover {
+  background: #f3f4f6;
+}

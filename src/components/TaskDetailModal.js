@@ -411,7 +411,9 @@ export default function TaskDetailModal({ task, onClose, onUpdate, onDelete, onR
                           <div className="comment-user-info">
                             <strong>{comment.username}</strong>
                             {comment.userRole === 'admin' && <span className="admin-badge">ADMIN</span>}
+                            {comment.userRole === 'team-manager' && <span className="team-manager-badge">TEAM MANAGER</span>}
                           </div>
+
                           <div className="comment-meta">
                             <span className="comment-time">
                               {format(new Date(comment.createdAt), "MMM d, h:mm a")}

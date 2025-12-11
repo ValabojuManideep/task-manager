@@ -333,7 +333,28 @@ body.dark-mode .comment-user-info strong {
   font-weight: 700;
   text-transform: uppercase;
 }
+/* ✅ ADD THIS - Team Manager Badge */
+.team-manager-badge {
+  padding: 2px 8px;
+  background: #10b981;
+  color: white;
+  border-radius: 4px;
+  font-size: 10px;
+  font-weight: 700;
+  text-transform: uppercase;
+}
 
+/* ✅ ADD THIS - Team Manager Comment Styling */
+.modal-comment.team-manager-comment {
+  border-left-color: #10b981;
+  background: rgba(16, 185, 129, 0.08);
+}
+
+[data-theme="dark"] .modal-comment.team-manager-comment,
+.dark .modal-comment.team-manager-comment,
+body.dark-mode .modal-comment.team-manager-comment {
+  background: rgba(16, 185, 129, 0.15);
+}
 .comment-meta {
   display: flex;
   align-items: center;
