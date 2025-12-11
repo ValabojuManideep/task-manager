@@ -3,7 +3,9 @@ import Conversation from "../models/Conversation.js";
 import Message from "../models/Message.js";
 import Team from "../models/Team.js";
 
+
 const router = express.Router();
+
 
 // Create or get a 1:1 conversation within a team
 router.post("/conversations", async (req, res) => {
@@ -17,11 +19,24 @@ router.post("/conversations", async (req, res) => {
     const team = await Team.findById(teamId);
     if (!team) return res.status(404).json({ error: "Team not found" });
 
-    // Ensure both users are members of the team
-    const members = team.members.map((m) => m.toString());
-    if (!members.includes(participantId) || !members.includes(senderId)) {
-      return res.status(403).json({ error: "Both users must be members of the team" });
+    // ✅ FIX: Ensure both users are members OR team managers of the team
+    const members = (team.members || []).map((m) => m.toString());
+    const teamManagers = (team.teamManagers || []).map((m) => m.toString());
+    
+    // Combine both arrays to check if user is either a member or team manager
+    const allAuthorizedUsers = [...members, ...teamManagers];
+    
+    const isParticipantAuthorized = allAuthorizedUsers.includes(participantId);
+    const isSenderAuthorized = allAuthorizedUsers.includes(senderId);
+    
+    if (!isParticipantAuthorized || !isSenderAuthorized) {
+      console.log("❌ Chat access denied:");
+      console.log("  - Participant:", participantId, "Authorized:", isParticipantAuthorized);
+      console.log("  - Sender:", senderId, "Authorized:", isSenderAuthorized);
+      return res.status(403).json({ error: "Both users must be members or managers of the team" });
     }
+
+    console.log("✅ Chat authorized for users:", senderId, "and", participantId);
 
     // Look for existing conversation with same team and same pair of participants
     const participantsSet = [participantId, senderId].sort();
@@ -33,13 +48,18 @@ router.post("/conversations", async (req, res) => {
     if (!conv) {
       conv = new Conversation({ team: teamId, participants: participantsSet });
       await conv.save();
+      console.log("✅ New conversation created:", conv._id);
+    } else {
+      console.log("✅ Existing conversation found:", conv._id);
     }
 
     res.json(conv);
   } catch (err) {
+    console.error("❌ Error creating conversation:", err);
     res.status(500).json({ error: err.message });
   }
 });
+
 
 // List conversations for a user within a team
 router.get("/conversations", async (req, res) => {
@@ -57,6 +77,7 @@ router.get("/conversations", async (req, res) => {
   }
 });
 
+
 // Get single conversation populated with participants
 router.get("/conversations/:id", async (req, res) => {
   try {
@@ -68,6 +89,7 @@ router.get("/conversations/:id", async (req, res) => {
     res.status(500).json({ error: err.message });
   }
 });
+
 
 // Send a message in a conversation
 router.post("/messages", async (req, res) => {
@@ -95,6 +117,7 @@ router.post("/messages", async (req, res) => {
   }
 });
 
+
 // Get messages for a conversation
 router.get("/messages/:conversationId", async (req, res) => {
   try {
@@ -107,5 +130,6 @@ router.get("/messages/:conversationId", async (req, res) => {
     res.status(500).json({ error: err.message });
   }
 });
+
 
 export default router;
