@@ -5,6 +5,7 @@ import Team from "../models/Team.js";
 import { logActivity } from "./activityRoutes.js";
 import dotenv from "dotenv";
 import multer from "multer";
+import jwt from "jsonwebtoken"; // ✅ ADD THIS IMPORT
 
 dotenv.config();
 const PRIVATE_TASK_KEY = process.env.PRIVATE_TASK_KEY;
@@ -37,24 +38,90 @@ router.get("/", async (req, res) => {
   }
 });
 
-// Get private tasks (requires security key)
-router.get("/private", async (req, res) => {
-  const key = req.headers["x-private-key"];
-  if (!key || key !== PRIVATE_TASK_KEY) {
-    return res.status(401).json({ error: "Invalid or missing security key" });
-  }
-  try {
-    const privateTasks = await Task.find({ isPrivate: true })
-      .populate("assignedTo", "username email")
-      .populate({
-        path: "assignedToTeam",
-        populate: { path: "members", select: "username email" }
-      });
-    res.json(privateTasks);
-  } catch (err) {
-    res.status(500).json({ error: err.message });
-  }
-});
+// ✅ UPDATED: Get private tasks - requires security key AND filters by user
+// ✅ Get private tasks - requires security key AND filters by user
+  router.get("/private", async (req, res) => {
+    const key = req.headers["x-private-key"];
+    
+    console.log("\n🔐 === PRIVATE TASKS REQUEST ===");
+    console.log("Security key received:", key ? "YES" : "NO");
+    console.log("Expected key:", PRIVATE_TASK_KEY);
+    console.log("Keys match:", key === PRIVATE_TASK_KEY);
+    
+    if (!key || key !== PRIVATE_TASK_KEY) {
+      console.log("❌ Invalid security key");
+      return res.status(401).json({ error: "Invalid or missing security key" });
+    }
+
+    try {
+      // ✅ Extract token
+      const authHeader = req.headers.authorization;
+      console.log("Authorization header:", authHeader ? "Present" : "Missing");
+      
+      const token = authHeader?.split(" ")[1];
+      console.log("Token extracted:", token ? "YES" : "NO");
+      
+      let currentUserId = null;
+      let isAdmin = false;
+
+      if (token) {
+        try {
+          const decoded = jwt.verify(token, process.env.JWT_SECRET);
+          currentUserId = decoded.id;
+          isAdmin = decoded.role === "admin";
+          
+          console.log("✅ Token decoded successfully:");
+          console.log("  - User ID:", currentUserId);
+          console.log("  - Role:", decoded.role);
+          console.log("  - Is Admin:", isAdmin);
+        } catch (err) {
+          console.log("⚠️ Token verification failed:", err.message);
+        }
+      } else {
+        console.log("⚠️ No token provided");
+      }
+
+      // Build query
+      let query = { isPrivate: true };
+
+      // ✅ Filter by user if not admin
+      if (!isAdmin && currentUserId) {
+        query.assignedTo = currentUserId;
+        console.log(`🔒 Filtering for user: ${currentUserId}`);
+      } else if (isAdmin) {
+        console.log(`👑 Admin - showing all private tasks`);
+      } else {
+        console.log("❌ No valid user - returning empty");
+        return res.json([]);
+      }
+
+      console.log("📋 MongoDB Query:", JSON.stringify(query));
+
+      const privateTasks = await Task.find(query)
+        .populate("assignedTo", "username email")
+        .populate({
+          path: "assignedToTeam",
+          populate: { path: "members", select: "username email" }
+        });
+
+      console.log(`✅ Found ${privateTasks.length} private tasks`);
+      
+      if (privateTasks.length > 0) {
+        console.log("Tasks details:");
+        privateTasks.forEach(t => {
+          console.log(`  - "${t.title}" assigned to: ${t.assignedTo?.username} (ID: ${t.assignedTo?._id})`);
+        });
+      }
+      
+      console.log("=== END PRIVATE TASKS REQUEST ===\n");
+      
+      res.json(privateTasks);
+    } catch (err) {
+      console.error("❌ Error fetching private tasks:", err);
+      res.status(500).json({ error: err.message });
+    }
+  });
+
 
 // Get single task by ID
 router.get("/:id", async (req, res) => {

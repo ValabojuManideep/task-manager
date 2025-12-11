@@ -7,20 +7,12 @@ import useAppStore from "../store/useAppStore";
 import "./TaskBoard.css";
 
 export default function TaskBoard({ taskType = "team" }) {
-  // Search bar state
-  
-  
-  
   const taskSearchTerm = useAppStore((s) => s.taskBoard_taskSearchTerm);
   const setTaskSearchTerm = useAppStore((s) => s.setTaskBoard_taskSearchTerm);
   const { user } = useAuth();
   const statusFilter = useAppStore((s) => s.taskBoard_statusFilter);
   const setStatusFilter = useAppStore((s) => s.setTaskBoard_statusFilter);
   const priorityFilter = useAppStore((s) => s.taskBoard_priorityFilter);
-  
-  const viewMode = useAppStore((s) => s.taskList_viewMode);
-  const setViewMode = useAppStore((s) => s.setTaskList_viewMode);
-  
   const setPriorityFilter = useAppStore((s) => s.setTaskBoard_priorityFilter);
   const userFilter = useAppStore((s) => s.taskBoard_userFilter);
   const setUserFilter = useAppStore((s) => s.setTaskBoard_userFilter);
@@ -38,21 +30,73 @@ export default function TaskBoard({ taskType = "team" }) {
   const tasks = useAppStore((s) => s.tasks);
   const allTasks = useAppStore((s) => s.allTasks);
   const privateTasks = useAppStore((s) => s.privateTasks);
+  const teams = useAppStore((s) => s.teams);
+  const setTeams = useAppStore((s) => s.setTeams);
+
   const fetchPrivateTasks = async (key) => {
     try {
+      const token = localStorage.getItem("token");
+      
+      console.log("🔐 === FETCHING PRIVATE TASKS ===");
+      console.log("Security Key:", key);
+      console.log("Token exists:", !!token);
+      console.log("Token value (first 20 chars):", token ? token.substring(0, 20) + "..." : "null");
+      
       const { data } = await axios.get("http://localhost:5000/api/tasks/private", {
-        headers: { "x-private-key": key }
+        headers: { 
+          "x-private-key": key,
+          "Authorization": token ? `Bearer ${token}` : ""
+        }
       });
+      
       useAppStore.setState({ privateTasks: data });
+      
+      console.log(`✅ Fetched ${data.length} private tasks`);
+      console.log("Tasks:", data.map(t => ({
+        title: t.title,
+        assignedTo: t.assignedTo?.username,
+        assignedToId: t.assignedTo?._id
+      })));
+      console.log("Current user ID:", user?._id || user?.id);
+      
       return data;
     } catch (err) {
-      console.error("Error fetching private tasks:", err);
+      console.error("❌ Error fetching private tasks:", err);
+      console.error("Error response:", err.response?.data);
       useAppStore.setState({ privateTasks: [] });
       return [];
     }
   };
 
+
+
   const isAdmin = user?.role === "admin";
+  const isTeamManager = user?.role === "team-manager";
+
+  // ✅ FIX: Reset sensitive tasks state when user changes
+  useEffect(() => {
+    return () => {
+      setPrivateKeyEntered(false);
+      setSecurityKey('');
+      setShowPrivateSection(false);
+      useAppStore.setState({ privateTasks: [] });
+    };
+  }, [user?.id]);
+
+  // ✅ FIX: Fetch teams for team managers and regular users
+  useEffect(() => {
+    const fetchTeams = async () => {
+      try {
+        const { data } = await axios.get("http://localhost:5000/api/teams");
+        setTeams(data);
+        console.log("✅ Teams fetched:", data.length, "teams");
+      } catch (err) {
+        console.error("❌ Error fetching teams:", err);
+      }
+    };
+
+    fetchTeams();
+  }, []);
 
   useEffect(() => {
     if (isAdmin) {
@@ -60,7 +104,6 @@ export default function TaskBoard({ taskType = "team" }) {
     }
   }, [isAdmin]);
 
-  // Close form when switching between user/team tasks
   useEffect(() => {
     setShowForm(false);
   }, [taskType]);
@@ -74,30 +117,70 @@ export default function TaskBoard({ taskType = "team" }) {
     }
   };
 
-  // Private tasks
   const handleShowPrivate = async () => {
-    if (!securityKey) {
+    if (!securityKey || securityKey.trim() === '') {
       alert("Enter security key.");
       return;
     }
+
     const data = await fetchPrivateTasks(securityKey);
-    if (data && data.length > 0) {
+
+    if (data && data.length >= 0) {
       setPrivateKeyEntered(true);
     } else {
       setPrivateKeyEntered(false);
-      alert("Invalid key or no sensitive tasks.");
+      setSecurityKey('');
+      alert("Invalid key or error accessing sensitive tasks.");
     }
   };
 
-  // Filter tasks based on type and role
+  // ✅ FIX: Complete filtering logic for team-manager role
   const getDisplayTasks = () => {
     let filtered;
     const currentUserId = user?.id || user?._id;
 
+    console.log("🔍 Filtering tasks:", {
+      role: user?.role,
+      taskType,
+      totalTasks: allTasks.length,
+      totalTeams: teams.length,
+      currentUserId
+    });
+
     if (taskType === "team") {
+      // ========== TEAM TASKS ==========
       if (isAdmin) {
         filtered = allTasks.filter(t => t.isTeamTask === true && !t.isPrivate);
+      } else if (isTeamManager) {
+        // ✅ Team manager sees team tasks for teams they manage OR are members of
+        filtered = allTasks.filter(t => {
+          if (!t.isTeamTask || t.isPrivate) return false;
+          if (!t.assignedToTeam) return false;
+
+          const teamId = t.assignedToTeam._id || t.assignedToTeam;
+          
+          // Find the team in our teams list
+          const team = teams.find(tm => String(tm._id) === String(teamId));
+          if (!team) return false;
+
+          // Check if user is a manager of this team
+          const teamManagers = team.teamManagers || [];
+          const isManager = teamManagers.some(manager => {
+            const managerId = manager._id || manager;
+            return String(managerId) === String(currentUserId);
+          });
+
+          // Check if user is a member of this team
+          const teamMembers = team.members || [];
+          const isMember = teamMembers.some(member => {
+            const memberId = member._id || member;
+            return String(memberId) === String(currentUserId);
+          });
+
+          return isManager || isMember;
+        });
       } else {
+        // Regular user sees team tasks they're a member of
         filtered = allTasks.filter(t => {
           if (!t.isTeamTask || t.isPrivate) return false;
           if (!t.assignedToTeam) return false;
@@ -109,9 +192,39 @@ export default function TaskBoard({ taskType = "team" }) {
         });
       }
     } else {
+      // ========== USER TASKS ==========
       if (isAdmin) {
         filtered = allTasks.filter(t => t.isTeamTask === false && !t.isPrivate);
+      } else if (isTeamManager) {
+        // ✅ Team manager sees:
+        // 1. Their own user tasks
+        // 2. User tasks of members in teams they manage
+        filtered = allTasks.filter(t => {
+          if (t.isTeamTask || t.isPrivate) return false;
+
+          const assignedId = String(t.assignedTo?._id || t.assignedTo);
+
+          // Check if task is assigned to the manager themselves
+          if (assignedId === String(currentUserId)) {
+            return true;
+          }
+
+          // Get teams where current user is a manager
+          const managedTeams = teams.filter(team => {
+            const managers = team.teamManagers || [];
+            return managers.some(m => String(m._id || m) === String(currentUserId));
+          });
+
+          // Get all member IDs from managed teams
+          const managedMemberIds = managedTeams.flatMap(team =>
+            (team.members || []).map(m => String(m._id || m))
+          );
+
+          // Check if task is assigned to any managed team member
+          return managedMemberIds.includes(assignedId);
+        });
       } else {
+        // Regular user sees only their own tasks
         filtered = allTasks.filter(t => {
           if (t.isTeamTask || t.isPrivate) return false;
           const assignedId = t.assignedTo?._id || t.assignedTo;
@@ -120,7 +233,9 @@ export default function TaskBoard({ taskType = "team" }) {
       }
     }
 
-    // Apply user filter for admin (only for user tasks)
+    console.log("✅ Filtered to", filtered.length, "tasks");
+
+    // Apply user filter for admin
     if (isAdmin && userFilter !== "All Users" && taskType === "user") {
       filtered = filtered.filter(t => {
         const assignedId = t.assignedTo?._id || t.assignedTo;
@@ -128,7 +243,7 @@ export default function TaskBoard({ taskType = "team" }) {
       });
     }
 
-    // Apply search filter (task name or description)
+    // Apply search filter
     if (taskSearchTerm.trim()) {
       const term = taskSearchTerm.trim().toLowerCase();
       filtered = filtered.filter(t =>
@@ -150,21 +265,27 @@ export default function TaskBoard({ taskType = "team" }) {
             {taskType === "team" ? "Team Tasks" : "User Tasks"}
           </h1>
           <p className="page-subtitle">
-            {isAdmin 
-              ? `${displayTasks.length} ${taskType} tasks` 
+            {isAdmin
+              ? `${displayTasks.length} ${taskType} tasks`
               : `${displayTasks.length} ${taskType} task${displayTasks.length !== 1 ? 's' : ''} assigned to you`}
           </p>
-
 
           <button
             style={{ marginLeft: "10px" }}
             className="filter-btn"
-            onClick={() => setShowPrivateSection(!showPrivateSection)}
+            onClick={() => {
+              if (showPrivateSection) {
+                setPrivateKeyEntered(false);
+                setSecurityKey('');
+              }
+              setShowPrivateSection(!showPrivateSection);
+            }}
           >
             Sensitive Tasks
           </button>
         </div>
-        {isAdmin && (
+        {/* ✅ FIX: Both admin and team-manager can create tasks */}
+        {(isAdmin || isTeamManager) && (
           <button className="new-task-btn" onClick={() => setShowForm(!showForm)}>
             <span>+</span>
             <span>New Task</span>
@@ -172,7 +293,7 @@ export default function TaskBoard({ taskType = "team" }) {
         )}
       </div>
 
-      {showForm && isAdmin && (
+      {showForm && (isAdmin || isTeamManager) && (
         <div className="task-form-wrapper">
           <TaskForm onClose={() => setShowForm(false)} taskType={taskType} />
         </div>
@@ -246,7 +367,7 @@ export default function TaskBoard({ taskType = "team" }) {
 
           {isAdmin && users.length > 0 && taskType === "user" && (
             <div className="filter-group user-filter" style={{ flexShrink: 0 }}>
-              <select 
+              <select
                 className="user-filter-select"
                 value={userFilter}
                 onChange={(e) => setUserFilter(e.target.value)}
@@ -262,7 +383,6 @@ export default function TaskBoard({ taskType = "team" }) {
             </div>
           )}
 
-          {/* Search bar beside filters */}
           <div style={{ position: "relative", minWidth: "140px", maxWidth: "240px", flex: 1, flexShrink: 1 }}>
             <input
               type="text"
@@ -317,8 +437,8 @@ export default function TaskBoard({ taskType = "team" }) {
         </div>
       )}
 
-      <TaskList 
-        statusFilter={statusFilter} 
+      <TaskList
+        statusFilter={statusFilter}
         priorityFilter={priorityFilter}
         displayTasks={displayTasks}
       />

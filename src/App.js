@@ -19,6 +19,7 @@ import Conversations from "./components/Conversations";
 import UserManagement from "./components/UserManagement";
 import Login from "./components/Login";
 import SignUp from "./components/SignUp";
+import TeamManagerDashboard from "./components/TeamManagerDashboard";
 import "./App.css";
 
 const queryClient = new QueryClient();
@@ -85,8 +86,6 @@ function AppLayout({ children }) {
             <button className="dark-mode-toggle" onClick={toggleDarkMode}>
               {darkMode ? "☀️" : "🌙"}
             </button>
-
-            
 
             <button className="logout-btn" onClick={logout}>
               <span>→</span>
@@ -163,6 +162,18 @@ export default function App() {
                   </ProtectedRoute>
                 }
               />
+              {/* ✅ FIX: Team Manager Dashboard route */}
+              <Route
+                path="/team-manager"
+                element={
+                  <ProtectedRoute>
+                    <AppLayout>
+                      <TeamManagerDashboard />
+                    </AppLayout>
+                  </ProtectedRoute>
+                }
+              />
+              {/* Teams route for team management */}
               <Route
                 path="/teams"
                 element={
@@ -174,17 +185,17 @@ export default function App() {
                 }
               />
               <Route
-                 path="/leaderboard"
-                 element={
-                   <ProtectedRoute>
-                     <AppLayout>
-                       <Leaderboard />
-                     </AppLayout>
-                   </ProtectedRoute>
-                 }
-               />
-               <Route
-                 path="/chat"
+                path="/leaderboard"
+                element={
+                  <ProtectedRoute>
+                    <AppLayout>
+                      <Leaderboard />
+                    </AppLayout>
+                  </ProtectedRoute>
+                }
+              />
+              <Route
+                path="/chat"
                 element={
                   <ProtectedRoute>
                     <AppLayout>

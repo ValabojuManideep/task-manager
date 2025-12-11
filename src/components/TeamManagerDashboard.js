@@ -1,10 +1,13 @@
 import React, { useEffect } from "react";
 import { useAuth } from "../hooks/useAuth";
+import { useNavigate } from "react-router-dom";
 import useAppStore from "../store/useAppStore";
+import axios from "axios";
 import "./TeamManagerDashboard.css";
 
 const TeamManagerDashboard = () => {
   const { user } = useAuth();
+  const navigate = useNavigate();
   const teams = useAppStore((s) => s.teams);
   const managedTeams = useAppStore((s) => s.managedTeams);
   const setManagedTeams = useAppStore((s) => s.setManagedTeams);
@@ -21,11 +24,28 @@ const TeamManagerDashboard = () => {
     // Filter teams where current user is a team manager
     const myTeams = teams.filter(team => 
       team.teamManagers?.some(manager => 
-        (manager._id || manager) === (user.id || user._id)
+        String(manager._id || manager) === String(user?.id || user?._id)
       )
     );
     setManagedTeams(myTeams);
   }, [teams, user]);
+
+  // ✅ FIX: Add the missing getTeamTasks function
+  const getTeamTasks = async (teamId) => {
+    try {
+      const token = localStorage.getItem("token");
+      const { data } = await axios.get(
+        `http://localhost:5000/api/teams/${teamId}/tasks`,
+        {
+          headers: { Authorization: `Bearer ${token}` }
+        }
+      );
+      return data;
+    } catch (err) {
+      console.error("Error fetching team tasks:", err);
+      throw err;
+    }
+  };
 
   const loadTeamTasks = async (teamId) => {
     setLoading(true);
@@ -40,6 +60,13 @@ const TeamManagerDashboard = () => {
     } finally {
       setLoading(false);
     }
+  };
+
+  // ✅ Alternative: Navigate to Team Tasks page
+  const handleViewTasks = (team, e) => {
+    e.stopPropagation(); // Prevent card click
+    console.log("📋 Viewing tasks for team:", team.name);
+    navigate("/tasks/team");
   };
 
   const getStatusColor = (status) => {
@@ -69,7 +96,7 @@ const TeamManagerDashboard = () => {
 
       {managedTeams.length === 0 ? (
         <div className="empty-state">
-          <div className="empty-icon">👔</div>
+          <div className="empty-icon">📋</div>
           <h3>No Teams to Manage</h3>
           <p>You haven't been assigned as a manager for any teams yet.</p>
         </div>
@@ -93,7 +120,11 @@ const TeamManagerDashboard = () => {
                   {team.description && (
                     <p className="team-description">{team.description}</p>
                   )}
-                  <button className="view-tasks-btn">
+                  {/* ✅ FIX: Button navigates to Team Tasks page */}
+                  <button 
+                    className="view-tasks-btn"
+                    onClick={(e) => handleViewTasks(team, e)}
+                  >
                     View Tasks →
                   </button>
                 </div>

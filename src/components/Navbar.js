@@ -6,11 +6,15 @@ import useAppStore from "../store/useAppStore";
 
 export default function Navbar() {
   const location = useLocation();
-  const { user, logout, isAdmin, isTeamManager } = useAuth();
+  const { user, logout } = useAuth();
   const expandTasks = useAppStore((s) => s.navbar_expandTasks);
   const setExpandTasks = useAppStore((s) => s.setNavbar_expandTasks);
   const darkMode = useAppStore((s) => s.darkMode);
   const setDarkMode = useAppStore((s) => s.setDarkMode);
+
+  // ✅ FIX: Get role information correctly
+  const isAdmin = user?.role === "admin";
+  const isTeamManager = user?.role === "team-manager";
 
   useEffect(() => {
     // keep expansion in sync with current location on mount/navigation
@@ -43,7 +47,7 @@ export default function Navbar() {
           {/* Mobile actions in header */}
           <div className="mobile-header-actions">
             <button className="mobile-theme-btn" onClick={toggleDarkMode}>
-              🌙
+              {darkMode ? "☀️" : "🌙"}
             </button>
             <button className="mobile-logout-btn" onClick={logout}>
               →
@@ -132,13 +136,13 @@ export default function Navbar() {
             <span className="nav-label">Profile</span>
           </Link>
 
-          {/* ✅ Team Manager Dashboard - Only for team-managers */}
+          {/* ✅ My Teams - Only for team-managers */}
           {isTeamManager && (
             <Link
               to="/team-manager"
               className={`nav-item ${location.pathname === "/team-manager" ? "active" : ""}`}
             >
-              <span className="nav-icon">👔</span>
+              <span className="nav-icon">📚</span>
               <span className="nav-label">My Teams</span>
             </Link>
           )}
@@ -154,7 +158,7 @@ export default function Navbar() {
             </Link>
           )}
 
-          {/* ✅ NEW: User Management - Admin only - MOVED TO CORRECT PLACE */}
+          {/* ✅ User Management - Admin only */}
           {isAdmin && (
             <Link
               to="/admin/users"
@@ -198,6 +202,7 @@ export default function Navbar() {
           <span className="mobile-nav-icon">👥</span>
           <span>Team</span>
         </Link>
+
         {!isAdmin && (
           <Link
             to="/chat"
@@ -223,22 +228,6 @@ export default function Navbar() {
           <span className="mobile-nav-icon">📊</span>
           <span>Analytics</span>
         </Link>
-        
-        <Link
-          to="/activity"
-          className={`mobile-nav-item ${location.pathname === "/activity" ? "active" : ""}`}
-        >
-          <span className="mobile-nav-icon">📈</span>
-          <span>Activity</span>
-        </Link>
-
-        <Link
-          to="/profile"
-          className={`mobile-nav-item ${location.pathname === "/profile" ? "active" : ""}`}
-        >
-          <span className="mobile-nav-icon">👤</span>
-          <span>Profile</span>
-        </Link>
 
         {/* Team Manager link for mobile */}
         {isTeamManager && (
@@ -246,7 +235,7 @@ export default function Navbar() {
             to="/team-manager"
             className={`mobile-nav-item ${location.pathname === "/team-manager" ? "active" : ""}`}
           >
-            <span className="mobile-nav-icon">👔</span>
+            <span className="mobile-nav-icon">📚</span>
             <span>My Teams</span>
           </Link>
         )}
