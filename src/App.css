@@ -17,6 +17,36 @@ body.dark-mode {
   --hover-bg: #374151;
   --card-bg: #1f2937;
   --bg-color: #111827;
+
+  /* Dark mode scrollbar colors (Firefox) */
+  scrollbar-color: rgba(255,255,255,0.16) transparent;
+  /* Ensure Firefox uses thin scrollbars in dark mode */
+  scrollbar-width: thin;
+}
+
+/* Dark mode scrollbar colors (WebKit) */
+html.dark-mode::-webkit-scrollbar,
+body.dark-mode::-webkit-scrollbar {
+  width: 6px;
+  height: 6px;
+}
+
+html.dark-mode::-webkit-scrollbar-track,
+body.dark-mode::-webkit-scrollbar-track {
+  background: transparent;
+}
+
+html.dark-mode::-webkit-scrollbar-thumb,
+body.dark-mode::-webkit-scrollbar-thumb {
+  background-color: rgba(255,255,255,0.16);
+  border-radius: 8px;
+  border: 2px solid transparent;
+  background-clip: padding-box;
+}
+
+html.dark-mode::-webkit-scrollbar-thumb:hover,
+body.dark-mode::-webkit-scrollbar-thumb:hover {
+  background-color: rgba(255,255,255,0.26);
 }
 
 /* Base Styles */
@@ -37,6 +67,34 @@ body {
   transition: background-color 0.3s ease, color 0.3s ease;
   width: 100%;
   overflow-x: hidden;
+  /* Firefox */
+  scrollbar-width: thin;
+  scrollbar-color: #cbd5e1 transparent;
+}
+
+/* WebKit (Chrome, Edge, Safari) - document scrollbar */
+html::-webkit-scrollbar,
+body::-webkit-scrollbar {
+  width: 8px;
+  height: 8px;
+}
+
+html::-webkit-scrollbar-track,
+body::-webkit-scrollbar-track {
+  background: transparent;
+}
+
+html::-webkit-scrollbar-thumb,
+body::-webkit-scrollbar-thumb {
+  background-color: rgba(0,0,0,0.12);
+  border-radius: 8px;
+  border: 2px solid transparent;
+  background-clip: padding-box;
+}
+
+html::-webkit-scrollbar-thumb:hover,
+body::-webkit-scrollbar-thumb:hover {
+  background-color: rgba(0,0,0,0.18);
 }
 
 /* App Container */
@@ -50,16 +108,45 @@ body {
 /* Main Content */
 .main-content {
   flex: 1;
-  margin-left: 280px;
+  margin-left: 200px;
   min-height: 100vh;
   background: var(--bg-color);
   transition: margin-left 0.3s ease;
-  width: calc(100% - 280px);
+  width: calc(100% - 200px);
+  padding-top: 0px;
+  scrollbar-width: thin;
+  overflow-y: auto;
+}
+
+.main-content:hover {
+  scrollbar-width: thin;
+}
+
+
+.main-content::-webkit-scrollbar {
+  width: 6px;
+}
+
+.main-content:hover::-webkit-scrollbar {
+  width: 8px;
+}
+
+.main-content::-webkit-scrollbar-track {
+  background: transparent;
+}
+
+.main-content::-webkit-scrollbar-thumb {
+  background: #d1d5db;
+  border-radius: 1px;
+}
+
+.main-content::-webkit-scrollbar-thumb:hover {
+  background: #9ca3af;
 }
 
 /* Top Bar */
 .top-bar {
-  height: 70px;
+  height: 60px;
   background: var(--card-bg);
   border-bottom: 1px solid var(--border-color);
   display: flex;
@@ -76,7 +163,7 @@ body {
 
 .top-bar-left {
   flex: 1;
-  margin-left: 280px;
+  margin-left: 200px;
 }
 
 .top-bar-right {
@@ -201,4 +288,37 @@ html {
 html, body {
   max-width: 100%;
   overflow-x: hidden;
+}
+
+/* Stronger dark-mode WebKit overrides placed after defaults so they take precedence. */
+html.dark-mode::-webkit-scrollbar,
+body.dark-mode::-webkit-scrollbar,
+html.dark-mode .main-content::-webkit-scrollbar,
+body.dark-mode .main-content::-webkit-scrollbar {
+  width: 6px;
+  height: 6px;
+}
+
+html.dark-mode::-webkit-scrollbar-track,
+body.dark-mode::-webkit-scrollbar-track,
+html.dark-mode .main-content::-webkit-scrollbar-track,
+body.dark-mode .main-content::-webkit-scrollbar-track {
+  background: transparent;
+}
+
+html.dark-mode::-webkit-scrollbar-thumb,
+body.dark-mode::-webkit-scrollbar-thumb,
+html.dark-mode .main-content::-webkit-scrollbar-thumb,
+body.dark-mode .main-content::-webkit-scrollbar-thumb {
+  background-color: rgba(255,255,255,0.16);
+  border-radius: 8px;
+  border: 2px solid transparent;
+  background-clip: padding-box;
+}
+
+html.dark-mode::-webkit-scrollbar-thumb:hover,
+body.dark-mode::-webkit-scrollbar-thumb:hover,
+html.dark-mode .main-content::-webkit-scrollbar-thumb:hover,
+body.dark-mode .main-content::-webkit-scrollbar-thumb:hover {
+  background-color: rgba(255,255,255,0.26);
 }

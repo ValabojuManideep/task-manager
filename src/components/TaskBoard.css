@@ -212,4 +212,34 @@
   }
 }
 
+/* Dark Mode Styles for TaskBoard */
+body.dark-mode .filter-group {
+  background: #1f2937;
+  border-color: #374151;
+}
 
+body.dark-mode .filter-btn {
+  color: #b8bcc4;
+}
+
+body.dark-mode .filter-btn:hover {
+  background: #374151;
+  color: #f9fafb;
+}
+
+body.dark-mode .filter-btn.active {
+  background: #5B7FFF;
+  color: #ffffff;
+  font-weight: 600;
+}
+
+body.dark-mode .your-tasks-btn {
+  background: #1f2937;
+  color: #f9fafb;
+  border-color: #374151;
+}
+
+body.dark-mode .your-tasks-btn:hover {
+  background: #374151;
+  border-color: #5B7FFF;
+}

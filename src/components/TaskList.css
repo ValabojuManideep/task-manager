@@ -135,6 +135,12 @@ body.dark-mode .task-table {
   background: #111827;
 }
 
+[data-theme="dark"] .task-table thead,
+.dark .task-table thead,
+body.dark-mode .task-table thead {
+  background: #1f2937;
+}
+
 [data-theme="dark"] .task-table th,
 [data-theme="dark"] .task-table td,
 .dark .task-table th,
@@ -142,7 +148,14 @@ body.dark-mode .task-table {
 body.dark-mode .task-table th,
 body.dark-mode .task-table td {
   border-color: #374151;
-  color: #e5e7eb;
+  color: #ffffff;
+}
+
+[data-theme="dark"] .task-table th,
+.dark .task-table th,
+body.dark-mode .task-table th {
+  color: #f9fafb;
+  font-weight: 600;
 }
 
 [data-theme="dark"] .task-row:hover,
@@ -151,11 +164,43 @@ body.dark-mode .task-row:hover {
   background: #1f2937;
 }
 
+[data-theme="dark"] .task-title-cell,
+.dark .task-title-cell,
+body.dark-mode .task-title-cell {
+  color: #ffffff;
+}
+
+[data-theme="dark"] .task-desc-cell,
+.dark .task-desc-cell,
+body.dark-mode .task-desc-cell {
+  color: #d1d5db;
+}
+
+[data-theme="dark"] .task-assigned-cell,
+.dark .task-assigned-cell,
+body.dark-mode .task-assigned-cell {
+  color: #d1d5db;
+}
+
 [data-theme="dark"] .task-status-badge,
 .dark .task-status-badge,
 body.dark-mode .task-status-badge {
   background: #374151;
-  color: #e5e7eb;
+  color: #f9fafb;
+}
+
+[data-theme="dark"] .task-recurrent-pill,
+.dark .task-recurrent-pill,
+body.dark-mode .task-recurrent-pill {
+  background: #3730a3;
+  color: #a5b4fc;
+}
+
+[data-theme="dark"] .task-action-btn,
+.dark .task-action-btn,
+body.dark-mode .task-action-btn {
+  background: #5B7FFF;
+  color: #ffffff;
 }
 
 /* COMMENTS, EMPTY STATE, CONFIRMATION (unchanged from your file) */

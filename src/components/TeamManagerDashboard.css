@@ -441,3 +441,94 @@
 .user-item:hover {
   background: #f3f4f6;
 }
+/* Dark mode styles */
+body.dark-mode .dashboard-header h1 {
+  color: #ffffff;
+}
+
+body.dark-mode .subtitle {
+  color: #b8bcc4;
+}
+
+body.dark-mode .empty-state h3 {
+  color: #f9fafb;
+}
+
+body.dark-mode .empty-state p {
+  color: #d1d5db;
+}
+
+body.dark-mode .managed-teams-section h2 {
+  color: #ffffff;
+}
+
+body.dark-mode .team-card {
+  background: #1f2937;
+  border-color: #374151;
+}
+
+body.dark-mode .team-card:hover {
+  border-color: #5B7FFF;
+  box-shadow: 0 4px 12px rgba(91, 127, 255, 0.2);
+}
+
+body.dark-mode .team-card.active {
+  border-color: #5B7FFF;
+  background: #2a3f5f;
+}
+
+body.dark-mode .team-card-header h3 {
+  color: #ffffff;
+}
+
+body.dark-mode .member-count {
+  background: #3730a3;
+  color: #a5b4fc;
+}
+
+body.dark-mode .team-description {
+  color: #b8bcc4;
+}
+
+body.dark-mode .team-tasks-section h2 {
+  color: #ffffff;
+}
+
+body.dark-mode .loading-state,
+body.dark-mode .error-state,
+body.dark-mode .empty-tasks {
+  background: #1f2937;
+  color: #b8bcc4;
+}
+
+body.dark-mode .error-state {
+  color: #fca5a5;
+  background: #5f1f1f;
+}
+
+body.dark-mode .task-card {
+  background: #1f2937;
+  border-color: #374151;
+}
+
+body.dark-mode .task-card:hover {
+  box-shadow: 0 4px 12px rgba(91, 127, 255, 0.15);
+}
+
+body.dark-mode .task-title {
+  color: #ffffff;
+}
+
+body.dark-mode .task-description {
+  color: #b8bcc4;
+}
+
+body.dark-mode .user-item {
+  border-bottom-color: #374151;
+  background: transparent;
+  color: #d1d5db;
+}
+
+body.dark-mode .user-item:hover {
+  background: #374151;
+}

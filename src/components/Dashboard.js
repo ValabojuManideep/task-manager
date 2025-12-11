@@ -178,13 +178,15 @@ export default function Dashboard() {
             <button
               className="export-btn"
               style={{
-                padding: '0.5rem 1.2rem',
+                padding: '12px 24px',
                 background: '#5B7FFF',
                 color: '#fff',
                 border: 'none',
-                borderRadius: '6px',
-                fontWeight: 'bold',
+                borderRadius: '10px',
+                fontWeight: '600',
                 cursor: 'pointer',
+                fontSize: '15px',
+                transition: 'all 0.2s',
                 boxShadow: '0 2px 8px rgba(91,127,255,0.12)'
               }}
               onClick={() => setShowExportModal(true)}

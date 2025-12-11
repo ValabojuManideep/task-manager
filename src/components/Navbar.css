@@ -27,7 +27,7 @@ body.dark-mode .logo-text {
 }
 
 .navbar {
-  width: 280px;
+  width: 200px;
   height: 100vh;
   background: #f9fafb;
   border-right: 1px solid #e5e7eb;
@@ -40,7 +40,7 @@ body.dark-mode .logo-text {
 }
 
 .navbar-header {
-  padding: 25px 20px;
+  padding: 12px 20px;
   display: flex;
   align-items: center;
   gap: 12px;
@@ -68,6 +68,33 @@ body.dark-mode .logo-text {
   flex: 1;
   padding: 30px 20px;
   overflow-y: auto;
+  /* Firefox */
+  scrollbar-width: thin;
+  scrollbar-color: rgba(0,0,0,0.12) transparent;
+}
+
+.nav-section:hover {
+  scrollbar-width: thin;
+}
+
+/* WebKit (Chrome, Edge, Safari) */
+.nav-section::-webkit-scrollbar {
+  width: 6px;
+}
+
+.nav-section::-webkit-scrollbar-track {
+  background: transparent;
+}
+
+.nav-section::-webkit-scrollbar-thumb {
+  background-color: rgba(0,0,0,0.12);
+  border-radius: 8px;
+  border: 2px solid transparent;
+  background-clip: padding-box;
+}
+
+.nav-section::-webkit-scrollbar-thumb:hover {
+  background-color: rgba(0,0,0,0.18);
 }
 
 .nav-title {
@@ -116,8 +143,8 @@ body.dark-mode .logo-text {
 }
 
 .user-avatar {
-  width: 45px;
-  height: 45px;
+  width: 56px;
+  height: 56px;
   border-radius: 50%;
   background: #e5e7eb;
   display: flex;
@@ -125,11 +152,13 @@ body.dark-mode .logo-text {
   justify-content: center;
   font-weight: 600;
   color: #6b7280;
-  font-size: 14px;
+  font-size: 18px;
+  flex-shrink: 0;
 }
 
 .user-info {
   flex: 1;
+  display: none;
 }
 
 .user-name {
@@ -137,11 +166,13 @@ body.dark-mode .logo-text {
   font-weight: 600;
   color: #111827;
   margin-bottom: 2px;
+  display: none;
 }
 
 .user-email {
   font-size: 12px;
   color: #6b7280;
+  display: none;
 }
 
 /* Dark mode for sidebar */
@@ -150,6 +181,35 @@ body.dark-mode .logo-text {
 body.dark-mode .navbar {
   background: #1f2937;
   border-right-color: #374151;
+}
+
+/* Dark mode sidebar scrollbar */
+[data-theme="dark"] .nav-section,
+.dark .nav-section,
+body.dark-mode .nav-section {
+  scrollbar-color: rgba(255,255,255,0.12) transparent;
+  scrollbar-width: thin;
+}
+
+[data-theme="dark"] .nav-section::-webkit-scrollbar,
+.dark .nav-section::-webkit-scrollbar,
+body.dark-mode .nav-section::-webkit-scrollbar {
+  width: 6px;
+}
+
+[data-theme="dark"] .nav-section::-webkit-scrollbar-thumb,
+.dark .nav-section::-webkit-scrollbar-thumb,
+body.dark-mode .nav-section::-webkit-scrollbar-thumb {
+  background-color: rgba(255,255,255,0.12);
+  border-radius: 8px;
+  border: 2px solid transparent;
+  background-clip: padding-box;
+}
+
+[data-theme="dark"] .nav-section::-webkit-scrollbar-thumb:hover,
+.dark .nav-section::-webkit-scrollbar-thumb:hover,
+body.dark-mode .nav-section::-webkit-scrollbar-thumb:hover {
+  background-color: rgba(255,255,255,0.22);
 }
 
 [data-theme="dark"] .navbar-header,
@@ -425,6 +485,7 @@ body.dark-mode .mobile-header-actions .mobile-logout-btn:hover {
   border-radius: 6px;
   margin-bottom: 4px;
   transition: all 0.2s;
+  white-space: nowrap;
 }
 
 .nav-subitem:last-child {
@@ -447,6 +508,37 @@ body.dark-mode .mobile-header-actions .mobile-logout-btn:hover {
 
 .subitem-icon {
   font-size: 14px;
+}
+
+/* Dark mode for nav-subitems */
+[data-theme="dark"] .nav-subitems,
+.dark .nav-subitems,
+body.dark-mode .nav-subitems {
+  border-left-color: #6b7280;
+  background: rgba(0, 0, 0, 0.3);
+  border-radius: 6px;
+}
+
+[data-theme="dark"] .nav-subitem,
+.dark .nav-subitem,
+body.dark-mode .nav-subitem {
+  color: #ffffff;
+  font-weight: 500;
+}
+
+[data-theme="dark"] .nav-subitem:hover,
+.dark .nav-subitem:hover,
+body.dark-mode .nav-subitem:hover {
+  background: #1f2937;
+  color: #ffffff;
+}
+
+[data-theme="dark"] .nav-subitem.active,
+.dark .nav-subitem.active,
+body.dark-mode .nav-subitem.active {
+  background: #1f2937;
+  color: #5B7FFF;
+  border-left-color: #5B7FFF;
 }
 
 /* ✅ NEW: User role badge */

@@ -157,43 +157,49 @@ useEffect(() => {
   };
 
   // Remove member from team
-  const handleRemoveMember = async (teamId, memberId, memberName) => {
-    const confirmed = await confirmAction(
-      "Remove Member?",
-      `Are you sure you want to remove ${memberName} from this team?`,
-      "warning",
-      "Remove",
-      "#ef4444"
+  const handleRemoveMember = async (teamId, userId, username) => {
+  // Get user info for confirmation message
+  const userToAdd = allUsers.find(u => u._id === userId);
+  if (!userToAdd) return;
+
+  const confirmed = await confirmAction(
+    "Remove Member?",
+    `Are you sure you want to remove ${username} from this team?`,
+    "warning",
+    "Remove",
+    "#dc2626"
+  );
+
+  if (!confirmed) return;
+
+  try {
+    const token = localStorage.getItem("token");
+    console.log("➖ Removing member:", userId, "from team:", teamId);
+    
+    const { data } = await axios.delete(
+      `http://localhost:5000/api/teams/${teamId}/members/${userId}`,
+      { headers: { Authorization: `Bearer ${token}` } }
     );
 
-    if (!confirmed) return;
+    console.log("✅ Member removed successfully:", data);
 
-    try {
-      const token = localStorage.getItem("token");
-      console.log("➖ Removing member:", memberId, "from team:", teamId);
-      
-      const { data } = await axios.delete(
-        `http://localhost:5000/api/teams/${teamId}/members/${memberId}`,
-        { headers: { Authorization: `Bearer ${token}` } }
-      );
+    // Update teams in store
+    const updatedTeams = teams.map(t => (t._id === teamId ? data.team : t));
+    setTeams(updatedTeams);
 
-      console.log("✅ Member removed successfully:", data);
-
-      // Update teams in store
-      const updatedTeams = teams.map(t => (t._id === teamId ? data.team : t));
-      setTeams(updatedTeams);
-
-      // Update showTeamDetail if it's the current team
-      if (showTeamDetail?._id === teamId) {
-        setShowTeamDetail(data.team);
-      }
-
-      toast.success("Member removed successfully!");
-    } catch (err) {
-      console.error("❌ Error removing member:", err);
-      toast.error(err.response?.data?.error || "Failed to remove member");
+    // Update showTeamDetail if it's the current team
+    if (showTeamDetail?._id === teamId) {
+      setShowTeamDetail(data.team);
     }
-  };
+
+    toast.success("Member removed successfully!");
+    setShowAddMemberModal(false);
+    setMemberSearchTerm("");
+  } catch (err) {
+    console.error("❌ Error removing member:", err);
+    toast.error(err.response?.data?.error || "Failed to remove member");
+  }
+};
 
   // ✅ FIXED: Get available users to add (not already members)
   const availableUsers = allUsers.filter(u => {

@@ -1,6 +1,6 @@
 /* Dashboard Container */
 .dashboard-container {
-  padding: 40px;
+  padding: 20px 24px;
   margin: 0 auto;
 }
 
@@ -48,7 +48,7 @@
 /* Stats Grid - FORCE Single Row */
 .stats-grid {
   display: grid;
-  grid-template-columns: repeat(5, 1fr) !important;
+  grid-template-columns: repeat(6, 1fr) !important;
   gap: 12px;
   margin-bottom: 40px;
   width: 100%;
@@ -59,7 +59,7 @@
   background: var(--card-bg);
   border: 1px solid var(--border-color);
   border-radius: 12px;
-  padding: 16px 12px;
+  padding: 10px 6px;
   transition: all 0.3s ease;
   box-shadow: 0 2px 8px rgba(0, 0, 0, 0.08);
   display: flex;
@@ -76,8 +76,8 @@
 }
 
 .stat-icon {
-  font-size: 24px;
-  margin-bottom: 8px;
+  font-size: 16px;
+  margin-bottom: 2px;
   display: block;
   line-height: 1;
   flex-shrink: 0;
@@ -91,15 +91,15 @@
 }
 
 .stat-value {
-  font-size: 24px;
+  font-size: 18px;
   font-weight: 700;
   color: var(--text-color);
-  margin-bottom: 3px;
+  margin-bottom: 2px;
   line-height: 1.1;
 }
 
 .stat-description {
-  font-size: 11px;
+  font-size: 10px;
   color: var(--text-muted);
   font-weight: 500;
   white-space: normal;
@@ -249,20 +249,20 @@ body.dark-mode .task-item:hover {
 /* Mobile Responsive - Keep single line on larger screens */
 @media (max-width: 1600px) {
   .stats-grid {
-    grid-template-columns: repeat(5, 1fr) !important;
+    grid-template-columns: repeat(6, 1fr) !important;
   }
 
   .stat-card {
-    padding: 14px 10px;
+    padding: 10px 6px;
   }
 
   .stat-icon {
-    font-size: 22px;
-    margin-bottom: 6px;
+    font-size: 16px;
+    margin-bottom: 2px;
   }
 
   .stat-value {
-    font-size: 22px;
+    font-size: 18px;
   }
 
   .stat-description {
@@ -272,23 +272,23 @@ body.dark-mode .task-item:hover {
 
 @media (max-width: 1200px) {
   .stats-grid {
-    grid-template-columns: repeat(3, 1fr) !important;
+    grid-template-columns: repeat(6, 1fr) !important;
   }
 
   .stat-card {
-    padding: 16px 12px;
+    padding: 10px 6px;
   }
 
   .stat-icon {
-    font-size: 24px;
+    font-size: 16px;
   }
 
   .stat-value {
-    font-size: 24px;
+    font-size: 18px;
   }
 
   .stat-description {
-    font-size: 11px;
+    font-size: 10px;
   }
 }
 
