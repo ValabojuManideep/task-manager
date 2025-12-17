@@ -40,8 +40,8 @@ export default function Leaderboard() {
     try {
       setLoading(true);
       const [teamsRes, membersRes] = await Promise.all([
-        axios.get("http://localhost:5000/api/leaderboard/teams"),
-        axios.get("http://localhost:5000/api/leaderboard/members")
+        axios.get("/api/leaderboard/teams"),
+        axios.get("/api/leaderboard/members")
       ]);
 
       setTeamLeaderboard(teamsRes.data);

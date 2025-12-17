@@ -23,7 +23,7 @@ export default function Profile() {
       try {
         const userId = user?.id || user?._id;
         if (userId) {
-          const { data } = await axios.get(`http://localhost:5000/api/users/${userId}`);
+          const { data } = await axios.get(`/api/users/${userId}`);
           setProfile(data);
         } else {
           setProfile(user);
@@ -41,7 +41,7 @@ export default function Profile() {
     async function fetchMentions() {
       if (!user?.username) return;
       try {
-        const { data: tasks } = await axios.get("http://localhost:5000/api/tasks");
+        const { data: tasks } = await axios.get("/api/tasks");
         const recentMentions = [];
 
         for (const task of tasks) {

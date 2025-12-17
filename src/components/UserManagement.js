@@ -27,7 +27,7 @@ export default function UserManagement() {
       const token = localStorage.getItem("token");
       console.log("Fetching users with token:", token ? "present" : "missing");
       const { data } = await axios.get(
-        "http://localhost:5000/api/auth/all-users",
+        "/api/auth/all-users",
         { headers: { Authorization: `Bearer ${token}` } }
       );
       console.log("Users fetched successfully:", data);
@@ -51,7 +51,7 @@ export default function UserManagement() {
     try {
       const token = localStorage.getItem("token");
       await axios.put(
-        `http://localhost:5000/api/auth/users/${userId}/role`,
+        `/api/auth/users/${userId}/role`,
         { role: newRole },
         { headers: { Authorization: `Bearer ${token}` } }
       );

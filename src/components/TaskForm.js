@@ -54,7 +54,7 @@ export default function TaskForm({ onClose }) {
 
   const fetchUsers = async () => {
     try {
-      const { data } = await axios.get("http://localhost:5000/api/auth/users");
+      const { data } = await axios.get("/api/auth/users");
       setUsers(data.filter(u => u.role === "user"));
     } catch (err) {
       console.error("Error fetching users:", err);
@@ -174,7 +174,7 @@ export default function TaskForm({ onClose }) {
       files.forEach(file => formData.append('files', file));
 
       // Create on backend
-      const response = await axios.post('http://localhost:5000/api/tasks', formData, {
+      const response = await axios.post('/api/tasks', formData, {
         headers: { 'Content-Type': 'multipart/form-data' }
       });
 
@@ -203,7 +203,7 @@ export default function TaskForm({ onClose }) {
       setPrivateKeyError("");
 
       // Refresh task list (GET — avoids POSTing null)
-      const { data } = await axios.get("http://localhost:5000/api/tasks");
+      const { data } = await axios.get("/api/tasks");
       useAppStore.setState({ tasks: data, allTasks: data });
 
       if (onClose) onClose();

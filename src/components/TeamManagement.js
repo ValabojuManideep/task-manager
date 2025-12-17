@@ -68,7 +68,7 @@ export default function TeamManagement() {
     try {
       const token = localStorage.getItem("token");
       const { data } = await axios.get(
-        "http://localhost:5000/api/auth/all-users",
+        "/api/auth/all-users",
         { headers: { Authorization: `Bearer ${token}` } }
       );
       setUsers(data);
@@ -84,7 +84,7 @@ export default function TeamManagement() {
 
   const addTeam = async (team) => {
     try {
-      const { data } = await axios.post("http://localhost:5000/api/teams", team);
+      const { data } = await axios.post("/api/teams", team);
       const updatedTeams = [...teams, data];
       useAppStore.setState({ teams: updatedTeams });
       return data;
@@ -96,7 +96,7 @@ export default function TeamManagement() {
 
   const updateTeam = async (id, updates) => {
     try {
-      const { data } = await axios.put(`http://localhost:5000/api/teams/${id}`, updates);
+      const { data } = await axios.put(`/api/teams/${id}`, updates);
       const updatedTeams = teams.map(t => t._id === id ? data : t);
       useAppStore.setState({ teams: updatedTeams });
       return data;
@@ -108,7 +108,7 @@ export default function TeamManagement() {
 
   const deleteTeam = async (id) => {
     try {
-      await axios.delete(`http://localhost:5000/api/teams/${id}`);
+      await axios.delete(`/api/teams/${id}`);
       const updatedTeams = teams.filter(t => t._id !== id);
       useAppStore.setState({ teams: updatedTeams });
     } catch (err) {

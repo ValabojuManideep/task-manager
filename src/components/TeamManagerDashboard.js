@@ -52,14 +52,14 @@ useEffect(() => {
       // ✅ Try multiple endpoints
       let data;
       try {
-        const response = await axios.get("http://localhost:5000/api/auth/all-users", {
+        const response = await axios.get("/api/auth/all-users", {
           headers: { Authorization: `Bearer ${token}` }
         });
         data = response.data;
       } catch (err) {
         // If /all-users doesn't exist, try /users
         console.log("⚠️ /all-users not found, trying /users");
-        const response = await axios.get("http://localhost:5000/api/auth/users", {
+        const response = await axios.get("/api/auth/users", {
           headers: { Authorization: `Bearer ${token}` }
         });
         data = response.data;
@@ -82,7 +82,7 @@ useEffect(() => {
     try {
       const token = localStorage.getItem("token");
       const { data } = await axios.get(
-        `http://localhost:5000/api/teams/${teamId}/tasks`,
+        `/api/teams/${teamId}/tasks`,
         {
           headers: { Authorization: `Bearer ${token}` }
         }
@@ -131,7 +131,7 @@ useEffect(() => {
       console.log("➕ Adding member:", userId, "to team:", teamId);
       
       const { data } = await axios.post(
-        `http://localhost:5000/api/teams/${teamId}/members`,
+        `/api/teams/${teamId}/members`,
         { userId },
         { headers: { Authorization: `Bearer ${token}` } }
       );
@@ -177,7 +177,7 @@ useEffect(() => {
     console.log("➖ Removing member:", userId, "from team:", teamId);
     
     const { data } = await axios.delete(
-      `http://localhost:5000/api/teams/${teamId}/members/${userId}`,
+      `/api/teams/${teamId}/members/${userId}`,
       { headers: { Authorization: `Bearer ${token}` } }
     );
 

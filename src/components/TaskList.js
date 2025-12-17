@@ -79,8 +79,8 @@ export default function TaskList({ statusFilter, priorityFilter, displayTasks })
 
   const updateTask = async (taskId, updates) => {
     try {
-      await axios.put(`http://localhost:5000/api/tasks/${taskId}`, updates);
-      const { data } = await axios.get("http://localhost:5000/api/tasks");
+      await axios.put(`/api/tasks/${taskId}`, updates);
+      const { data } = await axios.get("/api/tasks");
       useAppStore.setState({ tasks: data, allTasks: data });
       toast.success("Task updated successfully!");
     } catch (err) {
@@ -93,11 +93,11 @@ export default function TaskList({ statusFilter, priorityFilter, displayTasks })
     try {
       console.log("🗑 Attempting to delete task:", taskId);
       const response = await axios.delete(
-        `http://localhost:5000/api/tasks/${taskId}`
+        `/api/tasks/${taskId}`
       );
       console.log("✅ Task deleted successfully:", response.data);
       toast.success("Task deleted successfully!");
-      const { data } = await axios.get("http://localhost:5000/api/tasks");
+      const { data } = await axios.get("/api/tasks");
       useAppStore.setState({ tasks: data, allTasks: data });
     } catch (err) {
       console.error("❌ Error deleting task:", err.response?.data || err.message);
@@ -121,7 +121,7 @@ export default function TaskList({ statusFilter, priorityFilter, displayTasks })
 
   const fetchTasks = async () => {
     try {
-      const { data } = await axios.get("http://localhost:5000/api/tasks");
+      const { data } = await axios.get("/api/tasks");
       useAppStore.setState({ tasks: data, allTasks: data });
     } catch (err) {
       console.error("Error fetching tasks:", err);
@@ -135,7 +135,7 @@ export default function TaskList({ statusFilter, priorityFilter, displayTasks })
   useEffect(() => {
     async function fetchUsers() {
       try {
-        const { data } = await axios.get("http://localhost:5000/api/auth/users");
+        const { data } = await axios.get("/api/auth/users");
         setUsers(data);
       } catch (err) {
         setUsers([]);
@@ -1137,7 +1137,7 @@ export default function TaskList({ statusFilter, priorityFilter, displayTasks })
             onRefresh={async () => {
               // Fetch the updated task directly
               try {
-                const { data } = await axios.get(`http://localhost:5000/api/tasks/${selectedTask._id}`);
+                const { data } = await axios.get(`/api/tasks/${selectedTask._id}`);
                 setSelectedTask(data);
                 // Also refresh the tasks list
                 await fetchTasks();

@@ -1,11 +1,15 @@
 import React from 'react';
 import ReactDOM from 'react-dom/client';
 import './index.css';
+import axios from 'axios';
+import { BACKEND_URL } from './config';
 import { Toaster } from 'react-hot-toast';
+axios.defaults.baseURL = BACKEND_URL;
 import App from './App';
 import reportWebVitals from './reportWebVitals';
 
 const root = ReactDOM.createRoot(document.getElementById('root'));
+axios.defaults.baseURL = BACKEND_URL;
 root.render(
   <React.StrictMode>
     

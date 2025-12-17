@@ -29,7 +29,7 @@ export default function Analytics() {
 
   const fetchUsers = async () => {
     try {
-      const { data } = await axios.get("http://localhost:5000/api/auth/users");
+      const { data } = await axios.get("/api/auth/users");
       setUsers(data);
     } catch (err) {
       console.error("Error fetching users:", err);

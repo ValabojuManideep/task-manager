@@ -13,7 +13,7 @@ export const TaskProvider = ({ children }) => {
 
   const fetchTasks = async () => {
     try {
-      const { data } = await axios.get("http://localhost:5000/api/tasks");
+      const { data } = await axios.get("/api/tasks");
       setAllTasks(data);
       setTasks(data);
     } catch (err) {
@@ -24,7 +24,7 @@ export const TaskProvider = ({ children }) => {
   // Fetch private tasks using key
   const fetchPrivateTasks = async (key) => {
     try {
-      const { data } = await axios.get("http://localhost:5000/api/tasks/private", {
+      const { data } = await axios.get("/api/tasks/private", {
         headers: { "x-private-key": key }
       });
       setPrivateTasks(data);
@@ -42,7 +42,7 @@ export const TaskProvider = ({ children }) => {
 
   const addTask = async (task) => {
     try {
-      const { data } = await axios.post("http://localhost:5000/api/tasks", task);
+      const { data } = await axios.post("/api/tasks", task);
       await fetchTasks();
       return data;
     } catch (err) {
@@ -52,7 +52,7 @@ export const TaskProvider = ({ children }) => {
 
   const updateTask = async (id, updates) => {
     try {
-      const { data } = await axios.put(`http://localhost:5000/api/tasks/${id}`, updates);
+      const { data } = await axios.put(`/api/tasks/${id}`, updates);
       await fetchTasks();
     } catch (err) {
       console.error("Error updating task:", err);
@@ -61,7 +61,7 @@ export const TaskProvider = ({ children }) => {
 
   const deleteTask = async (id) => {
     try {
-      await axios.delete(`http://localhost:5000/api/tasks/${id}`, {
+      await axios.delete(`/api/tasks/${id}`, {
         data: { username: user?.username || "Admin" }
       });
       await fetchTasks();

@@ -16,7 +16,7 @@ export default function Chat({ teamId, otherUser, currentUser, onClose, conversa
 
       const createOrGetConversation = async () => {
         try {
-          const { data } = await axios.post("http://localhost:5000/api/chat/conversations", {
+          const { data } = await axios.post("/api/chat/conversations", {
             teamId,
             participantId: otherUser._id,
             senderId: currentUser.id
@@ -36,7 +36,7 @@ export default function Chat({ teamId, otherUser, currentUser, onClose, conversa
     const fetchMessages = async () => {
       try {
         if (!conversation) return;
-        const { data } = await axios.get(`http://localhost:5000/api/chat/messages/${conversation._id}`);
+        const { data } = await axios.get(`/api/chat/messages/${conversation._id}`);
         setMessages(data);
         // scroll to bottom
         if (bodyRef.current) {
@@ -74,7 +74,7 @@ export default function Chat({ teamId, otherUser, currentUser, onClose, conversa
 
       // otherwise fetch populated conversation from server
       try {
-        const { data } = await axios.get(`http://localhost:5000/api/chat/conversations/${conversation._id}`);
+        const { data } = await axios.get(`/api/chat/conversations/${conversation._id}`);
         setConversation(data); // populated
         const other = data.participants.find((p) => String(p._id) !== String(currentUser.id) && String(p._id) !== String(currentUser._id));
         setLocalDisplayUser(other || data.participants[0]);
@@ -90,14 +90,14 @@ export default function Chat({ teamId, otherUser, currentUser, onClose, conversa
   const handleSend = async () => {
     if (!text.trim() || !conversation) return;
     try {
-      await axios.post("http://localhost:5000/api/chat/messages", {
+      await axios.post("/api/chat/messages", {
         conversationId: conversation._id,
         senderId: currentUser.id,
         text: text.trim()
       });
       setText("");
       // immediate fetch
-      const { data } = await axios.get(`http://localhost:5000/api/chat/messages/${conversation._id}`);
+      const { data } = await axios.get(`/api/chat/messages/${conversation._id}`);
       setMessages(data);
       if (bodyRef.current) bodyRef.current.scrollTop = bodyRef.current.scrollHeight;
     } catch (err) {

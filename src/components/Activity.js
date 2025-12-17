@@ -28,7 +28,7 @@ export default function Activity() {
 
   const fetchUsers = async () => {
     try {
-      const { data } = await axios.get("http://localhost:5000/api/auth/users");
+      const { data } = await axios.get("/api/auth/users");
       setUsers(data);
     } catch (err) {
       console.error("Error fetching users:", err);
@@ -37,7 +37,7 @@ export default function Activity() {
 
   const fetchActivities = async () => {
     try {
-      const { data } = await axios.get("http://localhost:5000/api/activities");
+      const { data } = await axios.get("/api/activities");
       
       console.log("Fetched activities:", data);
       

@@ -49,7 +49,7 @@ export default function Conversations() {
 
   const openConversationWith = async (teamId, member, teamName) => {
     try {
-      const { data } = await axios.post("http://localhost:5000/api/chat/conversations", {
+      const { data } = await axios.post("/api/chat/conversations", {
         teamId,
         participantId: member._id,
         senderId: user.id

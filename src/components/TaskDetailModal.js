@@ -51,7 +51,7 @@ export default function TaskDetailModal({ task, onClose, onUpdate, onDelete, onR
   useEffect(() => {
     async function fetchUsers() {
       try {
-        const { data } = await axios.get("http://localhost:5000/api/auth/users");
+          const { data } = await axios.get("/api/auth/users");
         setUsers(data);
       } catch (err) {
         setUsers([]);
@@ -93,7 +93,7 @@ export default function TaskDetailModal({ task, onClose, onUpdate, onDelete, onR
   const handleDownloadAttachment = async (attachmentId, filename) => {
     try {
       const response = await axios.get(
-        `http://localhost:5000/api/tasks/${task._id}/download/${attachmentId}`,
+        `/api/tasks/${task._id}/download/${attachmentId}`,
         { responseType: 'blob' }
       );
       
@@ -123,7 +123,7 @@ export default function TaskDetailModal({ task, onClose, onUpdate, onDelete, onR
   setDeletingAttachment(attachmentId);
   try {
     await axios.delete(
-      `http://localhost:5000/api/tasks/${task._id}/attachment/${attachmentId}`,
+      `/api/tasks/${task._id}/attachment/${attachmentId}`,
       { data: { username: user.username || 'Admin' } }
     );
     alert('Attachment deleted successfully');
@@ -140,7 +140,7 @@ export default function TaskDetailModal({ task, onClose, onUpdate, onDelete, onR
     if (!commentText.trim()) return;
 
     try {
-      await axios.post(`http://localhost:5000/api/tasks/${task._id}/comment`, {
+      await axios.post(`/api/tasks/${task._id}/comment`, {
         userId: currentUserId,
         username: user.username,
         userRole: user.role,
@@ -158,7 +158,7 @@ export default function TaskDetailModal({ task, onClose, onUpdate, onDelete, onR
     if (!editText.trim()) return;
 
     try {
-      await axios.put(`http://localhost:5000/api/tasks/${task._id}/comments/${commentId}`, {
+      await axios.put(`/api/tasks/${task._id}/comments/${commentId}`, {
         text: editText
       });
       setEditingComment(null);
@@ -178,7 +178,7 @@ export default function TaskDetailModal({ task, onClose, onUpdate, onDelete, onR
     if (!confirmed) return;
 
     try {
-      await axios.delete(`http://localhost:5000/api/tasks/${task._id}/comments/${commentId}`);
+      await axios.delete(`/api/tasks/${task._id}/comments/${commentId}`);
       onRefresh();
     } catch (err) {
       console.error("Error deleting comment:", err.response?.data || err.message);

@@ -8,7 +8,7 @@ export const TeamProvider = ({ children }) => {
 
   const fetchTeams = async () => {
     try {
-      const { data } = await axios.get("http://localhost:5000/api/teams");
+      const { data } = await axios.get("/api/teams");
       setTeams(data);
     } catch (err) {
       console.error("Error fetching teams:", err);
@@ -21,7 +21,7 @@ export const TeamProvider = ({ children }) => {
 
   const addTeam = async (team) => {
     try {
-      const { data } = await axios.post("http://localhost:5000/api/teams", team);
+      const { data } = await axios.post("/api/teams", team);
       await fetchTeams();
       return data;
     } catch (err) {
@@ -32,7 +32,7 @@ export const TeamProvider = ({ children }) => {
 
   const updateTeam = async (id, updates) => {
     try {
-      const { data } = await axios.put(`http://localhost:5000/api/teams/${id}`, updates);
+      const { data } = await axios.put(`/api/teams/${id}`, updates);
       await fetchTeams();
       return data;
     } catch (err) {
@@ -43,7 +43,7 @@ export const TeamProvider = ({ children }) => {
 
   const deleteTeam = async (id) => {
     try {
-      await axios.delete(`http://localhost:5000/api/teams/${id}`);
+      await axios.delete(`/api/teams/${id}`);
       await fetchTeams();
     } catch (err) {
       console.error("Error deleting team:", err);
@@ -56,7 +56,7 @@ export const TeamProvider = ({ children }) => {
     try {
       const token = localStorage.getItem("token");
       const { data } = await axios.post(
-        `http://localhost:5000/api/teams/${teamId}/managers`,
+        `/api/teams/${teamId}/managers`,
         { userId },
         { headers: { Authorization: `Bearer ${token}` } }
       );
@@ -73,7 +73,7 @@ export const TeamProvider = ({ children }) => {
     try {
       const token = localStorage.getItem("token");
       await axios.delete(
-        `http://localhost:5000/api/teams/${teamId}/managers/${userId}`,
+        `/api/teams/${teamId}/managers/${userId}`,
         { headers: { Authorization: `Bearer ${token}` } }
       );
       await fetchTeams();
@@ -88,7 +88,7 @@ export const TeamProvider = ({ children }) => {
     try {
       const token = localStorage.getItem("token");
       const { data } = await axios.get(
-        `http://localhost:5000/api/teams/${teamId}/tasks`,
+        `/api/teams/${teamId}/tasks`,
         { headers: { Authorization: `Bearer ${token}` } }
       );
       return data;
@@ -103,7 +103,7 @@ export const TeamProvider = ({ children }) => {
     try {
       const token = localStorage.getItem("token");
       const { data } = await axios.post(
-        `http://localhost:5000/api/teams/${teamId}/members`,
+        `/api/teams/${teamId}/members`,
         { userId },
         { headers: { Authorization: `Bearer ${token}` } }
       );
@@ -120,7 +120,7 @@ export const TeamProvider = ({ children }) => {
     try {
       const token = localStorage.getItem("token");
       await axios.delete(
-        `http://localhost:5000/api/teams/${teamId}/members/${userId}`,
+        `/api/teams/${teamId}/members/${userId}`,
         { headers: { Authorization: `Bearer ${token}` } }
       );
       await fetchTeams();

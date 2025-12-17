@@ -42,7 +42,7 @@ export default function TaskBoard({ taskType = "team" }) {
       console.log("Token exists:", !!token);
       console.log("Token value (first 20 chars):", token ? token.substring(0, 20) + "..." : "null");
       
-      const { data } = await axios.get("http://localhost:5000/api/tasks/private", {
+      const { data } = await axios.get("/api/tasks/private", {
         headers: { 
           "x-private-key": key,
           "Authorization": token ? `Bearer ${token}` : ""
@@ -87,7 +87,7 @@ export default function TaskBoard({ taskType = "team" }) {
   useEffect(() => {
     const fetchTeams = async () => {
       try {
-        const { data } = await axios.get("http://localhost:5000/api/teams");
+        const { data } = await axios.get("/api/teams");
         setTeams(data);
         console.log("✅ Teams fetched:", data.length, "teams");
       } catch (err) {
@@ -110,7 +110,7 @@ export default function TaskBoard({ taskType = "team" }) {
 
   const fetchUsers = async () => {
     try {
-      const { data } = await axios.get("http://localhost:5000/api/auth/users");
+      const { data } = await axios.get("/api/auth/users");
       setUsers(data);
     } catch (err) {
       console.error("Error fetching users:", err);

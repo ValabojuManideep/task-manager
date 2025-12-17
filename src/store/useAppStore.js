@@ -43,7 +43,7 @@ const useAppStore = create((set, get) => ({
 
   loginAction: async (usernameOrEmail, password) => {
     try {
-      const { data } = await axios.post("http://localhost:5000/api/auth/login", { usernameOrEmail, password });
+      const { data } = await axios.post("/api/auth/login", { usernameOrEmail, password });
       set({ user: data.user });
       localStorage.setItem("token", data.token);
       localStorage.setItem("user", JSON.stringify(data.user));
@@ -56,7 +56,7 @@ const useAppStore = create((set, get) => ({
 
   registerAction: async (username, email, password) => {
     try {
-      const { data } = await axios.post("http://localhost:5000/api/auth/register", { username, email, password });
+      const { data } = await axios.post("/api/auth/register", { username, email, password });
       set({ user: data.user });
       localStorage.setItem("token", data.token);
       localStorage.setItem("user", JSON.stringify(data.user));
