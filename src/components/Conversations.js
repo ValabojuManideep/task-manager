@@ -88,22 +88,34 @@ export default function Conversations() {
 
               {selectedTeam && selectedTeam._id === t._id && (
                 <div style={{ marginTop: 12 }}>
-                  {/* ✅ Show all members (excluding current user) for chatting */}
-                  {(t.members || []).filter(m => {
-                    const memberId = String(m._id || m);
+                  {/* ✅ Show all members and team managers (excluding current user) for chatting */}
+                  {(() => {
+                    // Normalize members and managers into a list with roles
+                    const membersList = (t.members || []).map((m) => ({ _id: m._id || m, username: m.username || '', email: m.email || '', role: 'Member' }));
+                    const managersList = (t.teamManagers || []).map((m) => ({ _id: m._id || m, username: m.username || '', email: m.email || '', role: 'Manager' }));
+                    // Combine and dedupe by _id
+                    const combined = [...membersList, ...managersList];
+                    const deduped = combined.reduce((acc, cur) => {
+                      if (!acc.find((x) => String(x._id) === String(cur._id))) acc.push(cur);
+                      return acc;
+                    }, []);
                     const currentUserId = String(user.id || user._id);
-                    return memberId !== currentUserId;
-                  }).map((member) => (
-                    <div key={member._id} style={{ display: "flex", justifyContent: "space-between", alignItems: "center", padding: 8, borderBottom: "1px solid #f1f1f1" }}>
-                      <div>
-                        <div style={{ fontWeight: 700 }}>{member.username}</div>
-                        <div style={{ fontSize: 12, color: "#6b7280" }}>{member.email}</div>
+                    const others = deduped.filter((m) => String(m._id) !== currentUserId);
+
+                    return others.map((member) => (
+                      <div key={member._id} style={{ display: "flex", justifyContent: "space-between", alignItems: "center", padding: 8, borderBottom: "1px solid #f1f1f1" }}>
+                        <div>
+                          <div style={{ fontWeight: 700 }}>
+                            {member.username || String(member._id)} {member.role === 'Manager' && <span style={{ fontSize: 12, color: '#fff', background: '#10b981', padding: '2px 6px', borderRadius: 4, marginLeft: 8 }}>Manager</span>}
+                          </div>
+                          <div style={{ fontSize: 12, color: "#6b7280" }}>{member.email}</div>
+                        </div>
+                        <div>
+                          <button onClick={() => openConversationWith(t._id, member, t.name)} style={{ background: "#5B7FFF", color: "#fff", border: "none", padding: "6px 10px", borderRadius: 6, cursor: "pointer" }}>💬 Chat</button>
+                        </div>
                       </div>
-                      <div>
-                        <button onClick={() => openConversationWith(t._id, member, t.name)} style={{ background: "#5B7FFF", color: "#fff", border: "none", padding: "6px 10px", borderRadius: 6, cursor: "pointer" }}>💬 Chat</button>
-                      </div>
-                    </div>
-                  ))}
+                    ));
+                  })()}
                 </div>
               )}
             </div>
