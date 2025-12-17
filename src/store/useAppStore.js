@@ -261,13 +261,6 @@ const useAppStore = create((set, get) => ({
   setLeaderboard_currentPage: (v) => set({ leaderboard_currentPage: v }),
 
   // Login component state
-  login_form: { usernameOrEmail: "", password: "" },
-  setLogin_form: (v) => set({ login_form: v }),
-  login_error: "",
-  setLogin_error: (v) => set({ login_error: v }),
-  login_loading: false,
-  setLogin_loading: (v) => set({ login_loading: v }),
-  
   // Navbar component state
   navbar_expandTasks: false,
   setNavbar_expandTasks: (v) => set({ navbar_expandTasks: v }),
