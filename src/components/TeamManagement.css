@@ -234,6 +234,7 @@ body.dark-mode .user-dropdown {
   border-color: #374151;
 }
 
+/* User Item Styles */
 .user-item {
   display: flex;
   align-items: center;
@@ -304,6 +305,19 @@ body.dark-mode .user-name {
 
 body.dark-mode .user-email {
   color: #9ca3af;
+}
+
+.user-role-badge {
+  display: inline-block;
+  padding: 2px 8px;
+  background: #5B7FFF;
+  color: white;
+  border-radius: 4px;
+  font-size: 10px;
+  font-weight: 700;
+  text-transform: uppercase;
+  width: fit-content;
+  margin-top: 4px;
 }
 
 .check-icon {
@@ -522,7 +536,7 @@ body.dark-mode .delete-team-btn:hover {
   max-height: 60px;
 }
 
-.team-description {
+.team-description-preview p {
   color: #6b7280;
   font-size: 14px;
   line-height: 1.5;
@@ -530,12 +544,55 @@ body.dark-mode .delete-team-btn:hover {
   display: -webkit-box;
   -webkit-line-clamp: 2;
   -webkit-box-orient: vertical;
-  line-clamp: 2;
   overflow: hidden;
 }
 
-body.dark-mode .team-description {
+body.dark-mode .team-description-preview p {
   color: #9ca3af;
+}
+
+.team-managers {
+  margin-bottom: 16px;
+  padding-bottom: 16px;
+  border-bottom: 1px solid #f3f4f6;
+  flex-shrink: 0;
+}
+
+body.dark-mode .team-managers {
+  border-bottom-color: #374151;
+}
+
+.team-managers strong {
+  display: block;
+  margin-bottom: 12px;
+  color: #374151;
+  font-size: 13px;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+}
+
+body.dark-mode .team-managers strong {
+  color: #9ca3af;
+}
+
+.managers-list {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+}
+
+.manager-tag {
+  background: #10b981;
+  color: white;
+  padding: 6px 14px;
+  border-radius: 20px;
+  font-size: 13px;
+  font-weight: 600;
+  box-shadow: 0 2px 4px rgba(16, 185, 129, 0.2);
+}
+
+.manager-tag.more-managers {
+  background: #9ca3af;
 }
 
 .team-members {
@@ -746,6 +803,10 @@ body.dark-mode .detail-member-card {
   border-color: #374151;
 }
 
+.detail-member-card.manager-card .member-avatar {
+  background: #10b981;
+}
+
 .member-avatar {
   width: 48px;
   height: 48px;
@@ -782,10 +843,22 @@ body.dark-mode .member-name-detail {
   overflow: hidden;
   text-overflow: ellipsis;
   white-space: nowrap;
+  margin-bottom: 6px;
 }
 
 body.dark-mode .member-email-detail {
   color: #9ca3af;
+}
+
+.role-badge-detail {
+  display: inline-block;
+  padding: 2px 8px;
+  background: #10b981;
+  color: white;
+  border-radius: 4px;
+  font-size: 10px;
+  font-weight: 700;
+  text-transform: uppercase;
 }
 
 .team-meta {
@@ -898,4 +971,64 @@ body.dark-mode .modal-footer {
   .modal-footer {
     flex-direction: column;
   }
+}
+/* User details container - FORCE display */
+.user-details {
+  flex: 1 !important;
+  display: flex !important;
+  flex-direction: column !important;
+  gap: 4px !important;
+  min-width: 0 !important;
+}
+
+/* Username styling - FORCE visibility */
+.user-name {
+  font-weight: 600 !important;
+  font-size: 14px !important;
+  color: #1f2937 !important;
+  display: block !important;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+body.dark-mode .user-name {
+  color: #f3f4f6 !important;
+}
+
+/* Email styling - FORCE visibility */
+.user-email {
+  font-size: 12px !important;
+  color: #6b7280 !important;
+  display: block !important;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+body.dark-mode .user-email {
+  color: #9ca3af !important;
+}
+
+/* Role badge styling */
+.user-role-badge {
+  display: inline-block !important;
+  padding: 2px 8px !important;
+  background: #5B7FFF !important;
+  color: white !important;
+  border-radius: 4px !important;
+  font-size: 10px !important;
+  font-weight: 700 !important;
+  text-transform: uppercase !important;
+  width: fit-content !important;
+  margin-top: 4px !important;
+}
+/* Hide email for team manager items only */
+.user-item .user-role-badge ~ .user-email,
+.user-item:has(.user-role-badge) .user-email {
+  display: none !important;
+}
+/* Hide the Team Manager badge completely */
+.user-role-badge {
+  display: none !important;
 }
