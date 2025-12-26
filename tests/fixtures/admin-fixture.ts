@@ -6,7 +6,7 @@ type AdminFixtures = {
 
 export const test = base.extend<AdminFixtures>({
   adminPage: async ({ page }, use) => {
-    await page.goto('/login');
+    await page.goto('/login', { waitUntil: 'domcontentloaded' });
     await page.getByLabel('Username or Email').fill('mani2@gmail.com');
     await page.getByLabel('Password').fill('1234');
     await page.getByRole('button', { name: /sign in/i }).click();
