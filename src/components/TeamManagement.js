@@ -303,6 +303,7 @@ export default function TeamManagement() {
             type="text"
             className="team-search-input"
             placeholder="Search teams by name, description, or member..."
+            aria-label="Search teams"
             value={teamSearchTerm}
             onChange={(e) => setTeamSearchTerm(e.target.value)}
           />

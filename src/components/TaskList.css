@@ -1,5 +1,4 @@
 /* TABLE / LIST LAYOUT */
-
 .task-table-wrapper {
   width: 100%;
   overflow-x: auto;
@@ -28,9 +27,10 @@
 }
 
 .task-table th {
-  font-weight: 600;
-  color: #374151;
+  font-weight: 700 !important;
+  color: #111827 !important;
   white-space: nowrap;
+  font-size: 13px;
 }
 
 .task-row:hover {
@@ -39,11 +39,11 @@
 
 .task-title-cell {
   font-weight: 600;
-  color: #111827;
+  color: #111827 !important;
 }
 
 .task-desc-cell {
-  color: #4b5563;
+  color: #374151 !important;
   max-width: 260px;
   overflow: hidden;
   text-overflow: ellipsis;
@@ -51,33 +51,37 @@
 }
 
 .task-assigned-cell {
-  color: #374151;
+  color: #111827 !important;
+  font-weight: 600;
 }
 
 .task-status-badge {
   display: inline-block;
-  padding: 2px 8px;
+  padding: 5px 12px !important;
   border-radius: 9999px;
   font-size: 12px;
+  font-weight: 700 !important;
   text-transform: capitalize;
-  background: #e5e7eb;
-  color: #374151;
+  background: #9ca3af !important;
+  color: #000000 !important;
 }
 
 .task-priority {
   font-size: 12px;
-  font-weight: 600;
+  font-weight: 700 !important;
   text-transform: uppercase;
   letter-spacing: 0.5px;
+  color: #111827 !important;
 }
 
 .task-recurrent-pill {
   display: inline-block;
-  padding: 2px 8px;
+  padding: 4px 10px;
   border-radius: 9999px;
   font-size: 12px;
-  background: #e0e7ff;
-  color: #3730a3;
+  font-weight: 600;
+  background: #bfdbfe;
+  color: #1e3a8a;
 }
 
 .task-actions-inline {
@@ -87,13 +91,14 @@
 }
 
 .task-action-btn {
-  padding: 4px 8px;
+  padding: 5px 10px;
   border-radius: 6px;
   border: none;
   font-size: 12px;
+  font-weight: 600;
   cursor: pointer;
   white-space: nowrap;
-  background: #6b7280;
+  background: #374151;
   color: #ffffff;
   transition: all 0.2s;
 }
@@ -104,31 +109,95 @@
 }
 
 .task-action-btn.done-btn {
-  background: #10b981;
+  background: #047857;
+  color: #ffffff;
+}
+
+.task-action-btn.done-btn:hover {
+  background: #065f46;
 }
 
 .task-action-btn.delete-btn {
-  background: #ef4444;
+  background: #b91c1c;
+  color: #ffffff;
+}
+
+.task-action-btn.delete-btn:hover {
+  background: #991b1b;
 }
 
 .task-action-btn.progress-btn {
-  background: #5b7fff;
+  background: #4338ca;
+  color: #ffffff;
+}
+
+.task-action-btn.progress-btn:hover {
+  background: #3730a3;
 }
 
 .task-action-btn.comment-btn {
-  background: #f59e0b;
+  background: #b45309;
+  color: #ffffff;
+}
+
+.task-action-btn.comment-btn:hover {
+  background: #92400e;
 }
 
 .task-action-btn.log-btn {
-  background: #6366f1;
+  background: #5b21b6;
+  color: #ffffff;
+}
+
+.task-action-btn.log-btn:hover {
+  background: #4c1d95;
 }
 
 .task-comments-row td {
   background: #f9fafb;
 }
 
-/* DARK MODE TABLE */
+/* Comment count badge */
+.comment-count-badge,
+.task-comment-badge {
+  background: #b45309 !important;
+  color: #ffffff !important;
+  padding: 4px 10px;
+  border-radius: 12px;
+  font-size: 12px;
+  font-weight: 600;
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+}
 
+/* Fix team member links */
+.task-assigned-cell a,
+.task-table a,
+a[href*="/team"],
+.team-member-link,
+.assigned-team {
+  color: #111827 !important;
+  text-decoration: none !important;
+  font-weight: 600 !important;
+}
+
+.task-table a:hover {
+  color: #4338ca !important;
+  text-decoration: underline !important;
+}
+
+/* Ensure all table text has good contrast */
+.task-table td {
+  color: #1f2937 !important;
+}
+
+.task-table td strong,
+.task-table td b {
+  color: #111827 !important;
+}
+
+/* DARK MODE TABLE */
 [data-theme="dark"] .task-table,
 .dark .task-table,
 body.dark-mode .task-table {
@@ -155,7 +224,7 @@ body.dark-mode .task-table td {
 .dark .task-table th,
 body.dark-mode .task-table th {
   color: #f9fafb;
-  font-weight: 600;
+  font-weight: 700;
 }
 
 [data-theme="dark"] .task-row:hover,
@@ -167,26 +236,26 @@ body.dark-mode .task-row:hover {
 [data-theme="dark"] .task-title-cell,
 .dark .task-title-cell,
 body.dark-mode .task-title-cell {
-  color: #ffffff;
+  color: #ffffff !important;
 }
 
 [data-theme="dark"] .task-desc-cell,
 .dark .task-desc-cell,
 body.dark-mode .task-desc-cell {
-  color: #d1d5db;
+  color: #d1d5db !important;
 }
 
 [data-theme="dark"] .task-assigned-cell,
 .dark .task-assigned-cell,
 body.dark-mode .task-assigned-cell {
-  color: #d1d5db;
+  color: #f9fafb !important;
 }
 
 [data-theme="dark"] .task-status-badge,
 .dark .task-status-badge,
 body.dark-mode .task-status-badge {
-  background: #374151;
-  color: #f9fafb;
+  background: #4b5563 !important;
+  color: #f9fafb !important;
 }
 
 [data-theme="dark"] .task-recurrent-pill,
@@ -199,12 +268,17 @@ body.dark-mode .task-recurrent-pill {
 [data-theme="dark"] .task-action-btn,
 .dark .task-action-btn,
 body.dark-mode .task-action-btn {
-  background: #5B7FFF;
+  background: #4338ca;
   color: #ffffff;
 }
 
-/* COMMENTS, EMPTY STATE, CONFIRMATION (unchanged from your file) */
+[data-theme="dark"] .task-table a,
+.dark .task-table a,
+body.dark-mode .task-table a {
+  color: #f9fafb !important;
+}
 
+/* COMMENTS SECTION */
 .comments-section {
   margin-top: 20px;
   padding-top: 20px;
@@ -224,7 +298,6 @@ body.dark-mode .task-action-btn {
   padding-right: 8px;
 }
 
-/* Custom scrollbar for comments */
 .comments-list::-webkit-scrollbar {
   width: 6px;
 }
@@ -251,8 +324,8 @@ body.dark-mode .task-action-btn {
 }
 
 .comment-item.admin-comment {
-  border-left: 3px solid #5b7fff;
-  background: rgba(91, 127, 255, 0.05);
+  border-left: 3px solid #4338ca;
+  background: rgba(67, 56, 202, 0.05);
 }
 
 .comment-header {
@@ -276,7 +349,7 @@ body.dark-mode .task-action-btn {
 
 .admin-badge {
   padding: 2px 8px;
-  background: #5b7fff;
+  background: #4338ca;
   color: white;
   border-radius: 4px;
   font-size: 10px;
@@ -339,12 +412,12 @@ body.dark-mode .task-action-btn {
 
 .comment-input:focus {
   outline: none;
-  border-color: #5b7fff;
+  border-color: #4338ca;
 }
 
 .comment-submit-btn {
   padding: 10px 20px;
-  background: #5b7fff;
+  background: #4338ca;
   color: white;
   border: none;
   border-radius: 8px;
@@ -354,7 +427,7 @@ body.dark-mode .task-action-btn {
 }
 
 .comment-submit-btn:hover {
-  background: #4a6eeb;
+  background: #3730a3;
 }
 
 .no-comments {
@@ -404,7 +477,7 @@ body.dark-mode .task-action-btn {
 
 .edit-comment-input:focus {
   outline: none;
-  border-color: #5b7fff;
+  border-color: #4338ca;
 }
 
 .edit-comment-actions {
@@ -414,7 +487,7 @@ body.dark-mode .task-action-btn {
 
 .save-edit-btn {
   padding: 8px 16px;
-  background: #10b981;
+  background: #047857;
   color: white;
   border: none;
   border-radius: 6px;
@@ -423,15 +496,23 @@ body.dark-mode .task-action-btn {
   cursor: pointer;
 }
 
+.save-edit-btn:hover {
+  background: #065f46;
+}
+
 .cancel-edit-btn {
   padding: 8px 16px;
-  background: #6b7280;
+  background: #374151;
   color: white;
   border: none;
   border-radius: 6px;
   font-size: 13px;
   font-weight: 500;
   cursor: pointer;
+}
+
+.cancel-edit-btn:hover {
+  background: #1f2937;
 }
 
 .task-comment-count {
@@ -460,16 +541,14 @@ body.dark-mode .task-action-btn {
   }
 }
 
-/* Extra bits from your original file */
-
+/* Team members count */
 .team-members-count {
-  color: #667eea;
+  color: #4c1d95;
   font-weight: 600;
   font-size: 13px;
 }
 
-/* Confirmation dialog styles (unchanged) */
-
+/* Confirmation dialog */
 .confirmation-overlay {
   position: fixed;
   top: 0;
@@ -517,19 +596,19 @@ body.dark-mode .task-action-btn {
 .confirmation-dialog h3 {
   margin: 0 0 16px 0;
   font-size: 20px;
-  color: #1f2937;
+  color: #111827;
   font-weight: 600;
 }
 
 .confirmation-dialog p {
   margin: 8px 0;
   font-size: 14px;
-  color: #4b5563;
+  color: #374151;
   line-height: 1.5;
 }
 
 .confirmation-dialog p strong {
-  color: #1f2937;
+  color: #111827;
   word-break: break-word;
 }
 
@@ -553,7 +632,7 @@ body.dark-mode .task-action-btn {
 
 .confirmation-btn.cancel-btn {
   background: #e5e7eb;
-  color: #374151;
+  color: #111827;
 }
 
 .confirmation-btn.cancel-btn:hover {
@@ -561,21 +640,20 @@ body.dark-mode .task-action-btn {
 }
 
 .confirmation-btn.delete-btn {
-  background: #ef4444;
+  background: #b91c1c;
   color: white;
 }
 
 .confirmation-btn.delete-btn:hover {
-  background: #dc2626;
-  box-shadow: 0 4px 12px rgba(239, 68, 68, 0.3);
+  background: #991b1b;
+  box-shadow: 0 4px 12px rgba(185, 28, 28, 0.3);
 }
 
 .confirmation-btn.delete-btn:active {
   transform: scale(0.98);
 }
 
-/* Dark mode support for confirmation */
-
+/* Dark mode confirmation */
 [data-theme="dark"] .confirmation-dialog,
 .dark .confirmation-dialog,
 body.dark-mode .confirmation-dialog {
@@ -614,6 +692,17 @@ body.dark-mode .confirmation-btn.cancel-btn:hover {
 }
 
 
+
+
+/* FORCE TABLE HEADERS TO MAXIMUM CONTRAST */
+.task-table th,
+th[role="columnheader"] {
+  font-weight: 900 !important; /* Maximum boldness */
+  color: #000000 !important; /* Pure black */
+  font-size: 13px !important;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+}
 
 
 /* END OF FILE */

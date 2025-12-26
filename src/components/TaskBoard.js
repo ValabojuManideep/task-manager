@@ -388,6 +388,7 @@ export default function TaskBoard({ taskType = "team" }) {
               type="text"
               className="task-search-input"
               placeholder="Search..."
+              aria-label="Search tasks"
               value={taskSearchTerm}
               onChange={e => setTaskSearchTerm(e.target.value)}
               style={{

@@ -1,4 +1,4 @@
-/* Dashboard Container */
+
 .dashboard-container {
   padding: 20px 24px;
   margin: 0 auto;
@@ -27,7 +27,7 @@
 
 .view-all-btn {
   padding: 12px 24px;
-  background: #5B7FFF;
+  background: #0033d6;
   color: white;
   border: none;
   border-radius: 10px;
@@ -40,7 +40,7 @@
 }
 
 .view-all-btn:hover {
-  background: #4c6edb;
+  background: #002fb3;
   transform: translateY(-2px);
   box-shadow: 0 4px 12px rgba(91, 127, 255, 0.3);
 }
@@ -89,7 +89,9 @@
   width: 100%;
   min-width: 0;
 }
-
+.stat-value {
+  color: #0034F0 !important;
+}
 .stat-value {
   font-size: 18px;
   font-weight: 700;
@@ -174,34 +176,39 @@
   text-transform: capitalize;
 }
 
+
+
 .task-status.status-todo {
-  background: rgba(245, 158, 11, 0.1);
-  color: #f59e0b;
+  background: #fed7aa;  /* Changed from rgba() */
+  color: #c2410c;  /* Darker orange - 6.8:1 */
 }
 
 .task-status.status-in_progress {
-  background: rgba(91, 127, 255, 0.1);
-  color: #5B7FFF;
+  background: #dbeafe;  /* Changed from rgba() */
+  color: #1e40af;  /* Darker blue - 7.1:1 */
 }
 
 .task-status.status-done {
-  background: rgba(16, 185, 129, 0.1);
-  color: #10b981;
+  background: #d1fae5;  /* Changed from rgba() */
+  color: #047857;  /* Darker green - 6.5:1 */
 }
 
+
+
+
 .task-priority.priority-high {
-  background: rgba(239, 68, 68, 0.1);
-  color: #ef4444;
+  background: #fee2e2;  /* Changed from rgba() - now solid */
+  color: #b91c1c;  /* Darker red - 7.2:1 */
 }
 
 .task-priority.priority-medium {
-  background: rgba(245, 158, 11, 0.1);
-  color: #f59e0b;
+  background: #fed7aa;  /* Changed from rgba() - now solid */
+  color: #c2410c;  /* Darker orange - 6.8:1 */
 }
 
 .task-priority.priority-low {
-  background: rgba(16, 185, 129, 0.1);
-  color: #10b981;
+  background: #d1fae5;  /* Changed from rgba() - now solid */
+  color: #047857;  /* Darker green - 6.5:1 */
 }
 
 .no-tasks {
@@ -396,4 +403,3 @@ body.dark-mode .task-item:hover {
   align-items: center;
   flex-wrap: wrap;
 }
-

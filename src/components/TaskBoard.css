@@ -14,7 +14,7 @@
   align-items: center;
   gap: 8px;
   padding: 12px 24px;
-  background: #5B7FFF;
+  background: #4338ca;
   color: white;
   border: none;
   border-radius: 8px;
@@ -25,7 +25,9 @@
 }
 
 .new-task-btn:hover {
-  background: #4c6edb;
+  background: #3730a3;
+  transform: translateY(-2px);
+  box-shadow: 0 4px 12px rgba(67, 56, 202, 0.3);
 }
 
 .task-form-wrapper {
@@ -62,8 +64,8 @@
   border: none;
   border-radius: 6px;
   font-size: 12px;
-  font-weight: 500;
-  color: #6b7280;
+  font-weight: 600;
+  color: #374151 !important;
   cursor: pointer;
   transition: all 0.2s;
   white-space: nowrap;
@@ -71,16 +73,15 @@
 
 .filter-btn:hover {
   background: #f3f4f6;
-  color: #374151;
+  color: #1f2937 !important;
 }
 
 .filter-btn.active {
-  background: #f3f4f6;
-  color: #111827;
-  font-weight: 600;
+  background: #dbeafe !important;
+  color: #1e3a8a !important;
+  font-weight: 700 !important;
 }
 
-/* Add to existing CSS */
 .taskboard-actions {
   display: flex;
   gap: 12px;
@@ -92,8 +93,8 @@
   gap: 8px;
   padding: 12px 24px;
   background: white;
-  color: #374151;
-  border: 2px solid #e5e7eb;
+  color: #111827;
+  border: 2px solid #d1d5db;
   border-radius: 8px;
   font-size: 15px;
   font-weight: 600;
@@ -102,14 +103,15 @@
 }
 
 .your-tasks-btn:hover {
-  border-color: #5B7FFF;
-  color: #5B7FFF;
+  border-color: #4338ca;
+  color: #4338ca;
+  background: #f0f4ff;
 }
 
 .your-tasks-btn.active {
-  background: #5B7FFF;
+  background: #4338ca;
   color: white;
-  border-color: #5B7FFF;
+  border-color: #4338ca;
 }
 
 .user-filter {
@@ -118,13 +120,13 @@
 }
 
 .user-filter-select {
-  padding: 6px 12px;
-  border: 2px solid var(--border-color, #e5e7eb);
+  padding: 8px 14px;
+  border: 2px solid #d1d5db;
   border-radius: 8px;
-  background: var(--card-bg, white);
-  color: var(--text-color, #1f2937);
-  font-size: 12px;
-  font-weight: 500;
+  background: white;
+  color: #111827 !important;
+  font-size: 13px;
+  font-weight: 600;
   cursor: pointer;
   transition: all 0.2s ease;
   min-width: 120px;
@@ -132,16 +134,16 @@
 }
 
 .user-filter-select:hover {
-  border-color: var(--primary-color, #5B7FFF);
+  border-color: #4338ca;
 }
 
 .user-filter-select:focus {
   outline: none;
-  border-color: var(--primary-color, #5B7FFF);
-  box-shadow: 0 0 0 3px rgba(91, 127, 255, 0.1);
+  border-color: #4338ca;
+  box-shadow: 0 0 0 3px rgba(67, 56, 202, 0.1);
 }
 
-/* Fix dropdown options visibility */
+/* Dropdown options */
 .user-filter-select option,
 .analytics-user-select option {
   background: white;
@@ -149,15 +151,16 @@
   padding: 10px;
 }
 
-/* In dark mode */
+/* Dark mode dropdowns */
 [data-theme="dark"] .user-filter-select option,
-[data-theme="dark"] .analytics-user-select option {
+[data-theme="dark"] .analytics-user-select option,
+.dark .user-filter-select option,
+.dark .analytics-user-select option,
+body.dark-mode .user-filter-select option,
+body.dark-mode .analytics-user-select option {
   background: #1f2937;
   color: #f9fafb;
 }
-
-
-
 
 /* Mobile Responsive */
 @media (max-width: 768px) {
@@ -212,34 +215,89 @@
   }
 }
 
-/* Dark Mode Styles for TaskBoard */
-body.dark-mode .filter-group {
+/* Dark Mode Styles */
+body.dark-mode .filter-group,
+[data-theme="dark"] .filter-group,
+.dark .filter-group {
   background: #1f2937;
   border-color: #374151;
 }
 
-body.dark-mode .filter-btn {
-  color: #b8bcc4;
+body.dark-mode .filter-btn,
+[data-theme="dark"] .filter-btn,
+.dark .filter-btn {
+  color: #e5e7eb !important;
 }
 
-body.dark-mode .filter-btn:hover {
+body.dark-mode .filter-btn:hover,
+[data-theme="dark"] .filter-btn:hover,
+.dark .filter-btn:hover {
   background: #374151;
-  color: #f9fafb;
+  color: #f9fafb !important;
 }
 
-body.dark-mode .filter-btn.active {
-  background: #5B7FFF;
+body.dark-mode .filter-btn.active,
+[data-theme="dark"] .filter-btn.active,
+.dark .filter-btn.active {
+  background: #4338ca !important;
+  color: #ffffff !important;
+  font-weight: 700 !important;
+}
+
+body.dark-mode .your-tasks-btn,
+[data-theme="dark"] .your-tasks-btn,
+.dark .your-tasks-btn {
+  background: #1f2937;
+  color: #f9fafb;
+  border-color: #374151;
+}
+
+body.dark-mode .your-tasks-btn:hover,
+[data-theme="dark"] .your-tasks-btn:hover,
+.dark .your-tasks-btn:hover {
+  background: #374151;
+  border-color: #4338ca;
   color: #ffffff;
-  font-weight: 600;
 }
 
-body.dark-mode .your-tasks-btn {
+body.dark-mode .your-tasks-btn.active,
+[data-theme="dark"] .your-tasks-btn.active,
+.dark .your-tasks-btn.active {
+  background: #4338ca;
+  color: #ffffff;
+  border-color: #4338ca;
+}
+
+body.dark-mode .new-task-btn,
+[data-theme="dark"] .new-task-btn,
+.dark .new-task-btn {
+  background: #4338ca;
+  color: #ffffff;
+}
+
+body.dark-mode .new-task-btn:hover,
+[data-theme="dark"] .new-task-btn:hover,
+.dark .new-task-btn:hover {
+  background: #3730a3;
+}
+
+body.dark-mode .user-filter-select,
+[data-theme="dark"] .user-filter-select,
+.dark .user-filter-select {
   background: #1f2937;
-  color: #f9fafb;
+  color: #f9fafb !important;
   border-color: #374151;
 }
 
-body.dark-mode .your-tasks-btn:hover {
-  background: #374151;
-  border-color: #5B7FFF;
+body.dark-mode .user-filter-select:hover,
+[data-theme="dark"] .user-filter-select:hover,
+.dark .user-filter-select:hover {
+  border-color: #4338ca;
+}
+
+body.dark-mode .user-filter-select:focus,
+[data-theme="dark"] .user-filter-select:focus,
+.dark .user-filter-select:focus {
+  border-color: #4338ca;
+  box-shadow: 0 0 0 3px rgba(67, 56, 202, 0.2);
 }

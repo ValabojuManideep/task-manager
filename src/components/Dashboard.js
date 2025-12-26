@@ -179,7 +179,7 @@ export default function Dashboard() {
               className="export-btn"
               style={{
                 padding: '12px 24px',
-                background: '#5B7FFF',
+                background: '#0032E6',
                 color: '#fff',
                 border: 'none',
                 borderRadius: '10px',
@@ -187,7 +187,7 @@ export default function Dashboard() {
                 cursor: 'pointer',
                 fontSize: '15px',
                 transition: 'all 0.2s',
-                boxShadow: '0 2px 8px rgba(91,127,255,0.12)'
+                boxShadow: '0 2px 8px rgba(0,50,230,0.12)'
               }}
               onClick={() => setShowExportModal(true)}
             >
@@ -229,7 +229,7 @@ export default function Dashboard() {
                   marginBottom: '0.5rem',
                   fontSize: '2rem',
                   fontWeight: 700,
-                  color: '#5B7FFF',
+                  color: '#0032E6',
                   textAlign: 'center',
                   letterSpacing: '0.02em'
                 }}>Export Data</h2>
@@ -243,7 +243,7 @@ export default function Dashboard() {
                 <button
                   style={{
                     padding: '0.7rem 1.2rem',
-                    background: '#5B7FFF',
+                    background: '#0032E6',
                     color: '#fff',
                     border: 'none',
                     borderRadius: '8px',
@@ -252,11 +252,11 @@ export default function Dashboard() {
                     marginBottom: '0.7rem',
                     width: '100%',
                     fontSize: '1.1rem',
-                    boxShadow: '0 2px 8px rgba(91,127,255,0.12)',
+                    boxShadow: '0 2px 8px rgba(0,50,230,0.12)',
                     transition: 'background 0.2s',
                   }}
-                  onMouseOver={e => e.currentTarget.style.background = '#3b5ccc'}
-                  onMouseOut={e => e.currentTarget.style.background = '#5B7FFF'}
+                  onMouseOver={e => e.currentTarget.style.background = '#0024b8'}
+                  onMouseOut={e => e.currentTarget.style.background = '#0032E6'}
                   onClick={() => { setExportFormat('xlsx'); handleExport(); }}
                 >
                   Excel (XLSX)

@@ -33,11 +33,11 @@
 }
 
 .profile-title h2 { margin: 0; }
-.profile-role { color: #6b7280; font-size: 0.9em; }
+.profile-role { color: #4b5563; font-size: 0.9em; }
 
 .profile-body { margin-top: 12px; }
 .profile-row { display:flex; justify-content:space-between; padding:10px 0; border-bottom:1px solid #f3f4f6; }
-.profile-row .label { color:#6b7280; }
+.profile-row .label { color:#4b5563; }
 .profile-row .value { font-weight:600; }
 
 .profile-error { color: #b91c1c; margin-top: 8px; }
