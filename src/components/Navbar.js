@@ -44,10 +44,19 @@ export default function Navbar() {
           <div className="logo-icon">☑</div>
           <div className="logo-text">TaskFlow</div>
           
-          {/* Mobile actions in header */}
-          <div className="mobile-header-actions">
+          {/* Actions in header: theme, leaderboard, logout */}
+          <div className="navbar-header-actions">
             <button className="mobile-theme-btn" onClick={toggleDarkMode}>
               {darkMode ? "☀️" : "🌙"}
+            </button>
+            <button
+              className="leaderboard-icon-btn"
+              aria-label="Leaderboard"
+              data-testid="leaderboard-button"
+              type="button"
+              onClick={() => window.location.assign('/leaderboard')}
+            >
+              🏅
             </button>
             <button className="mobile-logout-btn" onClick={logout}>
               →

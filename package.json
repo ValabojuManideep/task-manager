@@ -69,5 +69,9 @@
   "bugs": {
     "url": "https://github.com/ValabojuManideep/task-manager/issues"
   },
-  "homepage": "."
+  "homepage": ".",
+  "devDependencies": {
+    "@playwright/test": "^1.57.0",
+    "@types/node": "^25.0.3"
+  }
 }
