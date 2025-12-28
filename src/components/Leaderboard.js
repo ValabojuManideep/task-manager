@@ -91,7 +91,7 @@ export default function Leaderboard() {
     <div className="leaderboard-container">
       {/* Header */}
       <div className="leaderboard-header">
-        <h1 className="leaderboard-title">🏅 Performance Leaderboard</h1>
+        <h1 className="leaderboard-title" data-testid="leaderboard-title">🏅 Performance Leaderboard</h1>
         <p className="leaderboard-subtitle">
           Track team and member performance metrics
         </p>
@@ -131,7 +131,7 @@ export default function Leaderboard() {
                 const paged = teamLeaderboard.slice(start, end);
 
                 return paged.map((team, idx) => (
-                  <div key={team.teamId} className="leaderboard-item">
+                  <div key={team.teamId} className="leaderboard-item" data-testid="leaderboard-team-card">
                     <div className="item-rank">
                       <span
                         className="rank-number"
