@@ -70,31 +70,53 @@ function AppLayout({ children }) {
 
   return (
     <div className="app-container">
+      {/* Screen reader skip link */}
+      <a href="#main-content" className="skip-to-main">Skip to main content</a>
+      
+      {/* Navigation region - wrapped in semantic nav */}
       <Navbar />
-      <div className="main-content">
-        <div className="top-bar">
-          <div className="top-bar-left"></div>
+      
+      {/* Main content area */}
+      <main className="main-content" role="main" id="main-content">
+        {/* Top header bar */}
+        <header className="top-bar" role="banner">
+          <div className="top-bar-left">
+            <h1 className="sr-only">TaskFlow Application</h1>
+          </div>
           <div className="top-bar-right">
             <button
               className="leaderboard-header-btn"
               title="Leaderboard"
               onClick={() => navigate("/leaderboard")}
-              style={{ marginLeft: 8, marginRight: 8 }}
+              aria-label="Go to leaderboard"
             >
               🏅
             </button>
-            <button className="dark-mode-toggle" onClick={toggleDarkMode}>
+            <button 
+              className="dark-mode-toggle" 
+              onClick={toggleDarkMode}
+              aria-label={darkMode ? "Switch to light mode" : "Switch to dark mode"}
+              aria-pressed={darkMode}
+            >
               {darkMode ? "☀️" : "🌙"}
             </button>
 
-            <button className="logout-btn" onClick={logout}>
-              <span>→</span>
+            <button 
+              className="logout-btn" 
+              onClick={logout}
+              aria-label="Logout from application"
+            >
+              <span aria-hidden="true">→</span>
               <span>Logout</span>
             </button>
           </div>
-        </div>
-        <div className="page-content">{children}</div>
-      </div>
+        </header>
+        
+        {/* Page content section */}
+        <section className="page-content" aria-label="Page content">
+          {children}
+        </section>
+      </main>
     </div>
   );
 }
@@ -162,7 +184,6 @@ export default function App() {
                   </ProtectedRoute>
                 }
               />
-              {/* ✅ FIX: Team Manager Dashboard route */}
               <Route
                 path="/team-manager"
                 element={
@@ -173,7 +194,6 @@ export default function App() {
                   </ProtectedRoute>
                 }
               />
-              {/* Teams route for team management */}
               <Route
                 path="/teams"
                 element={
