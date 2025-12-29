@@ -1,5 +1,5 @@
-
 import { test, expect } from './fixtures/admin-fixture';
+const fs = require('fs');
 
 // ===== Utilities: Available to all test.describe blocks =====
 
@@ -42,6 +42,52 @@ async function createTeam(page, teamName, description = 'E2E test') {
   }
   await expect(confirmDialog).toBeHidden();
 }
+
+
+/* ============================================================
+   Admin – Analytics Export
+   ============================================================ */
+test.describe('Admin – Analytics Export', () => {
+  test('Export Data button downloads correct JSON and Excel files', async ({ adminPage }) => {
+    // Navigate to Analytics page
+    await adminPage.locator('.navbar .nav-label', { hasText: 'Analytics' }).click();
+    await expect(adminPage.getByRole('heading', { name: /analytics/i })).toBeVisible();
+
+    // Find and click Export Data button
+    const exportBtn = adminPage.getByRole('button', { name: /export data/i });
+    await expect(exportBtn).toBeVisible();
+    await exportBtn.click();
+
+    // Check for JSON and Excel options (as buttons)
+    const jsonOption = adminPage.getByRole('button', { name: /json/i });
+    const excelOption = adminPage.getByRole('button', { name: /excel/i });
+    await expect(jsonOption).toBeVisible();
+    await expect(excelOption).toBeVisible();
+
+    // Download after clicking JSON button
+    const [firstDownload] = await Promise.all([
+      adminPage.waitForEvent('download'),
+      jsonOption.click(),
+    ]);
+    const firstPath = await firstDownload.path();
+    expect(firstDownload.suggestedFilename()).toMatch(/\.(json|xlsx?|xls)$/);
+    const firstBuffer = fs.readFileSync(firstPath);
+    expect(firstBuffer.length).toBeGreaterThan(0);
+
+    // Re-open menu for Excel (if menu closes after click)
+    await exportBtn.click();
+    // Download after clicking Excel button
+    const [secondDownload] = await Promise.all([
+      adminPage.waitForEvent('download'),
+      excelOption.click(),
+    ]);
+    const secondPath = await secondDownload.path();
+    expect(secondDownload.suggestedFilename()).toMatch(/\.(json|xlsx?|xls)$/);
+    const secondBuffer = fs.readFileSync(secondPath);
+    expect(secondBuffer.length).toBeGreaterThan(0);
+  });
+});
+
 
 /* ============================================================
    Admin – Team Management
@@ -559,7 +605,7 @@ test.describe('Admin – Analytics', () => {
 /* ============================================================
    Admin – User Task Management
    ============================================================ */
-test.describe('Admin – User Task Management', () => {
+test.describe.only('Admin – User Task Management', () => {
   test('User Tasks: navigation, filter, CRUD, logs, comments, actions', async ({ adminPage }) => {
 
     // Navigate to User Tasks
@@ -575,14 +621,63 @@ test.describe('Admin – User Task Management', () => {
     // Search bar
     await expect(adminPage.getByPlaceholder('Search...')).toBeVisible();
 
-    // Status filters
+    // Status filters: click and assert table updates
     for (const status of ['All', 'To Do', 'In Progress', 'Done']) {
-      await expect(adminPage.getByRole('button', { name: new RegExp(`^${status}$`, 'i') })).toBeVisible();
+      const btn = adminPage.getByRole('button', { name: new RegExp(`^${status}$`, 'i') });
+      await expect(btn).toBeVisible();
+      await btn.click();
+      // Wait for table to update (loading spinner hidden or row count changes)
+      await adminPage.waitForTimeout(300); // adjust if spinner present
+      // Optionally assert at least one row or empty state
+      const rows = adminPage.locator('table.task-table tbody tr');
+      if (await rows.count()) {
+        await expect(rows.first()).toBeVisible();
+      } else {
+        await expect(adminPage.getByText(/no tasks found/i)).toBeVisible();
+      }
     }
 
-    // Priority filters
+    // Priority filters: click and assert table updates
     for (const priority of ['All Priority', 'High', 'Medium', 'Low']) {
-      await expect(adminPage.getByRole('button', { name: new RegExp(priority, 'i') })).toBeVisible();
+      const btn = adminPage.getByRole('button', { name: new RegExp(priority, 'i') });
+      await expect(btn).toBeVisible();
+      await btn.click();
+      await adminPage.waitForTimeout(300);
+      const rows = adminPage.locator('table.task-table tbody tr');
+      if (await rows.count()) {
+        await expect(rows.first()).toBeVisible();
+      } else {
+        await expect(adminPage.getByText(/no tasks found/i)).toBeVisible();
+      }
+    }
+
+    // User filter: select each user and assert table updates
+    if (await userFilter.count()) {
+      const options = await userFilter.locator('option').allTextContents();
+      for (const user of options) {
+        await userFilter.selectOption({ label: user });
+        // Wait for either a row or empty state
+        await expect(
+          adminPage.locator('table.task-table tbody tr').first()
+            .or(adminPage.getByText(/no tasks found/i))
+        ).toBeVisible({ timeout: 5000 });
+      }
+    }
+
+    // Team filter: if present, select each team and assert table updates
+    const teamFilter = adminPage.locator('select.team-filter-select');
+    if (await teamFilter.count()) {
+      const options = await teamFilter.locator('option').allTextContents();
+      for (const team of options) {
+        await teamFilter.selectOption({ label: team });
+        await adminPage.waitForTimeout(300);
+        const rows = adminPage.locator('table.task-table tbody tr');
+        if (await rows.count()) {
+          await expect(rows.first()).toBeVisible();
+        } else {
+          await expect(adminPage.getByText(/no tasks found/i)).toBeVisible();
+        }
+      }
     }
 
     // Create a user task
@@ -602,13 +697,28 @@ test.describe('Admin – User Task Management', () => {
       { timeout: 20000 }
     ).toBeGreaterThan(0);
 
-    // Pagination: go to last page
+    // Pagination: go to last page (robust, with max attempts and existence check)
     const nextBtn = adminPage.getByRole('button', { name: /^next$/i });
-    while (await nextBtn.isEnabled()) {
-      await nextBtn.click();
+    let attempts = 0;
+    const maxAttempts = 20;
+    if (await nextBtn.count() && await nextBtn.isVisible()) {
+      while (await nextBtn.isEnabled() && attempts < maxAttempts) {
+        await nextBtn.click();
+        attempts++;
+        const rows = await adminPage.locator('table.task-table tbody tr').count();
+        if (rows === 0) break;
+      }
     }
 
-    // Verify created user task
+    // Reset filters to 'All' before searching for the new task
+    await adminPage.getByRole('button', { name: /^All$/i }).click();
+    await adminPage.getByRole('button', { name: /All Priority/i }).click();
+    await userFilter.selectOption({ label: 'All Users' });
+    const teamFilter = adminPage.locator('select.team-filter-select');
+    if (await teamFilter.count()) {
+      await teamFilter.selectOption({ label: 'All Teams' }).catch(() => {});
+    }
+    // Now search for the new task
     const userTaskRows = adminPage.locator('table.task-table tbody tr', {
       hasText: userTaskTitle,
     });

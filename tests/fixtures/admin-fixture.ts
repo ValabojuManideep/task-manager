@@ -11,9 +11,9 @@ export const test = base.extend<AdminFixtures>({
     await page.getByLabel('Password').fill('1234');
     await page.getByRole('button', { name: /sign in/i }).click();
     // Wait for a global authenticated-only element (sidebar)
-    await expect(
-      page.locator('.navbar')
-    ).toBeVisible({ timeout: 20000 });
+    await expect(page.locator('.navbar')).toBeVisible({ timeout: 20000 });
+    // Assert login success (no error message)
+    await expect(page.getByText('Login failed')).not.toBeVisible({ timeout: 5000 });
     await use(page);
   },
 });
