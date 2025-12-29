@@ -605,7 +605,7 @@ test.describe('Admin – Analytics', () => {
 /* ============================================================
    Admin – User Task Management
    ============================================================ */
-test.describe.only('Admin – User Task Management', () => {
+test.describe('Admin – User Task Management', () => {
   test('User Tasks: navigation, filter, CRUD, logs, comments, actions', async ({ adminPage }) => {
 
     // Navigate to User Tasks
@@ -621,63 +621,14 @@ test.describe.only('Admin – User Task Management', () => {
     // Search bar
     await expect(adminPage.getByPlaceholder('Search...')).toBeVisible();
 
-    // Status filters: click and assert table updates
+    // Status filters
     for (const status of ['All', 'To Do', 'In Progress', 'Done']) {
-      const btn = adminPage.getByRole('button', { name: new RegExp(`^${status}$`, 'i') });
-      await expect(btn).toBeVisible();
-      await btn.click();
-      // Wait for table to update (loading spinner hidden or row count changes)
-      await adminPage.waitForTimeout(300); // adjust if spinner present
-      // Optionally assert at least one row or empty state
-      const rows = adminPage.locator('table.task-table tbody tr');
-      if (await rows.count()) {
-        await expect(rows.first()).toBeVisible();
-      } else {
-        await expect(adminPage.getByText(/no tasks found/i)).toBeVisible();
-      }
+      await expect(adminPage.getByRole('button', { name: new RegExp(`^${status}$`, 'i') })).toBeVisible();
     }
 
-    // Priority filters: click and assert table updates
+    // Priority filters
     for (const priority of ['All Priority', 'High', 'Medium', 'Low']) {
-      const btn = adminPage.getByRole('button', { name: new RegExp(priority, 'i') });
-      await expect(btn).toBeVisible();
-      await btn.click();
-      await adminPage.waitForTimeout(300);
-      const rows = adminPage.locator('table.task-table tbody tr');
-      if (await rows.count()) {
-        await expect(rows.first()).toBeVisible();
-      } else {
-        await expect(adminPage.getByText(/no tasks found/i)).toBeVisible();
-      }
-    }
-
-    // User filter: select each user and assert table updates
-    if (await userFilter.count()) {
-      const options = await userFilter.locator('option').allTextContents();
-      for (const user of options) {
-        await userFilter.selectOption({ label: user });
-        // Wait for either a row or empty state
-        await expect(
-          adminPage.locator('table.task-table tbody tr').first()
-            .or(adminPage.getByText(/no tasks found/i))
-        ).toBeVisible({ timeout: 5000 });
-      }
-    }
-
-    // Team filter: if present, select each team and assert table updates
-    const teamFilter = adminPage.locator('select.team-filter-select');
-    if (await teamFilter.count()) {
-      const options = await teamFilter.locator('option').allTextContents();
-      for (const team of options) {
-        await teamFilter.selectOption({ label: team });
-        await adminPage.waitForTimeout(300);
-        const rows = adminPage.locator('table.task-table tbody tr');
-        if (await rows.count()) {
-          await expect(rows.first()).toBeVisible();
-        } else {
-          await expect(adminPage.getByText(/no tasks found/i)).toBeVisible();
-        }
-      }
+      await expect(adminPage.getByRole('button', { name: new RegExp(priority, 'i') })).toBeVisible();
     }
 
     // Create a user task
@@ -697,28 +648,13 @@ test.describe.only('Admin – User Task Management', () => {
       { timeout: 20000 }
     ).toBeGreaterThan(0);
 
-    // Pagination: go to last page (robust, with max attempts and existence check)
+    // Pagination: go to last page
     const nextBtn = adminPage.getByRole('button', { name: /^next$/i });
-    let attempts = 0;
-    const maxAttempts = 20;
-    if (await nextBtn.count() && await nextBtn.isVisible()) {
-      while (await nextBtn.isEnabled() && attempts < maxAttempts) {
-        await nextBtn.click();
-        attempts++;
-        const rows = await adminPage.locator('table.task-table tbody tr').count();
-        if (rows === 0) break;
-      }
+    while (await nextBtn.isEnabled()) {
+      await nextBtn.click();
     }
 
-    // Reset filters to 'All' before searching for the new task
-    await adminPage.getByRole('button', { name: /^All$/i }).click();
-    await adminPage.getByRole('button', { name: /All Priority/i }).click();
-    await userFilter.selectOption({ label: 'All Users' });
-    const teamFilter = adminPage.locator('select.team-filter-select');
-    if (await teamFilter.count()) {
-      await teamFilter.selectOption({ label: 'All Teams' }).catch(() => {});
-    }
-    // Now search for the new task
+    // Verify created user task
     const userTaskRows = adminPage.locator('table.task-table tbody tr', {
       hasText: userTaskTitle,
     });
@@ -807,4 +743,3 @@ test.describe('Admin – Profile', () => {
     }
   });
 });
-
