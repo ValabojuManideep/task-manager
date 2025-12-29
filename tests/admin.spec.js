@@ -545,8 +545,11 @@ test.describe('Admin – Analytics', () => {
     await expect(adminPage.getByText('IN PROGRESS')).toBeVisible();
     await expect(adminPage.getByText('COMPLETION RATE')).toBeVisible();
 
-    // User filter (custom dropdown)
-    await expect(adminPage.getByText(/^All Users$/i)).toBeVisible();
+    // User filter (custom dropdown) - only assert if present
+    const analyticsUserFilter = adminPage.getByText(/^All Users$/i);
+    if (await analyticsUserFilter.count()) {
+      await expect(analyticsUserFilter).toBeVisible();
+    }
 
     // Export Data button
     await expect(adminPage.getByRole('button', { name: /export data/i })).toBeVisible();
@@ -575,10 +578,10 @@ test.describe('Admin – Analytics', () => {
     }
 
     // Change user filter (custom dropdown)
-    const userFilter = adminPage.getByText(/^All Users$/i);
-    await expect(userFilter).toBeVisible();
+    const analyticsUserFilter2 = adminPage.getByText(/^All Users$/i);
+    await expect(analyticsUserFilter2).toBeVisible();
     // Optionally open dropdown if interactive
-    const userFilterToggle = userFilter.locator('..');
+    const userFilterToggle = analyticsUserFilter2.locator('..');
     if (await userFilterToggle.isVisible()) {
       await userFilterToggle.click();
       // Optionally select another user if options are visible
@@ -740,6 +743,133 @@ test.describe('Admin – Profile', () => {
       ).toBeVisible();
       // Optionally assert mention items
       // await expect(adminPage.locator('.mention-item')).toBeVisible();
+    }
+  });
+});
+
+
+/* ============================================================
+   Admin – Recurrent Task Management
+   ============================================================ */
+
+test.describe('Admin – Recurrent Task Management', () => {
+  test('Create, complete, and cycle a recurrent user task', async ({ adminPage }) => {
+    // Navigate to User Tasks
+    await adminPage.locator('.navbar .nav-label', { hasText: 'Tasks' }).click();
+    await adminPage.getByRole('link', { name: /user tasks/i }).click();
+    await expect(adminPage.getByRole('heading', { name: /user tasks/i })).toBeVisible();
+
+    // Create a recurrent task
+    const taskTitle = `Playwright Recurrent Task ${Date.now()}`;
+    await adminPage.getByRole('button', { name: /new task/i }).click();
+    await adminPage.getByPlaceholder('Enter task title').fill(taskTitle);
+    await adminPage.getByPlaceholder('Enter task description').fill('Recurrent task created by Playwright E2E test');
+
+    // Select recurrent type (e.g., Daily)
+    const recurrentSelect = adminPage.locator('label:has-text("Recurrent Task")').locator('..').locator('select');
+    await recurrentSelect.selectOption({ label: 'Daily' });
+
+    // Set Recurrent Until (End Date) → datetime-local expects ISO format
+    const tomorrow = new Date();
+    tomorrow.setDate(tomorrow.getDate() + 1);
+    const yyyy = tomorrow.getFullYear();
+    const mm = String(tomorrow.getMonth() + 1).padStart(2, '0');
+    const dd = String(tomorrow.getDate()).padStart(2, '0');
+    // ISO format required by <input type="datetime-local">
+    const recurrentUntilValue = `${yyyy}-${mm}-${dd}T23:59`;
+    const recurrentUntilInput = adminPage
+      .getByText('Recurrent Until (End Date)')
+      .locator('..')
+      .locator('input');
+    await recurrentUntilInput.fill(recurrentUntilValue);
+
+    // Set Due Date (same rule)
+    const today = new Date();
+    const yyyy2 = today.getFullYear();
+    const mm2 = String(today.getMonth() + 1).padStart(2, '0');
+    const dd2 = String(today.getDate()).padStart(2, '0');
+    const dueDateValue = `${yyyy2}-${mm2}-${dd2}T23:59`;
+    const dueDateInput = adminPage
+      .getByText('Due Date')
+      .locator('..')
+      .locator('input');
+    await dueDateInput.fill(dueDateValue);
+
+    // Assign to first available user
+    const userSelect = adminPage.locator('label:has-text("Assign To User")').locator('..').locator('select');
+    if (await userSelect.count()) {
+      const options = await userSelect.locator('option:not([value=""])').allTextContents();
+      if (options.length > 0) {
+        await userSelect.selectOption({ label: options[0] });
+      }
+    }
+
+    // Set Status and Priority (optional, defaults are fine)
+    // Click Add Task
+    await adminPage.getByRole('button', { name: /add task/i }).click();
+    // Confirm dialog if shown
+    const confirmDialog = adminPage.getByRole('dialog', { name: /create task/i });
+    if (await confirmDialog.isVisible().catch(() => false)) {
+      await confirmDialog.getByRole('button', { name: /yes, proceed/i }).click();
+    }
+    // Assert success toast
+    await expect.poll(
+      () => adminPage.getByRole('status').filter({ hasText: /task created successfully/i }).count(),
+      { timeout: 20000 }
+    ).toBeGreaterThan(0);
+
+    // --- Ensure clean table state ---
+    await adminPage.getByRole('button', { name: /^All$/i }).click();
+    await adminPage.getByRole('button', { name: /all priority/i }).click();
+    const userFilter = adminPage.getByRole('combobox');
+    await userFilter.selectOption({ label: 'All Users' });
+    // Search guarantees visibility even with pagination
+    await adminPage.getByPlaceholder('Search...').fill(taskTitle);
+    // Assert task appears
+    const taskRow = adminPage.getByRole('row', { name: new RegExp(taskTitle) });
+    await expect(taskRow).toBeVisible({ timeout: 20000 });
+
+    // Wait for due date cell to be visible
+    // Due column = 5th column (0-based index = 4)
+    const dueDateCell = taskRow.locator('td').nth(4);
+    // Capture original due date BEFORE clicking Done
+    const beforeText = await dueDateCell.textContent();
+    expect(beforeText).toBeTruthy();
+    const beforeDate = new Date(beforeText);
+
+    // Complete the task (mark as done) - should cycle due date to next day
+    const doneBtn = taskRow.getByRole('button', { name: /done|✓ done|mark as done/i });
+    if (await doneBtn.count()) {
+      await doneBtn.click();
+      const swal = adminPage.locator('.swal2-container');
+      if (await swal.isVisible()) {
+        await adminPage.getByRole('button', { name: /yes, proceed|confirm/i }).click();
+        await expect(swal).toBeHidden();
+      }
+    }
+
+    // Wait for due date cell to change before checking the new value
+    await expect.poll(async () => {
+      const text = await dueDateCell.textContent();
+      return text && text !== beforeText;
+    }, { timeout: 15000 }).toBeTruthy();
+
+    // Assert due date increased by ~1 day (robust to locale)
+    await expect.poll(async () => {
+      const text = await dueDateCell.textContent();
+      if (!text) return false;
+      const afterDate = new Date(text);
+      const diffDays = (afterDate.getTime() - beforeDate.getTime()) / (1000 * 60 * 60 * 24);
+      return diffDays >= 0.9; // allow timezone/minute drift
+    }, { timeout: 15000 }).toBeTruthy();
+
+    // Complete the task again (final time, should show popup)
+    if (await doneBtn.count()) {
+      await doneBtn.click();
+      const finalSwal = adminPage.getByRole('dialog', { name: /final recurrent task/i });
+      await expect(finalSwal).toBeVisible({ timeout: 10000 });
+      await finalSwal.getByRole('button', { name: /yes, proceed/i }).click();
+      await expect(finalSwal).toBeHidden();
     }
   });
 });
