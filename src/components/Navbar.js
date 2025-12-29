@@ -7,6 +7,7 @@ import useAppStore from "../store/useAppStore";
 export default function Navbar() {
   const location = useLocation();
   const { user, logout } = useAuth();
+  console.log('NAVBAR USER:', user);
   const expandTasks = useAppStore((s) => s.navbar_expandTasks);
   const setExpandTasks = useAppStore((s) => s.setNavbar_expandTasks);
   const darkMode = useAppStore((s) => s.darkMode);
@@ -110,6 +111,17 @@ export default function Navbar() {
           <span className="nav-label">Activity</span>
         </Link>
 
+        {/* Chat */}
+        {!isAdmin && (
+          <Link
+            to="/chat"
+            className={`nav-item ${location.pathname === "/chat" ? "active" : ""}`}
+          >
+            <span className="nav-icon">💬</span>
+            <span className="nav-label">Chat</span>
+          </Link>
+        )}
+
         {/* Profile */}
         <Link
           to="/profile"
@@ -118,6 +130,17 @@ export default function Navbar() {
           <span className="nav-icon">👤</span>
           <span className="nav-label">Profile</span>
         </Link>
+
+        {/* My Teams (for Team Managers only) */}
+        {isTeamManager && (
+          <Link
+            to="/team-manager"
+            className={`nav-item ${location.pathname === "/team-manager" ? "active" : ""}`}
+          >
+            <span className="nav-icon">👨‍💼</span>
+            <span className="nav-label">My Teams</span>
+          </Link>
+        )}
 
         {/* Teams */}
         {(isAdmin || isTeamManager) && (
@@ -144,15 +167,12 @@ export default function Navbar() {
 
       {/* Footer */}
       <div className="navbar-footer">
-        <div className="user-avatar">{getInitials(user?.username)}</div>
-        <div className="user-info">
+        <div className="user-avatar" title={user?.username}>{getInitials(user?.username)}</div>
+        <div className="user-info role-first">
+          <span className="user-role-badge">
+            {user && user.role ? (user.role === "team-manager" ? "Team Manager" : user.role === "admin" ? "Admin" : "User") : "User"}
+          </span>
           <div className="user-name">{user?.username || "User"}</div>
-          <div className="user-email">{user?.email || "No email"}</div>
-          {user?.role && user.role !== "user" && (
-            <div className="user-role-badge">
-              {user.role === "team-manager" ? "Team Manager" : "Admin"}
-            </div>
-          )}
         </div>
       </div>
 

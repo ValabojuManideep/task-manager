@@ -154,24 +154,54 @@ body.dark-mode .logo-text {
   color: #1f2937;
   font-size: 18px;
   flex-shrink: 0;
+  cursor: pointer;
 }
 
 .user-info {
   flex: 1;
-  display: none;
+  display: flex;
+  flex-direction: row;
+  align-items: center;
+  gap: 12px;
+  min-width: 0;
+}
+
+.user-role-badge {
+  font-size: 14px;
+  font-weight: 600;
+  color: #111827;
+  background: transparent;
+  padding: 0;
+  border-radius: 0;
+  display: block;
+}
+
+.role-first .user-role-badge {
+  font-size: 14px;
+  font-weight: 600;
+  color: #111827;
 }
 
 .user-name {
   font-size: 14px;
   font-weight: 600;
   color: #111827;
-  margin-bottom: 2px;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
   display: none;
 }
 
-.user-email {
-  font-size: 12px;
-  color: #6b7280;
+@@.user-email {
+@@  font-size: 12px;
+@@  color: #6b7280;
+@@  display: none;
+@@}
+.navbar-footer:hover .user-name {
+  display: block;
+}
+
+.navbar-footer:hover .user-role-badge {
   display: none;
 }
 
@@ -254,6 +284,14 @@ body.dark-mode .user-name {
 .dark .user-email,
 body.dark-mode .user-email {
   color: #d1d5db;
+}
+
+[data-theme="dark"] .user-role-badge,
+.dark .user-role-badge,
+body.dark-mode .user-role-badge {
+  background: linear-gradient(135deg, #5B7FFF 0%, #4A6FE8 100%);
+  color: white;
+  box-shadow: 0 2px 4px rgba(91, 127, 255, 0.4);
 }
 
 /* Mobile header actions - hidden on desktop */
@@ -541,13 +579,3 @@ body.dark-mode .nav-subitem.active {
   border-left-color: #5B7FFF;
 }
 
-/* ✅ NEW: User role badge */
-.user-role-badge {
-  font-size: 0.7rem;
-  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
-  color: white;
-  padding: 0.2rem 0.6rem;
-  border-radius: 8px;
-  margin-top: 0.3rem;
-  display: inline-block;
-}
